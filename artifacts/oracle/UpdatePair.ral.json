@@ -1,15 +1,21 @@
 {
   "version": "v3.11.1",
-  "name": "ForceCancel",
-  "bytecodeTemplate": "010103000000040c0c{0}0109",
+  "name": "UpdatePair",
+  "bytecodeTemplate": "01010300000006{1}{2}0e0c{0}0103",
   "fieldsSig": {
     "names": [
-      "loan"
+      "oracle",
+      "pair",
+      "price"
     ],
     "types": [
-      "Loan"
+      "AlpacaFiOracle",
+      "ByteVec",
+      "U256"
     ],
     "isMutable": [
+      false,
+      false,
       false
     ]
   },

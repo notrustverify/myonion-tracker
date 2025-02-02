@@ -16,7 +16,7 @@ Contract Loan (
     // liquidation
     canLiquidate: Bool,
     mut liquidation: Bool,
-    ratio: U256,
+    mut ratio: U256,
     // auction
     mut highestBidder: Address,
     mut highestBid: U256,
@@ -39,6 +39,10 @@ Contract Loan (
 
     pub fn getTokenCollateral() -> (ByteVec, U256) {
         return collateralToken, collateralAmount
+    }
+
+    pub fn canLoanLiquidate() -> (Bool) {
+        return canLiquidate
     }
 
     // update ratio function needs to be added
@@ -80,7 +84,7 @@ Contract Loan (
 
     // contract functions
     @using(checkExternalCaller = true, updateFields = true, preapprovedAssets = true)
-    pub fn acceptLoan(acceptor: Address) -> () {
+    pub fn acceptLoan(acceptor: Address, newRatio: U256) -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
         assert!(active == false, 4)
@@ -88,10 +92,17 @@ Contract Loan (
         // transfer tokens to person requesting them
         transferToken!(acceptor, creator, tokenRequested, tokenAmount)
 
-        // assignment
+        // loan is now active
         active = true
+
+        // loan is started
         startTime = blockTimeStamp!()
+
+        // the person providing the loan is now the loanee
         loanee = acceptor
+
+        // the current collateral ratio
+        ratio = ratio
     }
 
     @using(checkExternalCaller = true, assetsInContract = true)
@@ -101,9 +112,11 @@ Contract Loan (
         // confirm loan is not running
         assert!(active == false, 1)
 
+        // return collateral to creator
         destroySelf!(caller)
     }
-
+    
+    // force cancel the loan -> decentralized
     @using(checkExternalCaller = false, assetsInContract = true)
     pub fn forceCancel() -> () {
         checkCaller!(callerAddress!() == creator, 5)
@@ -117,7 +130,7 @@ Contract Loan (
     pub fn payLoan(caller: Address) -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
-        // payback the loan
+        // payback the loan, the loan must be active
         assert!(active == true, 2)
 
         // transfer back assets plus the interest
@@ -126,8 +139,10 @@ Contract Loan (
         let totalCommission = getCommission(totalPayment)
 
         // user pays back two seperate accounts (marketplace fees, and the person who loaned them the assets)
+        transferToken!(caller, loanee, ALPH, dustAmount!())
         transferToken!(caller, loanee, tokenRequested, totalPayment - totalCommission)
 
+        transferToken!(caller, parentContract, ALPH, dustAmount!())
         transferToken!(caller, parentContract, tokenRequested, totalCommission)
 
         // destroy the contract
@@ -141,7 +156,7 @@ Contract Loan (
         assert!(active == true, 3)
         assert!(startTime + duration < blockTimeStamp!(), 4)
 
-        // is the loan a liquidation loan?
+        // is the loan a liquidation loan, if not then if it's not paid back the loaner can take all the collateral
         assert!(canLiquidate == false, 6)
 
         let totalCommission = getCommission(collateralAmount)
@@ -155,11 +170,11 @@ Contract Loan (
     // ---------------------------------------------------------
 
     // returns the amount of collateral after added
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
-    pub fn addCollateral(caller: Address, collateralAdded: U256) -> (U256) {
+    @using(checkExternalCaller = true, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn addCollateral(caller: Address, collateralAdded: U256, newRatio: U256) -> (U256) {
         checkCaller!(callerAddress!() == parentContract, 0)
 
-        // confirm the contract is a liquid contracts
+        // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
 
         // confirm it's active
@@ -168,6 +183,9 @@ Contract Loan (
         // transfer additional collateral to offset liquidation
         transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
         collateralAmount = collateralAmount + collateralAdded
+        
+        // assign new ratio
+        ratio = newRatio
 
         return collateralAmount
     }
@@ -183,14 +201,15 @@ Contract Loan (
         assert!(active == true, 3)
 
         // ratio is under 150
+        ratio = collateralLevel
         assert!(ratio < 150, 5)
 
         // liquidation to true
         liquidation = true
         timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to liquidate -> assets are just sent to loanee
 
-        // set the highest bid
-        highestBid = tokenAmount
+        //! I guess here we could add like a percentage decline as the auction proceeds
+        highestBid = tokenAmount 
     }
 
     // should return timeEnd + token + newHighestBid + newHighestBidder

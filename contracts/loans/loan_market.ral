@@ -88,4 +88,50 @@ Contract LoanMarket (
 
         destroySelf!(creator)
     }
+
+    @using(checkExternalCaller = false, assetsInContract = true)
+    pub fn forceCancel() -> () {
+        checkCaller!(callerAddress!() == creator, 5)
+
+        destroySelf!(creator)
+    }
+
+    // upgrade
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateMarketCode(newCode: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateMarketFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    } 
+}
+
+TxScript ForceCancelMarket (
+    loan: Loan
+) {
+    loan.forceCancel()
+}
+
+// add force cancel
+
+TxScript UpdateMarketCode (
+    market: LoanMarket,
+    newCode: ByteVec
+) {
+    market.updateMarketCode(newCode)
+}
+
+TxScript UpdateMarketFields (
+    market: LoanMarket,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    market.updateMarketFields(newCode, immFields, mutFields)
 }

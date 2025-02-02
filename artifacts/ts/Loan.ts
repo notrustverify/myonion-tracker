@@ -35,7 +35,7 @@ import {
 } from "@alephium/web3";
 import { default as LoanContractJson } from "../loans/Loan.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import { DIAOracleValue, PairInfo, AllStructs } from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
 // Custom types for the contract
 export namespace LoanTypes {
@@ -75,6 +75,10 @@ export namespace LoanTypes {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<[HexString, bigint]>;
     };
+    canLoanLiquidate: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<boolean>;
+    };
     isLoanComplete: {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<boolean>;
@@ -88,7 +92,7 @@ export namespace LoanTypes {
       result: CallContractResult<bigint>;
     };
     acceptLoan: {
-      params: CallContractParams<{ acceptor: Address }>;
+      params: CallContractParams<{ acceptor: Address; newRatio: bigint }>;
       result: CallContractResult<null>;
     };
     cancelLoan: {
@@ -108,7 +112,11 @@ export namespace LoanTypes {
       result: CallContractResult<null>;
     };
     addCollateral: {
-      params: CallContractParams<{ caller: Address; collateralAdded: bigint }>;
+      params: CallContractParams<{
+        caller: Address;
+        collateralAdded: bigint;
+        newRatio: bigint;
+      }>;
       result: CallContractResult<bigint>;
     };
     activateLiquidation: {
@@ -165,6 +173,10 @@ export namespace LoanTypes {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
+    canLoanLiquidate: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
     isLoanComplete: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
@@ -178,7 +190,10 @@ export namespace LoanTypes {
       result: SignExecuteScriptTxResult;
     };
     acceptLoan: {
-      params: SignExecuteContractMethodParams<{ acceptor: Address }>;
+      params: SignExecuteContractMethodParams<{
+        acceptor: Address;
+        newRatio: bigint;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     cancelLoan: {
@@ -201,6 +216,7 @@ export namespace LoanTypes {
       params: SignExecuteContractMethodParams<{
         caller: Address;
         collateralAdded: bigint;
+        newRatio: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -294,6 +310,19 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         getContractByCodeHash
       );
     },
+    canLoanLiquidate: async (
+      params: Omit<
+        TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
+        "testArgs"
+      >
+    ): Promise<TestContractResultWithoutMaps<boolean>> => {
+      return testMethod(
+        this,
+        "canLoanLiquidate",
+        params,
+        getContractByCodeHash
+      );
+    },
     isLoanComplete: async (
       params: Omit<
         TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
@@ -318,7 +347,7 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
     acceptLoan: async (
       params: TestContractParamsWithoutMaps<
         LoanTypes.Fields,
-        { acceptor: Address }
+        { acceptor: Address; newRatio: bigint }
       >
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "acceptLoan", params, getContractByCodeHash);
@@ -358,7 +387,7 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
     addCollateral: async (
       params: TestContractParamsWithoutMaps<
         LoanTypes.Fields,
-        { caller: Address; collateralAdded: bigint }
+        { caller: Address; collateralAdded: bigint; newRatio: bigint }
       >
     ): Promise<TestContractResultWithoutMaps<bigint>> => {
       return testMethod(this, "addCollateral", params, getContractByCodeHash);
@@ -425,7 +454,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "83905f562f0aa3793c9eefbcb44886fa76a4b3cb2e2b3a48a71b04c5d2cbe8da",
+    "afa394ecc899afe08e445abb6f4837c7e36e98de3e8dfe028bd36ca6e5c3973e",
     AllStructs
   )
 );
@@ -471,6 +500,17 @@ export class LoanInstance extends ContractInstance {
         Loan,
         this,
         "getTokenCollateral",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
+    canLoanLiquidate: async (
+      params?: LoanTypes.CallMethodParams<"canLoanLiquidate">
+    ): Promise<LoanTypes.CallMethodResult<"canLoanLiquidate">> => {
+      return callMethod(
+        Loan,
+        this,
+        "canLoanLiquidate",
         params === undefined ? {} : params,
         getContractByCodeHash
       );
@@ -628,6 +668,11 @@ export class LoanInstance extends ContractInstance {
       params: LoanTypes.SignExecuteMethodParams<"getTokenCollateral">
     ): Promise<LoanTypes.SignExecuteMethodResult<"getTokenCollateral">> => {
       return signExecuteMethod(Loan, this, "getTokenCollateral", params);
+    },
+    canLoanLiquidate: async (
+      params: LoanTypes.SignExecuteMethodParams<"canLoanLiquidate">
+    ): Promise<LoanTypes.SignExecuteMethodResult<"canLoanLiquidate">> => {
+      return signExecuteMethod(Loan, this, "canLoanLiquidate", params);
     },
     isLoanComplete: async (
       params: LoanTypes.SignExecuteMethodParams<"isLoanComplete">

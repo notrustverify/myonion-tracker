@@ -1,8 +1,8 @@
 {
   "version": "v3.11.1",
   "name": "LoanMarket",
-  "bytecode": "0a0810402640364066409a40d7410b4126010000000204d34e7fad9dce01a00002010000000507d32987d7a4ce00a001a002a003a00402010000000204d340713345a005a00602010007070017d3d98ab0bab4ce02450c7b1600ce00450d7b1605a1051606a1061601a1011602a1021603a1031604a104010202020018d39f7f9a91b4ce02450c7b1601a00031107bb21600ce01a000aab2160013c3038d7ea4c68000a7a00016012ba10001010303001ed33654b857b4ce02450c7b1600ce00450d7b1600b2ce011601aa1600b213c3038d7ea4c68000a716024c041600b2d1a7a00016012aa100010202020018d3f1ab4760b4ce02450c7b1600ce00450d7bb21600ce011601aab2160013c3038d7ea4c68000a7a00016012ba10001020101000dd320f98f62b4ce02450c7b1600ce00450d7bce00b0",
-  "codeHash": "a9cc0b2ee9caa208dc8ca365d3db5b86d548798aafe8f9cf94f1653636b0a676",
+  "bytecode": "0a0b10402640364066409a40d7410b4126413a414f4168010000000204d34e7fad9dce01a00002010000000507d32987d7a4ce00a001a002a003a00402010000000204d340713345a005a00602010007070017d3d98ab0bab4ce02450c7b1600ce00450d7b1605a1051606a1061601a1011602a1021603a1031604a104010202020018d39f7f9a91b4ce02450c7b1601a00031107bb21600ce01a000aab2160013c3038d7ea4c68000a7a00016012ba10001010303001ed33654b857b4ce02450c7b1600ce00450d7b1600b2ce011601aa1600b213c3038d7ea4c68000a716024c041600b2d1a7a00016012aa100010202020018d3f1ab4760b4ce02450c7b1600ce00450d7bb21600ce011601aab2160013c3038d7ea4c68000a7a00016012ba10001020101000dd320f98f62b4ce02450c7b1600ce00450d7bce00b0010200000008d3658f8d67b4ce0045117bce00b0010001010008d3c93d3406b4ce024513097b1600ba01000303000ad33d36b41eb4ce024513097b160016011602bb",
+  "codeHash": "a5aaee6199de09f944e6db1c8724d24eed044cabd7bce301f0e8acd53fed4fb2",
   "fieldsSig": {
     "names": [
       "creator",
@@ -167,6 +167,45 @@
         "Address"
       ],
       "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "forceCancel",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": []
+    },
+    {
+      "name": "updateMarketCode",
+      "paramNames": [
+        "newCode"
+      ],
+      "paramTypes": [
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "updateMarketFields",
+      "paramNames": [
+        "newCode",
+        "immFields",
+        "mutFields"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "ByteVec",
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
         false
       ],
       "returnTypes": []

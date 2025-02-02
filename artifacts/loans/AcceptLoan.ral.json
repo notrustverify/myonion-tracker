@@ -1,17 +1,23 @@
 {
   "version": "v3.11.1",
   "name": "AcceptLoan",
-  "bytecodeTemplate": "01010300020011{1}040e0e{0}010117011700b416001601a3{1}0d0c{0}0105",
+  "bytecodeTemplate": "01010300020013{1}040e0e{0}010117011700b416001601a3{1}{2}{3}0f0c{0}0105",
   "fieldsSig": {
     "names": [
       "loanFactory",
-      "contract"
+      "contract",
+      "tokenOracle",
+      "collateralOracle"
     ],
     "types": [
       "LoanFactory",
-      "ByteVec"
+      "ByteVec",
+      "Bool",
+      "Bool"
     ],
     "isMutable": [
+      false,
+      false,
       false,
       false
     ]

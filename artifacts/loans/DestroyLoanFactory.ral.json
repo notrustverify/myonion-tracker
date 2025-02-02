@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "DestroyLoanFactory",
-  "bytecodeTemplate": "010103000000040c0c{0}0113",
+  "bytecodeTemplate": "010103000000040c0c{0}0114",
   "fieldsSig": {
     "names": [
       "loanFactory"

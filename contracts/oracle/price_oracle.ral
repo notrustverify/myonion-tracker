@@ -1,0 +1,90 @@
+struct OracleData {
+    token: ByteVec,
+    mut value: U256,
+    decimals: U256
+}
+
+// notes: all prices should be 8 decimals to avoid conflicts with alephium oracle
+Contract AlpacaFiOracle (
+    admin: Address,
+    updateBot: Address
+) {
+    mapping [ByteVec, OracleData] prices
+
+    pub fn getValue(pair: ByteVec) -> (OracleData) {
+        assert!(prices.contains!(pair) == true, 0)
+
+        return prices[pair]
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = false)
+    pub fn insertPair(pair: ByteVec, token: ByteVec, price: U256, decimals: U256) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+        
+        let b = OracleData {
+            token: token,
+            value: price,
+            decimals: decimals
+        }
+
+        prices.insert!(callerAddress!(), pair, b)
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    pub fn removePair(pair: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        prices.remove!(admin, pair)
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    pub fn updatePair(pair: ByteVec, price: U256) -> () {
+        checkCaller!(callerAddress!() == updateBot, 0)
+
+        assert!(prices.contains!(pair) == true, 0)
+
+        prices[pair].value = price
+    }
+
+    // update code
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateOracleCode (
+        newCode: ByteVec
+    ) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        migrate!(newCode)
+    }
+}
+
+TxScript InsertPair (
+    oracle: AlpacaFiOracle,
+    token: ByteVec,
+    pair: ByteVec,
+    price: U256,
+    decimals: U256
+) {
+    oracle.insertPair{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, pair, price, decimals)
+}
+
+TxScript RemovePair (
+    oracle: AlpacaFiOracle,
+    token: ByteVec
+) {
+    oracle.removePair(token)
+}
+
+TxScript UpdatePair (
+    oracle: AlpacaFiOracle,
+    pair: ByteVec,
+    price: U256
+) {
+    oracle.updatePair(pair, price)
+}
+
+TxScript UpdateOracleCode (
+    oracle: AlpacaFiOracle,
+    newCode: ByteVec
+) {
+    oracle.updateOracleCode(newCode)
+}

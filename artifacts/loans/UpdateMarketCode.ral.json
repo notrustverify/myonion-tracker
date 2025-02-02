@@ -1,15 +1,18 @@
 {
   "version": "v3.11.1",
-  "name": "ForceCancel",
-  "bytecodeTemplate": "010103000000040c0c{0}0109",
+  "name": "UpdateMarketCode",
+  "bytecodeTemplate": "01010300000005{1}0d0c{0}0109",
   "fieldsSig": {
     "names": [
-      "loan"
+      "market",
+      "newCode"
     ],
     "types": [
-      "Loan"
+      "LoanMarket",
+      "ByteVec"
     ],
     "isMutable": [
+      false,
       false
     ]
   },

@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
+export * from "./AlpacaFiOracle";
 export * from "./Loan";
 export * from "./LoanFactory";
 export * from "./LoanMarket";

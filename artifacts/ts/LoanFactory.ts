@@ -35,7 +35,7 @@ import {
 } from "@alephium/web3";
 import { default as LoanFactoryContractJson } from "../loans/LoanFactory.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import { DIAOracleValue, PairInfo, AllStructs } from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 import { RalphMap } from "@alephium/web3";
 
 // Custom types for the contract
@@ -47,6 +47,7 @@ export namespace LoanFactoryTypes {
     activeLoans: bigint;
     rate: bigint;
     oracle: HexString;
+    alpaca: HexString;
   };
 
   export type State = ContractState<Fields>;
@@ -116,8 +117,10 @@ export namespace LoanFactoryTypes {
       params: CallContractParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         threshhold: bigint;
       }>;
       result: CallContractResult<[bigint, boolean]>;
@@ -137,8 +140,10 @@ export namespace LoanFactoryTypes {
       params: CallContractParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         interest: bigint;
         duration: bigint;
         canLiquidate: boolean;
@@ -149,8 +154,10 @@ export namespace LoanFactoryTypes {
       params: CallContractParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         interest: bigint;
         duration: bigint;
         loaneeMarket: HexString;
@@ -158,7 +165,11 @@ export namespace LoanFactoryTypes {
       result: CallContractResult<null>;
     };
     accept: {
-      params: CallContractParams<{ contractId: HexString }>;
+      params: CallContractParams<{
+        contractId: HexString;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: CallContractResult<null>;
     };
     cancel: {
@@ -174,7 +185,11 @@ export namespace LoanFactoryTypes {
       result: CallContractResult<null>;
     };
     liquidation: {
-      params: CallContractParams<{ contractId: HexString }>;
+      params: CallContractParams<{
+        contractId: HexString;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: CallContractResult<null>;
     };
     bid: {
@@ -183,6 +198,15 @@ export namespace LoanFactoryTypes {
     };
     redeem: {
       params: CallContractParams<{ contractId: HexString }>;
+      result: CallContractResult<null>;
+    };
+    addCollateral: {
+      params: CallContractParams<{
+        contractId: HexString;
+        amount: bigint;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: CallContractResult<null>;
     };
     loaneeMarket: {
@@ -268,6 +292,17 @@ export namespace LoanFactoryTypes {
       }>;
       result: CallContractResult<null>;
     };
+    upgradeContract: {
+      params: CallContractParams<{
+        contract: HexString;
+        newCode: HexString;
+        imm: HexString;
+        mutt: HexString;
+        fields: boolean;
+        isLoan: boolean;
+      }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -290,8 +325,10 @@ export namespace LoanFactoryTypes {
       params: SignExecuteContractMethodParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         threshhold: bigint;
       }>;
       result: SignExecuteScriptTxResult;
@@ -314,8 +351,10 @@ export namespace LoanFactoryTypes {
       params: SignExecuteContractMethodParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         interest: bigint;
         duration: bigint;
         canLiquidate: boolean;
@@ -326,8 +365,10 @@ export namespace LoanFactoryTypes {
       params: SignExecuteContractMethodParams<{
         tokenRequested: HexString;
         tokenAmount: bigint;
+        tokenOracle: boolean;
         collateralToken: HexString;
         collateralAmount: bigint;
+        collateralOracle: boolean;
         interest: bigint;
         duration: bigint;
         loaneeMarket: HexString;
@@ -335,7 +376,11 @@ export namespace LoanFactoryTypes {
       result: SignExecuteScriptTxResult;
     };
     accept: {
-      params: SignExecuteContractMethodParams<{ contractId: HexString }>;
+      params: SignExecuteContractMethodParams<{
+        contractId: HexString;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     cancel: {
@@ -351,7 +396,11 @@ export namespace LoanFactoryTypes {
       result: SignExecuteScriptTxResult;
     };
     liquidation: {
-      params: SignExecuteContractMethodParams<{ contractId: HexString }>;
+      params: SignExecuteContractMethodParams<{
+        contractId: HexString;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     bid: {
@@ -363,6 +412,15 @@ export namespace LoanFactoryTypes {
     };
     redeem: {
       params: SignExecuteContractMethodParams<{ contractId: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
+    addCollateral: {
+      params: SignExecuteContractMethodParams<{
+        contractId: HexString;
+        amount: bigint;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     loaneeMarket: {
@@ -448,6 +506,17 @@ export namespace LoanFactoryTypes {
       }>;
       result: SignExecuteScriptTxResult;
     };
+    upgradeContract: {
+      params: SignExecuteContractMethodParams<{
+        contract: HexString;
+        newCode: HexString;
+        imm: HexString;
+        mutt: HexString;
+        fields: boolean;
+        isLoan: boolean;
+      }>;
+      result: SignExecuteScriptTxResult;
+    };
   }
   export type SignExecuteMethodParams<T extends keyof SignExecuteMethodTable> =
     SignExecuteMethodTable[T]["params"];
@@ -496,8 +565,10 @@ class Factory extends ContractFactory<
         {
           tokenRequested: HexString;
           tokenAmount: bigint;
+          tokenOracle: boolean;
           collateralToken: HexString;
           collateralAmount: bigint;
+          collateralOracle: boolean;
           threshhold: bigint;
         },
         LoanFactoryTypes.Maps
@@ -548,8 +619,10 @@ class Factory extends ContractFactory<
         {
           tokenRequested: HexString;
           tokenAmount: bigint;
+          tokenOracle: boolean;
           collateralToken: HexString;
           collateralAmount: bigint;
+          collateralOracle: boolean;
           interest: bigint;
           duration: bigint;
           canLiquidate: boolean;
@@ -565,8 +638,10 @@ class Factory extends ContractFactory<
         {
           tokenRequested: HexString;
           tokenAmount: bigint;
+          tokenOracle: boolean;
           collateralToken: HexString;
           collateralAmount: bigint;
+          collateralOracle: boolean;
           interest: bigint;
           duration: bigint;
           loaneeMarket: HexString;
@@ -579,7 +654,11 @@ class Factory extends ContractFactory<
     accept: async (
       params: TestContractParams<
         LoanFactoryTypes.Fields,
-        { contractId: HexString },
+        {
+          contractId: HexString;
+          tokenOracle: boolean;
+          collateralOracle: boolean;
+        },
         LoanFactoryTypes.Maps
       >
     ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
@@ -615,7 +694,11 @@ class Factory extends ContractFactory<
     liquidation: async (
       params: TestContractParams<
         LoanFactoryTypes.Fields,
-        { contractId: HexString },
+        {
+          contractId: HexString;
+          tokenOracle: boolean;
+          collateralOracle: boolean;
+        },
         LoanFactoryTypes.Maps
       >
     ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
@@ -638,6 +721,20 @@ class Factory extends ContractFactory<
       >
     ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
       return testMethod(this, "redeem", params, getContractByCodeHash);
+    },
+    addCollateral: async (
+      params: TestContractParams<
+        LoanFactoryTypes.Fields,
+        {
+          contractId: HexString;
+          amount: bigint;
+          tokenOracle: boolean;
+          collateralOracle: boolean;
+        },
+        LoanFactoryTypes.Maps
+      >
+    ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
+      return testMethod(this, "addCollateral", params, getContractByCodeHash);
     },
     loaneeMarket: async (
       params: TestContractParams<
@@ -793,6 +890,22 @@ class Factory extends ContractFactory<
         getContractByCodeHash
       );
     },
+    upgradeContract: async (
+      params: TestContractParams<
+        LoanFactoryTypes.Fields,
+        {
+          contract: HexString;
+          newCode: HexString;
+          imm: HexString;
+          mutt: HexString;
+          fields: boolean;
+          isLoan: boolean;
+        },
+        LoanFactoryTypes.Maps
+      >
+    ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
+      return testMethod(this, "upgradeContract", params, getContractByCodeHash);
+    },
   };
 
   stateForTest(
@@ -809,8 +922,8 @@ class Factory extends ContractFactory<
 export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
-    "=77-4=1-2+1f=2-2+33=2-2=1+c46=1+0=1-1+678=2886-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=184",
-    "a43222f789fafaddee8aa7c425dcb52f083c10fa9f6f06dfa43ed56caa99fe9b",
+    "=81-4=1-1=1+1=2-2+35=2-2+4e=2+62=2+7a=2-2+d2=3402-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=360",
+    "d60c77fa7663655ccd17b221c1d09f389ab0213882760c76d7a53bbe06b02da9",
     AllStructs
   )
 );
@@ -1126,6 +1239,17 @@ export class LoanFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    addCollateral: async (
+      params: LoanFactoryTypes.CallMethodParams<"addCollateral">
+    ): Promise<LoanFactoryTypes.CallMethodResult<"addCollateral">> => {
+      return callMethod(
+        LoanFactory,
+        this,
+        "addCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
     loaneeMarket: async (
       params: LoanFactoryTypes.CallMethodParams<"loaneeMarket">
     ): Promise<LoanFactoryTypes.CallMethodResult<"loaneeMarket">> => {
@@ -1251,6 +1375,17 @@ export class LoanFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    upgradeContract: async (
+      params: LoanFactoryTypes.CallMethodParams<"upgradeContract">
+    ): Promise<LoanFactoryTypes.CallMethodResult<"upgradeContract">> => {
+      return callMethod(
+        LoanFactory,
+        this,
+        "upgradeContract",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -1324,6 +1459,11 @@ export class LoanFactoryInstance extends ContractInstance {
       params: LoanFactoryTypes.SignExecuteMethodParams<"redeem">
     ): Promise<LoanFactoryTypes.SignExecuteMethodResult<"redeem">> => {
       return signExecuteMethod(LoanFactory, this, "redeem", params);
+    },
+    addCollateral: async (
+      params: LoanFactoryTypes.SignExecuteMethodParams<"addCollateral">
+    ): Promise<LoanFactoryTypes.SignExecuteMethodResult<"addCollateral">> => {
+      return signExecuteMethod(LoanFactory, this, "addCollateral", params);
     },
     loaneeMarket: async (
       params: LoanFactoryTypes.SignExecuteMethodParams<"loaneeMarket">
@@ -1404,6 +1544,11 @@ export class LoanFactoryInstance extends ContractInstance {
         "updateLoanFactoryFields",
         params
       );
+    },
+    upgradeContract: async (
+      params: LoanFactoryTypes.SignExecuteMethodParams<"upgradeContract">
+    ): Promise<LoanFactoryTypes.SignExecuteMethodResult<"upgradeContract">> => {
+      return signExecuteMethod(LoanFactory, this, "upgradeContract", params);
     },
   };
 

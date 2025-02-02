@@ -28,5 +28,23 @@
       true,
       true
     ]
+  },
+  {
+    "name": "OracleData",
+    "fieldNames": [
+      "token",
+      "value",
+      "decimals"
+    ],
+    "fieldTypes": [
+      "ByteVec",
+      "U256",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      true,
+      false
+    ]
   }
 ]

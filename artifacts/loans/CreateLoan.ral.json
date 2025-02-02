@@ -1,14 +1,16 @@
 {
   "version": "v3.11.1",
   "name": "CreateLoan",
-  "bytecodeTemplate": "01010300000014b47ad10e2ca2{3}{4}a3{1}{2}{3}{4}{5}{6}{7}13070c{0}0103",
+  "bytecodeTemplate": "01010300000016b47ad10e2ca2{4}{5}a3{1}{2}{3}{4}{5}{6}{7}{8}{9}13090c{0}0103",
   "fieldsSig": {
     "names": [
       "loanFactory",
       "tokenRequested",
       "tokenAmount",
+      "tokenOracle",
       "collateralToken",
       "collateralAmount",
+      "collateralOracle",
       "interest",
       "duration",
       "canLiquidate"
@@ -17,13 +19,17 @@
       "LoanFactory",
       "ByteVec",
       "U256",
+      "Bool",
       "ByteVec",
       "U256",
+      "Bool",
       "U256",
       "U256",
       "Bool"
     ],
     "isMutable": [
+      false,
+      false,
       false,
       false,
       false,

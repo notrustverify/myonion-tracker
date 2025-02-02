@@ -9,6 +9,11 @@ export interface DIAOracleValue extends Record<string, Val> {
   value: bigint;
   timestamp: bigint;
 }
+export interface OracleData extends Record<string, Val> {
+  token: HexString;
+  value: bigint;
+  decimals: bigint;
+}
 export interface PairInfo extends Record<string, Val> {
   pair: HexString;
   decimals: bigint;

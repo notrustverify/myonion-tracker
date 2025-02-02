@@ -35,7 +35,7 @@ import {
 } from "@alephium/web3";
 import { default as LoanMarketContractJson } from "../loans/LoanMarket.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import { DIAOracleValue, PairInfo, AllStructs } from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
 // Custom types for the contract
 export namespace LoanMarketTypes {
@@ -97,6 +97,22 @@ export namespace LoanMarketTypes {
     };
     destroy: {
       params: CallContractParams<{ caller: Address }>;
+      result: CallContractResult<null>;
+    };
+    forceCancel: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<null>;
+    };
+    updateMarketCode: {
+      params: CallContractParams<{ newCode: HexString }>;
+      result: CallContractResult<null>;
+    };
+    updateMarketFields: {
+      params: CallContractParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
       result: CallContractResult<null>;
     };
   }
@@ -165,6 +181,22 @@ export namespace LoanMarketTypes {
     };
     destroy: {
       params: SignExecuteContractMethodParams<{ caller: Address }>;
+      result: SignExecuteScriptTxResult;
+    };
+    forceCancel: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
+    updateMarketCode: {
+      params: SignExecuteContractMethodParams<{ newCode: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateMarketFields: {
+      params: SignExecuteContractMethodParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -285,6 +317,40 @@ class Factory extends ContractFactory<
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "destroy", params, getContractByCodeHash);
     },
+    forceCancel: async (
+      params: Omit<
+        TestContractParamsWithoutMaps<LoanMarketTypes.Fields, never>,
+        "testArgs"
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(this, "forceCancel", params, getContractByCodeHash);
+    },
+    updateMarketCode: async (
+      params: TestContractParamsWithoutMaps<
+        LoanMarketTypes.Fields,
+        { newCode: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "updateMarketCode",
+        params,
+        getContractByCodeHash
+      );
+    },
+    updateMarketFields: async (
+      params: TestContractParamsWithoutMaps<
+        LoanMarketTypes.Fields,
+        { newCode: HexString; immFields: HexString; mutFields: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "updateMarketFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(
@@ -301,7 +367,7 @@ export const LoanMarket = new Factory(
   Contract.fromJson(
     LoanMarketContractJson,
     "",
-    "a9cc0b2ee9caa208dc8ca365d3db5b86d548798aafe8f9cf94f1653636b0a676",
+    "a5aaee6199de09f944e6db1c8724d24eed044cabd7bce301f0e8acd53fed4fb2",
     AllStructs
   )
 );
@@ -400,6 +466,39 @@ export class LoanMarketInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    forceCancel: async (
+      params?: LoanMarketTypes.CallMethodParams<"forceCancel">
+    ): Promise<LoanMarketTypes.CallMethodResult<"forceCancel">> => {
+      return callMethod(
+        LoanMarket,
+        this,
+        "forceCancel",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
+    updateMarketCode: async (
+      params: LoanMarketTypes.CallMethodParams<"updateMarketCode">
+    ): Promise<LoanMarketTypes.CallMethodResult<"updateMarketCode">> => {
+      return callMethod(
+        LoanMarket,
+        this,
+        "updateMarketCode",
+        params,
+        getContractByCodeHash
+      );
+    },
+    updateMarketFields: async (
+      params: LoanMarketTypes.CallMethodParams<"updateMarketFields">
+    ): Promise<LoanMarketTypes.CallMethodResult<"updateMarketFields">> => {
+      return callMethod(
+        LoanMarket,
+        this,
+        "updateMarketFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -456,6 +555,23 @@ export class LoanMarketInstance extends ContractInstance {
       params: LoanMarketTypes.SignExecuteMethodParams<"destroy">
     ): Promise<LoanMarketTypes.SignExecuteMethodResult<"destroy">> => {
       return signExecuteMethod(LoanMarket, this, "destroy", params);
+    },
+    forceCancel: async (
+      params: LoanMarketTypes.SignExecuteMethodParams<"forceCancel">
+    ): Promise<LoanMarketTypes.SignExecuteMethodResult<"forceCancel">> => {
+      return signExecuteMethod(LoanMarket, this, "forceCancel", params);
+    },
+    updateMarketCode: async (
+      params: LoanMarketTypes.SignExecuteMethodParams<"updateMarketCode">
+    ): Promise<LoanMarketTypes.SignExecuteMethodResult<"updateMarketCode">> => {
+      return signExecuteMethod(LoanMarket, this, "updateMarketCode", params);
+    },
+    updateMarketFields: async (
+      params: LoanMarketTypes.SignExecuteMethodParams<"updateMarketFields">
+    ): Promise<
+      LoanMarketTypes.SignExecuteMethodResult<"updateMarketFields">
+    > => {
+      return signExecuteMethod(LoanMarket, this, "updateMarketFields", params);
     },
   };
 

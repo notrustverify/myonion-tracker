@@ -1,21 +1,21 @@
 {
   "version": "v3.11.1",
-  "name": "AddFunds",
-  "bytecodeTemplate": "0101030001001713c3038d7ea4c680001700{4}4c041600d12a1700b47a{2}{3}a31600a2{1}{2}{3}{4}100c{0}010f",
+  "name": "InsertPair",
+  "bytecodeTemplate": "0101030000000bb4d1a2{1}{2}{3}{4}100c{0}0101",
   "fieldsSig": {
     "names": [
-      "loanFactory",
-      "contractId",
+      "oracle",
       "token",
-      "amount",
-      "gas"
+      "pair",
+      "price",
+      "decimals"
     ],
     "types": [
-      "LoanFactory",
+      "AlpacaFiOracle",
       "ByteVec",
       "ByteVec",
       "U256",
-      "Bool"
+      "U256"
     ],
     "isMutable": [
       false,

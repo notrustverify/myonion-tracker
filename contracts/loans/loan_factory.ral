@@ -19,7 +19,8 @@ Contract LoanFactory (
     marketTemplate: ByteVec,
     mut activeLoans: U256,
     mut rate: U256,
-    oracle: IDIAOracle
+    oracle: IDIAOracle,
+    alpaca: ByteVec
 ) {
     // price mappings
     mapping [ByteVec, PairInfo] tokenPairs
@@ -48,14 +49,31 @@ Contract LoanFactory (
     fn determineCollateralRatio(
         tokenRequested: ByteVec,
         tokenAmount: U256,
+        tokenOracle: Bool,
         collateralToken: ByteVec, 
         collateralAmount: U256,
+        collateralOracle: Bool,
         threshhold: U256
     ) -> (U256, Bool) {
         if (tokenPairs.contains!(tokenRequested) == true && tokenPairs.contains!(collateralToken)) {
-            let loan_value = oracle.getValue(tokenPairs[tokenRequested].pair).value
+            let mut loan_value = 0
+            let mut collateral_value = 0
 
-            let collateral_value = oracle.getValue(tokenPairs[collateralToken].pair).value
+            // fetch token price
+            if (tokenOracle) {
+                loan_value = oracle.getValue(tokenPairs[tokenRequested].pair).value
+            }
+            else {
+                loan_value = AlpacaFiOracle(alpaca).getValue(tokenPairs[tokenRequested].pair).value
+            }
+
+            // fetch collateral price
+            if (collateralOracle) {
+                collateral_value = oracle.getValue(tokenPairs[collateralToken].pair).value
+            }
+            else {
+                collateral_value = AlpacaFiOracle(alpaca).getValue(tokenPairs[collateralToken].pair).value
+            }
 
             if (loan_value == 0 || collateral_value == 0) {
                 return 0, false
@@ -116,24 +134,34 @@ Contract LoanFactory (
     @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = true)
     pub fn createLoan(
         tokenRequested: ByteVec, 
-        tokenAmount: U256, 
+        tokenAmount: U256,
+        tokenOracle: Bool, 
         collateralToken: ByteVec, 
-        collateralAmount: U256, 
+        collateralAmount: U256,
+        collateralOracle: Bool,
         interest: U256, 
-        duration: U256, 
+        duration: U256,
         canLiquidate: Bool
     ) -> () {
         let caller = callerAddress!()
 
         checkTokenAmount(tokenAmount, rate)
 
+        // need a solution for un-supported oracle tokens
         let (ratio, condition) = determineCollateralRatio(
             tokenRequested, 
-            tokenAmount, 
+            tokenAmount,
+            tokenOracle,
             collateralToken, 
             collateralAmount, 
+            collateralOracle,
             150
         )
+
+        // collateral is over 150 %
+        if (canLiquidate) {
+            assert!(condition == true, 2)
+        }
 
         let (encodeImmutableFields, encodeMutableFields) = Loan.encodeFields!(
             caller,
@@ -173,8 +201,10 @@ Contract LoanFactory (
     pub fn acceptMarket(
         tokenRequested: ByteVec, 
         tokenAmount: U256, 
+        tokenOracle: Bool,
         collateralToken: ByteVec, 
         collateralAmount: U256, 
+        collateralOracle: Bool,
         interest: U256, 
         duration: U256,
         loaneeMarket: ByteVec
@@ -186,25 +216,35 @@ Contract LoanFactory (
 
         let (loanee, borrow, int, min, liquid) = market.getLoaneeDetails()
         let (token, amount) = market.getLoaneeTokenDetails()
-        let (collateral, ratio) = market.getCollateralDetails()
+        let (collateral, minRatio) = market.getCollateralDetails()
 
+        // confirm conditions are met for market
         assert!(tokenRequested == token, 2)
         assert!(amount > tokenAmount, 3)
+
         assert!(interest >= int, 4)
         assert!(duration <= min, 5)
+        
+        // confirm no underflow
         assert!(tokenAmount >= borrow, 6)
 
-        if (collateral) {
-            let (r, condition) = determineCollateralRatio(
-                tokenRequested, 
-                tokenAmount, 
-                collateralToken, 
-                collateralAmount, 
-                150
-            )
-            assert!(r >= ratio, 7)
+        // need a solution for un-supported oracle tokens
+        let (ratio, condition) = determineCollateralRatio(
+            tokenRequested, 
+            tokenAmount,
+            tokenOracle,
+            collateralToken, 
+            collateralAmount, 
+            collateralOracle,
+            minRatio
+        )
+
+        // assert collateral is met
+        if (liquid) {
+            assert!(condition == true, 7)
         }
 
+        // delegate the loan token and amount
         market.delegate(caller, tokenAmount)
 
         let (encodeImmutableFields, encodeMutableFields) = Loan.encodeFields!(
@@ -222,7 +262,7 @@ Contract LoanFactory (
             true,
             selfAddress!(),
             liquid,
-            false,
+            condition,
             ratio,
             nullContractAddress!(),
             tokenAmount,
@@ -242,14 +282,31 @@ Contract LoanFactory (
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = true)
-    pub fn accept(contractId: ByteVec) -> () {
+    pub fn accept(contractId: ByteVec, tokenOracle: Bool, collateralOracle: Bool) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
 
-        let (token, amount) = loan.getTokenRequested()
+        let (token, tokenAmount) = loan.getTokenRequested()
+        let (collateral, collateralAmount) = loan.getTokenCollateral()
 
-        loan.acceptLoan{caller -> token: amount}(caller)
+        let (ratio, condition) = determineCollateralRatio(
+            token, 
+            tokenAmount,
+            tokenOracle,
+            collateral, 
+            collateralAmount, 
+            collateralOracle,
+            150
+        )
+
+        // loan should be in good standing to be accepted
+
+        if (loan.canLoanLiquidate() == true) {
+            assert!(condition == true, 8)
+        }
+
+        loan.acceptLoan{caller -> token: tokenAmount}(caller, ratio)
 
         // emit event
         emit AcceptedLoan(contractId, caller)
@@ -276,7 +333,7 @@ Contract LoanFactory (
         let (token, amount) = loan.getTokenRequested()
         let totalAmount = loan.getInterest()
 
-        loan.payLoan{caller -> token: totalAmount}(caller)
+        loan.payLoan{caller -> token: totalAmount, ALPH: dustAmount!() * 2}(caller)
 
         // emit event
         emit LoanWithdraw(contractId, false, caller)
@@ -299,23 +356,29 @@ Contract LoanFactory (
 
     // check liquidation
     @using(checkExternalCaller = false, updateFields = false)
-    pub fn liquidation(contractId: ByteVec) -> () {
+    pub fn liquidation(contractId: ByteVec, tokenOracle: Bool, collateralOracle: Bool) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
 
-        let (token, amount) = loan.getTokenRequested()
+        let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
 
-        // get liquidation threshold from loan (could be a cool feature)
+        let (ratio, condition) = determineCollateralRatio(
+            token, 
+            tokenAmount,
+            tokenOracle,
+            collateral, 
+            collateralAmount, 
+            collateralOracle,
+            150
+        )
 
-        let (ratio, liquidate) = determineCollateralRatio(token, amount, collateral, collateralAmount, 150)
-
-        assert!(liquidate == true, 8)
+        assert!(condition == true, 8)
 
         loan.activateLiquidation(ratio)
 
-        emit LoanLiquidation(contractId, token, amount)
+        emit LoanLiquidation(contractId, token, tokenAmount)
     }
 
     // auction functions
@@ -349,6 +412,27 @@ Contract LoanFactory (
     }
 
     // add collateral function
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true)
+    pub fn addCollateral(contractId: ByteVec, amount: U256, tokenOracle: Bool, collateralOracle: Bool) -> () {
+        let loan = Loan(contractId)
+
+        let caller = callerAddress!()
+
+        let (token, tokenAmount) = loan.getTokenRequested()
+        let (collateral, collateralAmount) = loan.getTokenCollateral()
+
+        let (ratio, _) = determineCollateralRatio(
+            token, 
+            tokenAmount,
+            tokenOracle,
+            collateral, 
+            collateralAmount + amount, 
+            collateralOracle,
+            0
+        )
+
+        loan.addCollateral{caller -> token: amount}(caller, amount, ratio)
+    }
 
     // loanee market functions - editMinInt, editMaxTime, canLiquidate, add, withdraw, destroy 
     // --------------------------------------------------------------------------------------
@@ -512,14 +596,44 @@ Contract LoanFactory (
 
         migrateWithFields!(newCode, immFields, mutFields)
     } 
+
+    // send upgrade to contract specified
+    pub fn upgradeContract(contract: ByteVec, newCode: ByteVec, imm: ByteVec, mutt: ByteVec, fields: Bool, isLoan: Bool) -> () {
+        let caller = callerAddress!()
+
+        checkCaller!(caller == admin, LoanCodes.NotAdmin)
+
+        if (isLoan) {
+            let loan = Loan(contract)
+
+            if (fields) {
+                loan.updateLoanFields(newCode, imm, mutt)
+            }
+            else {
+                loan.updateLoanCode(newCode)
+            }
+        }
+        else {
+            let market = LoanMarket(contract)
+
+            if (fields) {
+                market.updateMarketFields(newCode, imm, mutt)
+            }
+            else {
+                market.updateMarketCode(newCode)
+            }
+        }
+    }
 }
 
 TxScript CreateLoan (
     loanFactory: LoanFactory,
     tokenRequested: ByteVec,
     tokenAmount: U256,
+    tokenOracle: Bool,
     collateralToken: ByteVec,
     collateralAmount: U256,
+    collateralOracle: Bool,
     interest: U256,
     duration: U256,
     canLiquidate: Bool
@@ -527,8 +641,10 @@ TxScript CreateLoan (
     loanFactory.createLoan{callerAddress!() -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
         tokenRequested,
         tokenAmount,
+        tokenOracle,
         collateralToken,
         collateralAmount,
+        collateralOracle,
         interest,
         duration,
         canLiquidate
@@ -538,9 +654,11 @@ TxScript CreateLoan (
 TxScript AcceptMarket (
     loanFactory: LoanFactory,
     tokenRequested: ByteVec, 
-    tokenAmount: U256, 
+    tokenAmount: U256,
+    tokenOracle: Bool, 
     collateralToken: ByteVec, 
     collateralAmount: U256, 
+    collateralOracle: Bool,
     interest: U256, 
     duration: U256,
     loaneeMarket: ByteVec
@@ -548,8 +666,10 @@ TxScript AcceptMarket (
     loanFactory.acceptMarket{callerAddress!() -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
         tokenRequested,
         tokenAmount,
+        tokenOracle,
         collateralToken,
         collateralAmount,
+        collateralOracle,
         interest, 
         duration,
         loaneeMarket
@@ -558,11 +678,13 @@ TxScript AcceptMarket (
 
 TxScript AcceptLoan (
     loanFactory: LoanFactory,
-    contract: ByteVec
+    contract: ByteVec,
+    tokenOracle: Bool,
+    collateralOracle: Bool
 ) {
     let (token, amount) = loanFactory.getRequiredTokens(contract, false)
 
-    loanFactory.accept{callerAddress!() -> token: amount}(contract)
+    loanFactory.accept{callerAddress!() -> token: amount}(contract, tokenOracle, collateralOracle)
 }
 
 TxScript CancelLoan (
@@ -592,9 +714,11 @@ TxScript ForfeitLoan (
 
 TxScript LiquidationLoan (
     loanFactory: LoanFactory,
-    contract: ByteVec
+    contract: ByteVec,
+    tokenOracle: Bool,
+    collateralOracle: Bool
 ) {
-    loanFactory.liquidation(contract)
+    loanFactory.liquidation(contract, tokenOracle, collateralOracle)
 }
 
 TxScript BidLoan (
@@ -727,6 +851,20 @@ TxScript UpdateLoanFactoryFields (
     mutFields: ByteVec
 ) {
     loanFactory.updateLoanFactoryFields(newCode, immFields, mutFields)
+}
+
+// upgrade call to inidividual contracts
+
+TxScript UpgradeContract (
+    loanFactory: LoanFactory,
+    contract: ByteVec,
+    newCode: ByteVec,
+    imm: ByteVec,
+    mutt: ByteVec,
+    fields: Bool,
+    isLoan: Bool
+) {
+    loanFactory.upgradeContract(contract, newCode, imm, mutt, fields, isLoan)
 }
 
 TxScript DestroyLoanFactory (
