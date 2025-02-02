@@ -1,0 +1,32 @@
+[
+  {
+    "name": "PairInfo",
+    "fieldNames": [
+      "pair",
+      "decimals"
+    ],
+    "fieldTypes": [
+      "ByteVec",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      true
+    ]
+  },
+  {
+    "name": "DIAOracleValue",
+    "fieldNames": [
+      "value",
+      "timestamp"
+    ],
+    "fieldTypes": [
+      "U256",
+      "U256"
+    ],
+    "isMutable": [
+      true,
+      true
+    ]
+  }
+]

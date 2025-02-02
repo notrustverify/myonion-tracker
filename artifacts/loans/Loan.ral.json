@@ -1,0 +1,309 @@
+{
+  "version": "v3.11.1",
+  "name": "Loan",
+  "bytecode": "1211101e402e404a408240a040ca40e440fe4137417041a041d6425b42dc42f1430a010000000204d3b59689b5ce01ce0202010000000103d39da1c49fa00602010000000204d333ef9886ce03a0010201000000010fd343275b7da003031c0d7b56a002ce062a330c7b030201000002011ad392ef9a72ce040c334c1356a0022b1700ce02ce042c16002c13c10758f07a301367102c2d1701ce0216012a024a02ce020200000102010fce050c334c091600ce052c1367102d17011601024a020c02010301010016d3fcbd3992b4ce07450c7ba003041c107b1600ce00ce01ce02aa03a10356a1021600a10001020101000dd380fcd2c8b4ce07450c7ba003041c0d7b1600b001020000000dd3658f8d67b4ce0045117ba003041c0d7bce00b001010103001ed3f395b36cb4ce07450c7ba003031c0e7b000417011601000517021600a000ce01160116022baa1600ce07ce011602aace00b001020001004021d337415551b4ce07450c7ba003031c0f7ba002ce062a5631107bce08041c13067ba00100051700b2ce07ce031600aaa000b001020202011bd3d0bcecf4b4ce07450c7bce08031c13067ba003031c0f7b1600b2ce031601aaa00116012aa101a0010201000101001dd36d21d778b4ce07450c7bce08031c13067ba003031c0f7bce0913409631117b03a10456138036ee802aa107ce02a10601010202014045d39e143d97b4ce07450c7bce08031c13067ba003031c0f7b1601a0063313077b56a007310c7b1600a005460d7ba005ca464c09b2a00513c3038d7ea4c68000a7b2a005ce01a006aa1600a1051601a1061600b213c3038d7ea4c68000a71600b2ce011601aaa007562b13800249f0314c04a00713800249f02aa107a0070201020103004041d3f1331ecab4ce07450c7bce08031c13067ba003031c0f7b56a007330e7ba00600051701a00600051702b2a00013c3038d7ea4c68000a7b2a000ce01a00616012baab2a00513c3038d7ea4c68000a7b2a005ce03a00116022baab2ce0713c3038d7ea4c68000a7b2ce07ce011601aab2ce07ce031602aace00b0010001010008d3bb3c478cb4ce074513097b1600ba01000303000ad310de0d24b4ce074513097b160016011602bb",
+  "codeHash": "83905f562f0aa3793c9eefbcb44886fa76a4b3cb2e2b3a48a71b04c5d2cbe8da",
+  "fieldsSig": {
+    "names": [
+      "creator",
+      "loanee",
+      "tokenRequested",
+      "tokenAmount",
+      "collateralToken",
+      "collateralAmount",
+      "interest",
+      "rate",
+      "duration",
+      "startTime",
+      "active",
+      "parentContract",
+      "canLiquidate",
+      "liquidation",
+      "ratio",
+      "highestBidder",
+      "highestBid",
+      "timeToEnd"
+    ],
+    "types": [
+      "Address",
+      "Address",
+      "ByteVec",
+      "U256",
+      "ByteVec",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "Bool",
+      "Address",
+      "Bool",
+      "Bool",
+      "U256",
+      "Address",
+      "U256",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      false,
+      false,
+      false,
+      true,
+      true,
+      false,
+      false,
+      true,
+      false,
+      true,
+      true,
+      true
+    ]
+  },
+  "eventsSig": [],
+  "functions": [
+    {
+      "name": "getTokenRequested",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "getHighestBid",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getTokenCollateral",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "isLoanComplete",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "Bool"
+      ]
+    },
+    {
+      "name": "getInterest",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getCommission",
+      "paramNames": [
+        "total"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "acceptLoan",
+      "paramNames": [
+        "acceptor"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "cancelLoan",
+      "paramNames": [
+        "caller"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "forceCancel",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": []
+    },
+    {
+      "name": "payLoan",
+      "paramNames": [
+        "caller"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "acceptForfeit",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": []
+    },
+    {
+      "name": "addCollateral",
+      "paramNames": [
+        "caller",
+        "collateralAdded"
+      ],
+      "paramTypes": [
+        "Address",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "activateLiquidation",
+      "paramNames": [
+        "collateralLevel"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "bid",
+      "paramNames": [
+        "caller",
+        "bidAmount"
+      ],
+      "paramTypes": [
+        "Address",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "redeem",
+      "paramNames": [
+        "caller"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "updateLoanCode",
+      "paramNames": [
+        "newCode"
+      ],
+      "paramTypes": [
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "updateLoanFields",
+      "paramNames": [
+        "newCode",
+        "immFields",
+        "mutFields"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "ByteVec",
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": [
+    {
+      "name": "Loan",
+      "fields": [
+        {
+          "name": "AuctionEnded",
+          "value": {
+            "type": "U256",
+            "value": "0"
+          }
+        },
+        {
+          "name": "InvalidCaller",
+          "value": {
+            "type": "U256",
+            "value": "1"
+          }
+        },
+        {
+          "name": "AuctionActive",
+          "value": {
+            "type": "U256",
+            "value": "2"
+          }
+        }
+      ]
+    }
+  ]
+}

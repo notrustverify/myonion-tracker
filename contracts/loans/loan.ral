@@ -1,0 +1,308 @@
+Contract Loan (
+    creator: Address,
+    mut loanee: Address,
+    tokenRequested: ByteVec,
+    tokenAmount: U256,
+    // collateral
+    collateralToken: ByteVec,
+    mut collateralAmount: U256,
+    interest: U256,
+    rate: U256,                 // 200 would be 2%
+    duration: U256,
+    mut startTime: U256,
+    // active
+    mut active: Bool,
+    parentContract: Address,
+    // liquidation
+    canLiquidate: Bool,
+    mut liquidation: Bool,
+    ratio: U256,
+    // auction
+    mut highestBidder: Address,
+    mut highestBid: U256,
+    mut timeToEnd: U256
+) {
+    enum Loan {
+        AuctionEnded = 0
+        InvalidCaller = 1
+        AuctionActive = 2
+    }
+
+    // helper functions
+    pub fn getTokenRequested() -> (ByteVec, U256) {
+        return tokenRequested, tokenAmount
+    }
+
+    pub fn getHighestBid() -> (U256) {
+        return highestBid
+    }
+
+    pub fn getTokenCollateral() -> (ByteVec, U256) {
+        return collateralToken, collateralAmount
+    }
+
+    // update ratio function needs to be added
+
+    pub fn isLoanComplete() -> (Bool) {
+        assert!(active == true, 1)
+
+        // confirm the loan has completed it's time
+        assert!(blockTimeStamp!() > startTime + duration, 0)
+
+        return true
+    }
+
+    pub fn getInterest() -> (U256) {
+        if (interest > 0) {
+            // Calculate elapsed time
+            let elapsedTime = blockTimeStamp!() - startTime
+    
+            // Avoid integer truncation: multiply first, then divide
+            let gain = (tokenAmount * interest * elapsedTime) / (31556926000 * 10000)
+    
+            // Return the original amount plus interest
+            return tokenAmount + gain
+        } else {
+            return tokenAmount
+        }
+    }
+
+    fn getCommission(total: U256) -> (U256) {
+        if (rate > 0) {
+            let comission = (total * rate) / 10000
+            // return the original amount plus interest
+            return comission 
+        }
+        else {
+            return 0
+        }
+    }
+
+    // contract functions
+    @using(checkExternalCaller = true, updateFields = true, preapprovedAssets = true)
+    pub fn acceptLoan(acceptor: Address) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        assert!(active == false, 4)
+
+        // transfer tokens to person requesting them
+        transferToken!(acceptor, creator, tokenRequested, tokenAmount)
+
+        // assignment
+        active = true
+        startTime = blockTimeStamp!()
+        loanee = acceptor
+    }
+
+    @using(checkExternalCaller = true, assetsInContract = true)
+    pub fn cancelLoan(caller: Address) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm loan is not running
+        assert!(active == false, 1)
+
+        destroySelf!(caller)
+    }
+
+    @using(checkExternalCaller = false, assetsInContract = true)
+    pub fn forceCancel() -> () {
+        checkCaller!(callerAddress!() == creator, 5)
+
+        assert!(active == false, 1)
+
+        destroySelf!(creator)
+    }
+
+    @using(checkExternalCaller = true, preapprovedAssets = true, assetsInContract = true)
+    pub fn payLoan(caller: Address) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // payback the loan
+        assert!(active == true, 2)
+
+        // transfer back assets plus the interest
+        let totalPayment = getInterest()
+
+        let totalCommission = getCommission(totalPayment)
+
+        // user pays back two seperate accounts (marketplace fees, and the person who loaned them the assets)
+        transferToken!(caller, loanee, tokenRequested, totalPayment - totalCommission)
+
+        transferToken!(caller, parentContract, tokenRequested, totalCommission)
+
+        // destroy the contract
+        destroySelf!(creator)
+    }
+
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true)
+    pub fn acceptForfeit() -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        assert!(active == true, 3)
+        assert!(startTime + duration < blockTimeStamp!(), 4)
+
+        // is the loan a liquidation loan?
+        assert!(canLiquidate == false, 6)
+
+        let totalCommission = getCommission(collateralAmount)
+        transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
+
+        // claim collateral
+        destroySelf!(loanee)
+    }
+
+    // liquidation functions
+    // ---------------------------------------------------------
+
+    // returns the amount of collateral after added
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    pub fn addCollateral(caller: Address, collateralAdded: U256) -> (U256) {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm the contract is a liquid contracts
+        assert!(canLiquidate == true, 6)
+
+        // confirm it's active
+        assert!(active == true, 3)
+
+        // transfer additional collateral to offset liquidation
+        transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
+        collateralAmount = collateralAmount + collateralAdded
+
+        return collateralAmount
+    }
+
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = false, updateFields = true)
+    pub fn activateLiquidation(collateralLevel: U256) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm the contract is a liquid contracts
+        assert!(canLiquidate == true, 6)
+
+        // confirm it's active
+        assert!(active == true, 3)
+
+        // ratio is under 150
+        assert!(ratio < 150, 5)
+
+        // liquidation to true
+        liquidation = true
+        timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to liquidate -> assets are just sent to loanee
+
+        // set the highest bid
+        highestBid = tokenAmount
+    }
+
+    // should return timeEnd + token + newHighestBid + newHighestBidder
+    @using(checkExternalCaller = true, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn bid(caller: Address, bidAmount: U256) -> (U256) {    
+        // confirm this loan is called from the factory
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm the contract is a liquid contracts
+        assert!(canLiquidate == true, 6)
+
+        // confirm it's active
+        assert!(active == true, 3)
+
+        // newBid must be greater than current bid
+        assert!(bidAmount > highestBid, 7)
+
+        // check time on auction
+        assert!(blockTimeStamp!() < timeToEnd, Loan.AuctionEnded)
+
+        // assert topBidder cannot bid up
+        assert!(caller != highestBidder, Loan.InvalidCaller)
+
+        // return previous top bid if not origin
+        if (highestBidder != nullContractAddress!()) {
+            transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), highestBidder, tokenRequested, highestBid)
+        }
+
+        highestBidder = caller
+        highestBid = bidAmount
+
+        // Then transfer tokens
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+        transferToken!(caller, selfAddress!(), tokenRequested, bidAmount)
+
+        // anti-sniping
+        if ((timeToEnd - blockTimeStamp!()) < 150000) {
+            timeToEnd = timeToEnd + 150000 // 5 minutes in milliseconds
+        }
+
+        return timeToEnd
+    }
+
+    // redeem the auction
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true)
+    pub fn redeem(caller: Address) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm the contract is a liquid contracts
+        assert!(canLiquidate == true, 6)
+
+        // confirm it's active
+        assert!(active == true, 3)
+
+        // Ensure the auction has ended
+        assert!(blockTimeStamp!() > timeToEnd, Loan.AuctionActive)
+
+        // send the highestBid - fee to loanee
+        let factoryFeeLoanee = getCommission(highestBid)
+        let factoryFeeBidder = getCommission(highestBid)
+
+        // transfer requested token back
+        transferToken!(selfAddress!(), loanee, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), loanee, tokenRequested, highestBid - factoryFeeLoanee)
+
+        // transfer collateral to auction winner
+        transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), highestBidder, collateralToken, collateralAmount - factoryFeeBidder)
+
+        // factory fees
+        transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), parentContract, tokenRequested, factoryFeeLoanee)
+        transferToken!(selfAddress!(), parentContract, collateralToken, factoryFeeBidder)
+
+        destroySelf!(creator)
+    }
+
+    // upgrade functions
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateLoanCode(newCode: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateLoanFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    } 
+}
+
+TxScript ForceCancel (
+    loan: Loan
+) {
+    loan.forceCancel()
+}
+
+TxScript UpdateLoanCode (
+    loan: Loan,
+    newCode: ByteVec
+) {
+    loan.updateLoanCode(newCode)
+}
+
+TxScript UpdateLoanFields (
+    loan: Loan,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    loan.updateLoanFields(newCode, immFields, mutFields)
+}
