@@ -73,6 +73,10 @@ export namespace AlpacaFiOracleTypes {
       params: CallContractParams<{ newCode: HexString }>;
       result: CallContractResult<null>;
     };
+    updateBotAddress: {
+      params: CallContractParams<{ newBot: Address }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -117,6 +121,10 @@ export namespace AlpacaFiOracleTypes {
     };
     updateOracleCode: {
       params: SignExecuteContractMethodParams<{ newCode: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateBotAddress: {
+      params: SignExecuteContractMethodParams<{ newBot: Address }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -195,6 +203,20 @@ class Factory extends ContractFactory<
         getContractByCodeHash
       );
     },
+    updateBotAddress: async (
+      params: TestContractParams<
+        AlpacaFiOracleTypes.Fields,
+        { newBot: Address },
+        AlpacaFiOracleTypes.Maps
+      >
+    ): Promise<TestContractResult<null, AlpacaFiOracleTypes.Maps>> => {
+      return testMethod(
+        this,
+        "updateBotAddress",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(
@@ -211,8 +233,8 @@ class Factory extends ContractFactory<
 export const AlpacaFiOracle = new Factory(
   Contract.fromJson(
     AlpacaFiOracleContractJson,
-    "=10-2+9a=2+d=1-1=1-3+117=1-3+12b=155-1+9=82+7a7e0214696e73657274206174206d617020706174683a2000=30+1=1-1=60+7a7e021472656d6f7665206174206d617020706174683a2000=168",
-    "db4f7e3277d111d23244fbab7d79bcbd356486d6373293d6fd77acd00d533953",
+    "=10-2+9a=2+d=1-1=1-3+117=1-3+12b=2+4=1-1=155-1+9=82+7a7e0214696e73657274206174206d617020706174683a2000=30+1=1-1=60+7a7e021472656d6f7665206174206d617020706174683a2000=210",
+    "300f6b4f855687a40e8165f4974cc1e7ee4d5db1a87eb269a0e57f2cb6b23d66",
     AllStructs
   )
 );
@@ -292,6 +314,17 @@ export class AlpacaFiOracleInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    updateBotAddress: async (
+      params: AlpacaFiOracleTypes.CallMethodParams<"updateBotAddress">
+    ): Promise<AlpacaFiOracleTypes.CallMethodResult<"updateBotAddress">> => {
+      return callMethod(
+        AlpacaFiOracle,
+        this,
+        "updateBotAddress",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -324,6 +357,18 @@ export class AlpacaFiOracleInstance extends ContractInstance {
         AlpacaFiOracle,
         this,
         "updateOracleCode",
+        params
+      );
+    },
+    updateBotAddress: async (
+      params: AlpacaFiOracleTypes.SignExecuteMethodParams<"updateBotAddress">
+    ): Promise<
+      AlpacaFiOracleTypes.SignExecuteMethodResult<"updateBotAddress">
+    > => {
+      return signExecuteMethod(
+        AlpacaFiOracle,
+        this,
+        "updateBotAddress",
         params
       );
     },

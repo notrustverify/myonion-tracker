@@ -32,6 +32,7 @@ import { default as PayLoanScriptJson } from "../loans/PayLoan.ral.json";
 import { default as RedeemLoanScriptJson } from "../loans/RedeemLoan.ral.json";
 import { default as RemovePairScriptJson } from "../oracle/RemovePair.ral.json";
 import { default as TokenMappingScriptJson } from "../loans/TokenMapping.ral.json";
+import { default as UpdateBotAddressScriptJson } from "../oracle/UpdateBotAddress.ral.json";
 import { default as UpdateLoanCodeScriptJson } from "../loans/UpdateLoanCode.ral.json";
 import { default as UpdateLoanFactoryCodeScriptJson } from "../loans/UpdateLoanFactoryCode.ral.json";
 import { default as UpdateLoanFactoryFieldsScriptJson } from "../loans/UpdateLoanFactoryFields.ral.json";
@@ -230,6 +231,14 @@ export const TokenMapping = new ExecutableScript<{
   decimals: bigint;
 }>(
   Script.fromJson(TokenMappingScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const UpdateBotAddress = new ExecutableScript<{
+  oracle: HexString;
+  newBot: Address;
+}>(
+  Script.fromJson(UpdateBotAddressScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

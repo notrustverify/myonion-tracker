@@ -7,7 +7,7 @@ struct OracleData {
 // notes: all prices should be 8 decimals to avoid conflicts with alephium oracle
 Contract AlpacaFiOracle (
     admin: Address,
-    updateBot: Address
+    mut updateBot: Address
 ) {
     mapping [ByteVec, OracleData] prices
 
@@ -55,6 +55,16 @@ Contract AlpacaFiOracle (
 
         migrate!(newCode)
     }
+
+    // update code
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateBotAddress (
+        newBot: Address
+    ) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        updateBot = newBot
+    }
 }
 
 TxScript InsertPair (
@@ -87,4 +97,11 @@ TxScript UpdateOracleCode (
     newCode: ByteVec
 ) {
     oracle.updateOracleCode(newCode)
+}
+
+TxScript UpdateBotAddress (
+    oracle: AlpacaFiOracle,
+    newBot: Address
+) {
+    oracle.updateBotAddress(newBot)
 }
