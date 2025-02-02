@@ -9,7 +9,7 @@ const deployLoan: DeployFunction<Settings> = async (
 ): Promise<void> => {
   const result = await deployer.deployContract(LoanMarket, {
     initialFields: {
-        creator: '',
+        creator: deployer.account.address,
         token: '',
         tokenAmount: 0n,
         minTokenAmount: 0n,
@@ -18,7 +18,7 @@ const deployLoan: DeployFunction<Settings> = async (
         liquidation: false,
         collateralRatioRequired: false,
         ratioRequired: 0n,
-        parentContract: ''
+        parentContract: deployer.account.address,
     }
   })
 
