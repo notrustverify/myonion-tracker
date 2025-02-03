@@ -156,10 +156,12 @@ Contract Loan (
         assert!(active == true, 3)
         assert!(startTime + duration < blockTimeStamp!(), 4)
 
-        // is the loan a liquidation loan, if not then if it's not paid back the loaner can take all the collateral
-        assert!(canLiquidate == false, 6)
+        // if the loan duration has passed any loan should be forfeit bound
+        // assert!(canLiquidate == false, 6) -> this code makes no sense
 
         let totalCommission = getCommission(collateralAmount)
+
+        transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
         transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
 
         // claim collateral
@@ -206,10 +208,10 @@ Contract Loan (
 
         // liquidation to true
         liquidation = true
-        timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to liquidate -> assets are just sent to loanee
+        timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
 
         //! I guess here we could add like a percentage decline as the auction proceeds
-        highestBid = tokenAmount 
+        highestBid = tokenAmount
     }
 
     // should return timeEnd + token + newHighestBid + newHighestBidder
