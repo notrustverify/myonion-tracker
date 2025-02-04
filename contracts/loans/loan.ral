@@ -102,7 +102,7 @@ Contract Loan (
         loanee = acceptor
 
         // the current collateral ratio
-        ratio = ratio
+        ratio = newRatio
     }
 
     @using(checkExternalCaller = true, assetsInContract = true)
@@ -210,8 +210,8 @@ Contract Loan (
         liquidation = true
         timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
 
-        //! I guess here we could add like a percentage decline as the auction proceeds
-        highestBid = tokenAmount
+        //! need to edit this on the factory side too
+        highestBid = getInterest() // Start bid at the current owed amount
     }
 
     // should return timeEnd + token + newHighestBid + newHighestBidder
@@ -250,7 +250,7 @@ Contract Loan (
 
         // anti-sniping
         if ((timeToEnd - blockTimeStamp!()) < 150000) {
-            timeToEnd = timeToEnd + 150000 // 5 minutes in milliseconds
+            timeToEnd = timeToEnd + 300000 // Add 5 minutes (300,000 ms)
         }
 
         return timeToEnd
@@ -272,7 +272,9 @@ Contract Loan (
 
         // send the highestBid - fee to loanee
         let factoryFeeLoanee = getCommission(highestBid)
-        let factoryFeeBidder = getCommission(highestBid)
+
+        //! edited this per deepseek ai
+        let factoryFeeBidder = getCommission(collateralAmount)
 
         // transfer requested token back
         transferToken!(selfAddress!(), loanee, ALPH, dustAmount!())
