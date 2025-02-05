@@ -3,7 +3,7 @@
 import { Navbar } from '../../components/navbar'
 import { Footer } from '../../components/footer'
 import LoanCard from '../../components/LoanCard'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
 
@@ -18,7 +18,7 @@ export default function LoanPage() {
     total: 0
   })
   
-  const fetchLoans = async (page = 1) => {
+  const fetchLoans = useCallback(async (page = 1) => {
     setLoading(true)
     try {
       const limit = 12
@@ -65,11 +65,11 @@ export default function LoanPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeFilter])
 
   useEffect(() => {
     fetchLoans(1)
-  }, [activeFilter])
+  }, [fetchLoans])
 
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from '../../components/navbar';
 import { Footer } from '../../components/footer';
 import { motion } from 'framer-motion';
@@ -18,7 +18,7 @@ export default function Dashboard() {
   const wallet = useWallet();
   const { balance } = useBalance();
 
-  const fetchUserLoans = async () => {
+  const fetchUserLoans = useCallback(async () => {
     if (!wallet?.account?.address) return;
     
     setLoading(true);
@@ -59,11 +59,11 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [wallet?.account?.address, activeTab]);
 
   useEffect(() => {
     fetchUserLoans();
-  }, [wallet?.account?.address, activeTab]);
+  }, [fetchUserLoans]);
 
   // Calculer les statistiques basées sur les prêts de l'utilisateur
   const stats = [
