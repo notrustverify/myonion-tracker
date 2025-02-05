@@ -13,29 +13,22 @@ export const CreateLoanService = async (
   ) => {
     return await CreateLoan.execute(signerProvider, {
       initialFields: {
-
-        loanFactory: loanFactory,
-        tokenRequested: tokenRequested,
-        tokenAmount: tokenAmount,
-        tokenOracle: true,
-        collateralToken: collateralToken,
-        collateralAmount: collateralAmount,
-        collateralOracle: true,
-        interest: interest,
-        duration: duration,
-        canLiquidate: false,
+          loanFactory: loanFactory,
+          tokenRequested: tokenRequested,
+          tokenAmount: tokenAmount,
+          tokenOracle: true,
+          collateralToken: collateralToken,
+          collateralAmount: collateralAmount,  
+          collateralOracle: true,
+          interest: interest,
+          duration: duration,
+          canLiquidate: false
       },
-      attoAlphAmount: MINIMAL_CONTRACT_DEPOSIT + DUST_AMOUNT * 2n,
-
-
-      tokens: [
-        {
-          tokenId: collateralToken,
-          amount: collateralAmount
-        }
-      ]
+      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+      tokens: [{id: collateralToken, amount: collateralAmount}]
     })
 }
+
 
 export const CancelLoanService = async (
     signerProvider,
