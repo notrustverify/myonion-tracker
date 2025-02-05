@@ -64,7 +64,9 @@ export function Navbar() {
       <div className="bg-gradient-to-b from-gray-900 to-gray-800/95 backdrop-blur-sm border-b border-gray-700/50 relative z-[100]">
         <header className="container mx-auto flex items-center justify-between px-6 py-4 text-white">
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-xl font-bold">ALPHpaca</span>
+            <span className="text-xl font-bold bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent hover:opacity-80 transition-opacity">
+              AlpacaFi
+            </span>
           </Link>
           <nav className="z-50 hidden space-x-6 md:flex">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
@@ -72,21 +74,16 @@ export function Navbar() {
             </Link>
           </nav>
           <div className="z-50 flex items-center space-x-4">
-            <AlephiumConnectButton.Custom>
-              {({ show }) => (
-                <button
-                  onClick={show}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 via-green-500/20 to-green-400/10 
-                    hover:from-green-500/20 hover:via-green-500/30 hover:to-green-400/20 
-                    border border-green-500/20 hover:border-green-500/30 
-                    transition-all duration-300 ease-out
-                    text-green-400 hover:text-green-300"
-                >
-                  <PiWalletBold className="w-5 h-5" />
-                  <span>Connect</span>
-                </button>
-              )}
-            </AlephiumConnectButton.Custom>
+            <button
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 via-green-500/20 to-green-400/10 
+                hover:from-green-500/20 hover:via-green-500/30 hover:to-green-400/20 
+                border border-green-500/20 hover:border-green-500/30 
+                transition-all duration-300 ease-out
+                text-green-400 hover:text-green-300"
+            >
+              <PiWalletBold className="w-5 h-5" />
+              <span>Connect</span>
+            </button>
           </div>
         </header>
       </div>
