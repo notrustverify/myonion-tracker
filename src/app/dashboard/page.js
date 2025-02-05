@@ -11,9 +11,10 @@ import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
 import axios from 'axios';
 import { getTokensList } from '../../lib/configs';
+import DashboardLoanCard from '../../components/dashboard/DashboardLoanCard';
 
 export default function Dashboard() {
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('all');
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -39,28 +40,25 @@ export default function Dashboard() {
       const createdData = createdResponse.data;
       const borrowedData = borrowedResponse.data;
       
-      const transformLoan = loan => {
-        const tokenDecimals = getTokenDecimals(loan.tokenRequested);
-        const collateralDecimals = getTokenDecimals(loan.collateralToken);
-        
-        return {
-          value: Number(loan.tokenAmount) / Math.pow(10, tokenDecimals),
-          currency: loan.tokenRequested,
-          collateralAmount: Number(loan.collateralAmount) / Math.pow(10, collateralDecimals),
-          collateralCurrency: loan.collateralToken,
-          term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
-          interest: Number(loan.interest),
-          lender: loan.creator,
-          borrower: loan.loanee,
-          status: loan.active ? 'active' : 'pending',
-          id: loan.id,
-          type: loan.creator === wallet.account.address ? 'created' : 'borrowed'
-        };
-      };
+      const transformLoan = loan => ({
+        tokenAmount: loan.tokenAmount,
+        tokenRequested: loan.tokenRequested,
+        collateralAmount: loan.collateralAmount,
+        collateralToken: loan.collateralToken,
+        duration: loan.duration,
+        interest: Number(loan.interest),
+        creator: loan.creator,
+        loanee: loan.loanee,
+        active: loan.active,
+        status: loan.active ? 'active' : 'pending',
+        id: loan.id,
+        type: loan.creator === wallet.account.address ? 'created' : 'borrowed',
+        liquidation: loan.liquidation
+      });
 
       const allLoans = [
-        ...createdData.map(loan => transformLoan({ ...loan, type: 'created' })),
-        ...borrowedData.map(loan => transformLoan({ ...loan, type: 'borrowed' }))
+        ...createdData.map(loan => transformLoan(loan)),
+        ...borrowedData.map(loan => transformLoan(loan))
       ];
 
       setLoans(allLoans);
@@ -78,14 +76,20 @@ export default function Dashboard() {
   const stats = [
     {
       title: "Total Value",
-      value: `${loans.reduce((acc, loan) => acc + loan.value, 0).toLocaleString()} ALPH`,
+      value: `${loans.reduce((acc, loan) => {
+        const tokenDecimals = getTokenDecimals(loan.tokenRequested);
+        return acc + (Number(loan.tokenAmount) / Math.pow(10, tokenDecimals));
+      }, 0).toLocaleString()} ALPH`,
       change: "+12.5%",
       isPositive: true,
       icon: <PiHandCoins className="w-6 h-6" />
     },
     {
       title: "Collateral Locked",
-      value: `${loans.reduce((acc, loan) => acc + loan.collateralAmount, 0).toLocaleString()} ALPH`,
+      value: `${loans.reduce((acc, loan) => {
+        const collateralDecimals = getTokenDecimals(loan.collateralToken);
+        return acc + (Number(loan.collateralAmount) / Math.pow(10, collateralDecimals));
+      }, 0).toLocaleString()} ALPH`,
       change: "+8.2%",
       isPositive: true,
       icon: <FaChartLine className="w-6 h-6" />
@@ -197,11 +201,11 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
-          className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50 overflow-hidden"
+          className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700/50"
         >
           <div className="p-6 border-b border-gray-700/50">
             <div className="flex space-x-4">
-              {['active', 'pending', 'completed'].map((tab) => (
+              {['all', 'active', 'pending', 'completed'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -225,7 +229,7 @@ export default function Dashboard() {
             ) : loans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {loans.map((loan) => (
-                  <LoanCard key={loan.id} {...loan} />
+                  <DashboardLoanCard key={loan.id} {...loan} />
                 ))}
               </div>
             ) : (
