@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { CreateLoan } from "../artifacts/ts";
+import { Loan, LoanFactory, UpdateLoanCode, UpdateLoanFactoryCode } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -19,21 +19,12 @@ const deployScript: DeployFunction<Settings> = async (
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
     
-    await CreateLoan.execute(signer, {
+    await UpdateLoanFactoryCode.execute(signer, {
       initialFields: {
           loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
-          tokenRequested: ALPH_TOKEN_ID,
-          tokenAmount: ONE_ALPH * 1n,
-          tokenOracle: true,
-          collateralToken: ALPH_TOKEN_ID,
-          collateralAmount: ONE_ALPH * 3n,  
-          collateralOracle: true,
-          interest: 200n,
-          duration: 86400000n,
-          canLiquidate: false
+          newCode: LoanFactory.contract.bytecode
       },
-      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
-      tokens: [{id: ALPH_TOKEN_ID, amount: ONE_ALPH * 3n}]
+      attoAlphAmount: DUST_AMOUNT
     })
   }
   

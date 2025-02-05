@@ -56,40 +56,42 @@ Contract LoanFactory (
         threshhold: U256
     ) -> (U256, Bool) {
         if (tokenPairs.contains!(tokenRequested) == true && tokenPairs.contains!(collateralToken)) {
-            let mut loan_value = 0
-            let mut collateral_value = 0
+            let mut loanValue = 0
+            let mut collateralValue = 0
 
             // fetch token price
             if (tokenOracle) {
-                loan_value = oracle.getValue(tokenPairs[tokenRequested].pair).value
+                loanValue = oracle.getValue(tokenPairs[tokenRequested].pair).value
             }
             else {
-                loan_value = AlpacaFiOracle(alpaca).getValue(tokenPairs[tokenRequested].pair).value
+                loanValue = AlpacaFiOracle(alpaca).getValue(tokenPairs[tokenRequested].pair).value
             }
 
             // fetch collateral price
             if (collateralOracle) {
-                collateral_value = oracle.getValue(tokenPairs[collateralToken].pair).value
+                collateralValue = oracle.getValue(tokenPairs[collateralToken].pair).value
             }
             else {
-                collateral_value = AlpacaFiOracle(alpaca).getValue(tokenPairs[collateralToken].pair).value
+                collateralValue = AlpacaFiOracle(alpaca).getValue(tokenPairs[collateralToken].pair).value
             }
 
-            if (loan_value == 0 || collateral_value == 0) {
+            if (loanValue == 0 || collateralValue == 0) {
                 return 0, false
             }
 
-            let collateral_decimals = tokenPairs[collateralToken].decimals
-            let token_decimals = tokenPairs[tokenRequested].decimals
+            let collateralDecimals = tokenPairs[collateralToken].decimals
+            let tokenDecimals = tokenPairs[tokenRequested].decimals
 
             // Normalize collateral amount to 18 decimals
-            let collateralValueUSD = (collateralAmount * collateral_value * 10 ** (18 - collateral_decimals)) / 10 ** (8)
+            let collateralNormalized = (collateralAmount * (10 |**| 18)) / (10 |**| collateralDecimals)
+            let collateralValueUSD = (collateralNormalized * collateralValue) / (10 |**| 8) // Remove 8 decimals
 
             // Normalize loan amount to 18 decimals
-            let loanValueUSD = (tokenAmount * loan_value * 10 ** (18 - token_decimals)) / 10 ** (8)
+            let loanNormalized = (tokenAmount * (10 |**| 18)) / (10 |**| tokenDecimals)
+            let loanValueUSD = (loanNormalized * loanValue) / (10 |**| 8) // Remove 8 decimals
 
             // Compute collateral-to-loan ratio in basis points (10000 = 100%)
-            let ratio = (collateralValueUSD * 100) / loanValueUSD
+            let ratio = (collateralValueUSD * 10000) / loanValueUSD // Multiply before division to avoid precision loss
 
             if (ratio < threshhold) {
                 return ratio, true
@@ -155,11 +157,11 @@ Contract LoanFactory (
             collateralToken, 
             collateralAmount, 
             collateralOracle,
-            150
+            15000 // 150%
         )
 
         // collateral is over 150 %
-        if (canLiquidate) {
+        if (canLiquidate && condition) {
             assert!(condition == true, 2)
         }
 
@@ -297,7 +299,7 @@ Contract LoanFactory (
             collateral, 
             collateralAmount, 
             collateralOracle,
-            150
+            15000
         )
 
         // loan should be in good standing to be accepted
@@ -371,7 +373,7 @@ Contract LoanFactory (
             collateral, 
             collateralAmount, 
             collateralOracle,
-            150
+            15000
         )
 
         assert!(condition == true, 8)
@@ -431,7 +433,7 @@ Contract LoanFactory (
             0
         )
 
-        loan.addCollateral{caller -> token: amount}(caller, amount, ratio)
+        loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
     }
 
     // loanee market functions - editMinInt, editMaxTime, canLiquidate, add, withdraw, destroy 
@@ -700,7 +702,7 @@ TxScript PayLoan (
 ) {
     let (token, amount) = loanFactory.getRequiredTokens(contract, true)
 
-    loanFactory.pay{callerAddress!() -> token: amount}(contract)
+    loanFactory.pay{callerAddress!() -> token: amount, ALPH: dustAmount!() * 2}(contract)
 }
 
 TxScript ForfeitLoan (
