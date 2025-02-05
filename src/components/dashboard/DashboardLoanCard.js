@@ -1,10 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { getTokensList } from '../lib/configs'
-import LoanModal from './LoanModal'
+import { getTokensList } from '../../lib/configs'
+import DashboardLoanModal from './DashboardLoanModal'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -35,9 +35,9 @@ const truncateAddress = (address) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
-const LoanCard = ({ 
+const DashboardLoanCard = ({ 
   value,
-  currency = 'ALPH',
+  currency,
   collateralAmount,
   collateralCurrency,
   term,
@@ -45,15 +45,13 @@ const LoanCard = ({
   lender,
   borrower,
   status = 'active',
+  type,
   liquidation,
   id
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
 
-  const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
-  const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
-  
   const collateralRatio = ((collateralAmount / value) * 100).toFixed(0)
 
   const getStatusBadge = (status) => {
@@ -95,14 +93,14 @@ const LoanCard = ({
               animate={{ x: isHovered ? 5 : 0 }}
               transition={{ duration: 0.2 }}
             >
-              <span className="text-xs text-gray-400 mb-1">Loan request</span>
+              <span className="text-xs text-gray-400 mb-1">Loan amount</span>
               <div className="flex items-center gap-2">
                 <img 
                   src={getTokenInfo(currency).logoURI}
                   alt={getTokenInfo(currency).symbol}
                   className="w-6 h-6 rounded-full"
                 />
-                <span className="text-2xl font-semibold">{displayValue}</span>
+                <span className="text-2xl font-semibold">{formatNumber(value)}</span>
                 <span className="text-sm text-gray-400">{getTokenInfo(currency).symbol}</span>
               </div>
             </motion.div>
@@ -132,7 +130,7 @@ const LoanCard = ({
                 className="w-8 h-8 rounded-full"
               />
               <div>
-                <span className="font-medium text-lg">{displayCollateral}</span>
+                <span className="font-medium text-lg">{formatNumber(collateralAmount)}</span>
                 <span className="text-gray-400 ml-2">{getTokenInfo(collateralCurrency).symbol}</span>
               </div>
             </div>
@@ -183,7 +181,7 @@ const LoanCard = ({
             text-green-400 hover:text-green-300 font-medium 
             shadow-lg shadow-green-900/20 hover:shadow-green-900/30
             flex items-center justify-center gap-2">
-            <span>View Details</span>
+            <span>Manage Loan</span>
             <svg className="w-5 h-5 transition-transform duration-300 group-hover/btn:translate-x-0.5" 
               fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
@@ -194,29 +192,28 @@ const LoanCard = ({
       </motion.div>
 
       {isModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150]">
-          <LoanModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            loan={{
-              tokenAmount: value,
-              tokenRequested: currency,
-              collateralAmount: collateralAmount,
-              collateralToken: collateralCurrency,
-              duration: term,
-              interest,
-              creator: lender,
-              loanee: borrower,
-              status,
-              liquidation: liquidation,
-              id: id
-            }}
-          />
-        </div>,
+        <DashboardLoanModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          loan={{
+            id,
+            tokenAmount: value,
+            tokenRequested: currency,
+            collateralAmount,
+            collateralToken: collateralCurrency,
+            duration: term,
+            interest,
+            creator: lender,
+            loanee: borrower,
+            status,
+            type,
+            liquidation
+          }}
+        />,
         document.body
       )}
     </>
   )
 }
 
-export default LoanCard
+export default DashboardLoanCard 

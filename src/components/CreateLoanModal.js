@@ -147,9 +147,11 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
         collateralTokenInfo?.id,
         adjustedCollateralAmount,
         parseFloat(interestRate),
-        parseInt(term) * 30 * 24 * 60 * 60 * 1000
+        parseInt(term) * 30 * 24 * 60 * 60 * 1000,
+        enableLiquidation
       )
       onClose()
+
     } catch (error) {
       console.error('Error creating loan:', error)
     } finally {

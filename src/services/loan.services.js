@@ -10,6 +10,7 @@ export const CreateLoanService = async (
     collateralAmount,
     interest,
     duration,
+    canLiquidate
   ) => {
     return await CreateLoan.execute(signerProvider, {
       initialFields: {
@@ -22,7 +23,7 @@ export const CreateLoanService = async (
           collateralOracle: true,
           interest: interest,
           duration: duration,
-          canLiquidate: false
+          canLiquidate: canLiquidate
       },
       attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
       tokens: [{id: collateralToken, amount: collateralAmount}]
@@ -33,14 +34,14 @@ export const CreateLoanService = async (
 export const CancelLoanService = async (
     signerProvider,
     loanFactory,
-    loanId
+    contractId
   ) => {
     return await CancelLoan.execute(signerProvider, {
       initialFields: {
         loanFactory: loanFactory,
-        contractId: loanId
+        contract: contractId
     },
-    attoAlphAmount: DUST_AMOUNT,
+    attoAlphAmount: DUST_AMOUNT * 2n,
     })
 }
 
@@ -54,13 +55,13 @@ export const PayLoanService = async (
     return await PayLoan.execute(signerProvider, {
         initialFields: {
             loanFactory: loanFactory,
-            contractId: loanId
+            contract: loanId
         },
         attoAlphAmount: (DUST_AMOUNT * 2n) + MINIMAL_CONTRACT_DEPOSIT,
         tokens: [
             {
                 tokenId: tokenId,
-                amount: amount * 1e18
+                amount: amount
             }
         ]
     })
@@ -69,17 +70,19 @@ export const PayLoanService = async (
 export const AcceptLoanService = async (
     signerProvider,
     loanFactory,
-    loanId
+    contractId,
+    tokenId,
+    amount
   ) => {
     return await AcceptLoan.execute(signerProvider, {
-        initialFields: {
-            loanFactory: loanFactory,
-            contractId: loanId,
-            tokenOracle: true,
-            collateralOracle: true,
-        },
-        attoAlphAmount: DUST_AMOUNT,
-
+      initialFields: {
+          loanFactory: loanFactory,
+          contract: contractId,
+          tokenOracle: true,
+          collateralOracle: true
+      },
+      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+      tokens: [{id: tokenId, amount: amount}]
     })
 }
 

@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { AlephiumConnectButton, useBalance, useWallet, useConnect } from '@alephium/web3-react';
+import { AlephiumConnectButton, useBalance, useWallet } from '@alephium/web3-react';
 import { AiOutlineCopy, AiOutlineCheck, AiOutlineUser } from "react-icons/ai";
 import { PiWalletBold } from "react-icons/pi";
 import { LiaSignOutAltSolid } from 'react-icons/lia';
@@ -9,7 +9,7 @@ import { ANS } from '@alph-name-service/ans-sdk';
 import { FaCoins } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ConnectWalletModal from "./ConnectWalletModal";
-
+import { getAlephiumLoanConfig } from '../lib/configs';
 export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
@@ -19,12 +19,13 @@ export function Navbar() {
   const [ansUri, setAnsUri] = useState('');
   const [isCopied, setIsCopied] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
+  const config = getAlephiumLoanConfig();
 
   useEffect(() => {
     setMounted(true);
     if (wallet?.account?.address) {
         const getProfile = async () => {
-          const ans = new ANS('mainnet');
+          const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
           const testProfile = await ans.getProfile(wallet?.account?.address);
           if (testProfile?.name) {
               setAnsName(testProfile.name);
@@ -48,11 +49,6 @@ export function Navbar() {
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
-
-  const menuItems = [
-    { label: 'Loan', href: '/loan' },
-    ...(wallet?.account?.address ? [{ label: 'Dashboard', href: '/dashboard' }] : []),
-  ];
 
   const handleConnectClick = () => {
     setIsConnectModalOpen(true);

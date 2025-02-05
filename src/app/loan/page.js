@@ -6,7 +6,6 @@ import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
-import { getTokensList } from '../../lib/configs'
 
 export default function LoanPage() {
   const [activeFilter, setActiveFilter] = useState('all loans')
@@ -18,11 +17,6 @@ export default function LoanPage() {
     totalPages: 1,
     total: 0
   })
-  
-  const getTokenDecimals = (tokenId) => {
-    const token = getTokensList().find(t => t.id === tokenId);
-    return token?.decimals || 18;
-  };
 
   const fetchLoans = useCallback(async (page = 1) => {
     setLoading(true)
@@ -48,20 +42,18 @@ export default function LoanPage() {
       const data = await response.json()
       
       const transformedLoans = data.loans.map(loan => {
-        const tokenDecimals = getTokenDecimals(loan.tokenRequested);
-        const collateralDecimals = getTokenDecimals(loan.collateralToken);
-
         return {
-          value: Number(loan.tokenAmount) / Math.pow(10, tokenDecimals),
+          value: loan.tokenAmount,
           currency: loan.tokenRequested,
-          collateralAmount: Number(loan.collateralAmount) / Math.pow(10, collateralDecimals),
+          collateralAmount: loan.collateralAmount,
           collateralCurrency: loan.collateralToken,
           term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
           interest: Number(loan.interest),
           lender: loan.creator,
           borrower: loan.loanee,
           status: loan.active ? 'active' : 'pending',
-          id: loan.id
+          id: loan.id,
+          liquidation: loan.liquidation
         }
       })
 
