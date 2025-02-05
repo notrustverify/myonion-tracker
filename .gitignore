@@ -7,3 +7,5 @@ node_modules
 
 # anything else that might be generated
 next
+.next/trace
+.next
