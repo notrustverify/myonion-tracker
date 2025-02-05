@@ -700,7 +700,7 @@ TxScript PayLoan (
 ) {
     let (token, amount) = loanFactory.getRequiredTokens(contract, true)
 
-    loanFactory.pay{callerAddress!() -> token: amount}(contract)
+    loanFactory.pay{callerAddress!() -> token: amount, ALPH: dustAmount!() * 2}(contract)
 }
 
 TxScript ForfeitLoan (
