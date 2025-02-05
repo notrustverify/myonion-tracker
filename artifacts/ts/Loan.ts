@@ -454,7 +454,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "889ba00cf4511549878f63b6915c3d9d4bfe0402407e93ba267810574ff443ae",
+    "22e1cf1959a27116123789e0bbcd8db42dc75ac90859081d7e8320ddab47f1b4",
     AllStructs
   )
 );
