@@ -5,7 +5,7 @@ node_modules
 # secrets
 .env
 
-# anything else that might be generated
+# next
 next
 .next/trace
 .next

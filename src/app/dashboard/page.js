@@ -7,8 +7,10 @@ import { motion } from 'framer-motion';
 import { PiHandCoins } from "react-icons/pi";
 import { FaChartLine, FaHistory } from 'react-icons/fa';
 import LoanCard from '../../components/LoanCard';
-import { useWallet, useBalance } from '@alephium/web3-react';
+import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
+import axios from 'axios';
+import { getTokensList } from '../../lib/configs';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('active');
@@ -16,41 +18,49 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const wallet = useWallet();
-  const { balance } = useBalance();
+
+  const tokensList = getTokensList();
+
+  const getTokenDecimals = (tokenId) => {
+    const token = tokensList.find(t => t.id === tokenId);
+    return token?.decimals || 18;
+  };
 
   const fetchUserLoans = useCallback(async () => {
     if (!wallet?.account?.address) return;
     
     setLoading(true);
     try {
-      // Récupérer à la fois les prêts créés et empruntés
       const [createdResponse, borrowedResponse] = await Promise.all([
-        fetch(`https://backend.alpacafi.app/api/loans/creator/${wallet.account.address}${activeTab !== 'all' ? `?type=${activeTab}` : ''}`),
-        fetch(`https://backend.alpacafi.app/api/loans/loanee/${wallet.account.address}${activeTab !== 'all' ? `?type=${activeTab}` : ''}`)
+        axios.get(`https://backend.alpacafi.app/api/loans/creator/${wallet.account.address}`),
+        axios.get(`https://backend.alpacafi.app/api/loans/loanee/${wallet.account.address}`)
       ]);
 
-      const [createdData, borrowedData] = await Promise.all([
-        createdResponse.json(),
-        borrowedResponse.json()
-      ]);
+      const createdData = createdResponse.data;
+      const borrowedData = borrowedResponse.data;
       
-      const transformLoan = loan => ({
-        value: Number(loan.tokenAmount),
-        currency: loan.tokenRequested,
-        collateralAmount: Number(loan.collateralAmount),
-        collateralCurrency: loan.collateralToken,
-        term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
-        interest: Number(loan.interest),
-        lender: loan.creator,
-        borrower: loan.loanee,
-        status: loan.active ? 'active' : 'pending',
-        id: loan.id,
-        type: loan.creator === wallet.account.address ? 'created' : 'borrowed'
-      });
+      const transformLoan = loan => {
+        const tokenDecimals = getTokenDecimals(loan.tokenRequested);
+        const collateralDecimals = getTokenDecimals(loan.collateralToken);
+        
+        return {
+          value: Number(loan.tokenAmount) / Math.pow(10, tokenDecimals),
+          currency: loan.tokenRequested,
+          collateralAmount: Number(loan.collateralAmount) / Math.pow(10, collateralDecimals),
+          collateralCurrency: loan.collateralToken,
+          term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
+          interest: Number(loan.interest),
+          lender: loan.creator,
+          borrower: loan.loanee,
+          status: loan.active ? 'active' : 'pending',
+          id: loan.id,
+          type: loan.creator === wallet.account.address ? 'created' : 'borrowed'
+        };
+      };
 
       const allLoans = [
-        ...createdData.loans.map(loan => transformLoan({ ...loan, type: 'created' })),
-        ...borrowedData.loans.map(loan => transformLoan({ ...loan, type: 'borrowed' }))
+        ...createdData.map(loan => transformLoan({ ...loan, type: 'created' })),
+        ...borrowedData.map(loan => transformLoan({ ...loan, type: 'borrowed' }))
       ];
 
       setLoans(allLoans);
@@ -59,13 +69,12 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [wallet?.account?.address, activeTab]);
+  }, [wallet?.account?.address]);
 
   useEffect(() => {
     fetchUserLoans();
   }, [fetchUserLoans]);
 
-  // Calculer les statistiques basées sur les prêts de l'utilisateur
   const stats = [
     {
       title: "Total Value",

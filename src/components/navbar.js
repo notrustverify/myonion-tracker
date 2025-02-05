@@ -97,7 +97,6 @@ export function Navbar() {
     );
   }
 
-  // Render the actual component once mounted
   return (
     <>
       <div className="bg-gradient-to-b from-gray-900 to-gray-800/95 backdrop-blur-sm border-b border-gray-700/50 relative z-[100]">

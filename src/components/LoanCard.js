@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getTokensList } from '../lib/configs'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -11,10 +12,31 @@ const getCollateralRatioColor = (ratio) => {
   return 'text-red-400'
 }
 
+const formatNumber = (value) => {
+  return new Intl.NumberFormat('en-US', {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2
+  }).format(value)
+}
+
+const getTokenInfo = (tokenId) => {
+  const tokens = getTokensList()
+  return tokens.find(t => t.id === tokenId) || {
+    symbol: 'Unknown',
+    logoURI: '/tokens/unknown.png',
+    decimals: 18
+  }
+}
+
+const truncateAddress = (address) => {
+  if (!address) return ''
+  return `${address.slice(0, 6)}...${address.slice(-4)}`
+}
+
 const LoanModal = ({ isOpen, onClose, loan }) => {
   if (!isOpen) return null
 
-  const collateralRatio = ((loan.collateralAmount / loan.value) * 100).toFixed(0)
+  const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -58,24 +80,32 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   <span className="text-sm text-gray-400 block mb-2">Amount</span>
                   <div className="flex items-center gap-2">
                     <img 
-                      src={`/tokens/${loan.currency.toUpperCase()}.png`}
-                      alt={loan.currency}
+                      src={getTokenInfo(loan.tokenRequested).logoURI}
+                      alt={getTokenInfo(loan.tokenRequested).symbol}
                       className="w-8 h-8 rounded-full"
                     />
-                    <span className="text-2xl font-semibold text-white">{loan.value}</span>
-                    <span className="text-gray-400">{loan.currency}</span>
+                    <span className="text-2xl font-semibold text-white">
+                      {formatNumber(loan.tokenAmount)}
+                    </span>
+                    <span className="text-gray-400">
+                      {getTokenInfo(loan.tokenRequested).symbol}
+                    </span>
                   </div>
                 </div>
                 <div>
                   <span className="text-sm text-gray-400 block mb-2">Collateral</span>
                   <div className="flex items-center gap-2">
                     <img 
-                      src={`/tokens/${loan.collateralCurrency.toUpperCase()}.png`}
-                      alt={loan.collateralCurrency}
+                      src={getTokenInfo(loan.collateralToken).logoURI}
+                      alt={getTokenInfo(loan.collateralToken).symbol}
                       className="w-8 h-8 rounded-full"
                     />
-                    <span className="text-2xl font-semibold text-white">{loan.collateralAmount}</span>
-                    <span className="text-gray-400">{loan.collateralCurrency}</span>
+                    <span className="text-2xl font-semibold text-white">
+                      {formatNumber(loan.collateralAmount)}
+                    </span>
+                    <span className="text-gray-400">
+                      {getTokenInfo(loan.collateralToken).symbol}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -83,11 +113,15 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
               <div className="grid grid-cols-3 gap-4 mb-8">
                 <div className="bg-gray-700/30 rounded-lg p-4">
                   <span className="text-sm text-gray-400 block mb-1">Term</span>
-                  <span className="text-lg font-medium text-white">{loan.term} months</span>
+                  <span className="text-lg font-medium text-white">
+                    {Math.round(loan.duration / (30 * 24 * 60 * 60 * 1000))} months
+                  </span>
                 </div>
                 <div className="bg-gray-700/30 rounded-lg p-4">
                   <span className="text-sm text-gray-400 block mb-1">Interest</span>
-                  <span className="text-lg font-medium text-green-400">{loan.interest}%</span>
+                  <span className="text-lg font-medium text-green-400">
+                    {loan.interest}%
+                  </span>
                 </div>
                 <div className="bg-gray-700/30 rounded-lg p-4">
                   <span className="text-sm text-gray-400 block mb-1">Collateral Ratio</span>
@@ -187,12 +221,12 @@ const LoanCard = ({
             <span className="text-xs text-gray-400 mb-1">Loan request</span>
             <div className="flex items-center gap-2">
               <img 
-                src={`/tokens/${currency.toUpperCase()}.png`}
-                alt={currency}
+                src={getTokenInfo(currency).logoURI}
+                alt={getTokenInfo(currency).symbol}
                 className="w-6 h-6 rounded-full"
               />
-              <span className="text-2xl font-semibold">{value}</span>
-              <span className="text-sm text-gray-400">{currency}</span>
+              <span className="text-2xl font-semibold">{formatNumber(value)}</span>
+              <span className="text-sm text-gray-400">{getTokenInfo(currency).symbol}</span>
             </div>
           </motion.div>
           <motion.div
@@ -216,13 +250,13 @@ const LoanCard = ({
           </div>
           <div className="flex items-center gap-3">
             <img 
-              src={`/tokens/${collateralCurrency.toUpperCase()}.png`}
-              alt={collateralCurrency}
+              src={getTokenInfo(collateralCurrency).logoURI}
+              alt={getTokenInfo(collateralCurrency).symbol}
               className="w-8 h-8 rounded-full"
             />
             <div>
-              <span className="font-medium text-lg">{collateralAmount}</span>
-              <span className="text-gray-400 ml-2">{collateralCurrency}</span>
+              <span className="font-medium text-lg">{formatNumber(collateralAmount)}</span>
+              <span className="text-gray-400 ml-2">{getTokenInfo(collateralCurrency).symbol}</span>
             </div>
           </div>
         </motion.div>
@@ -254,11 +288,11 @@ const LoanCard = ({
           <div className="flex justify-between">
             <div className="flex flex-col gap-1">
               <span className="text-xs text-gray-400">Lender</span>
-              <span className="text-sm font-medium">{lender}</span>
+              <span className="text-sm font-medium">{truncateAddress(lender)}</span>
             </div>
             <div className="flex flex-col gap-1 text-right">
               <span className="text-xs text-gray-400">Borrower</span>
-              <span className="text-sm font-medium">{borrower}</span>
+              <span className="text-sm font-medium">{truncateAddress(borrower)}</span>
             </div>
           </div>
         </motion.div>
@@ -268,11 +302,11 @@ const LoanCard = ({
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         loan={{
-          value,
-          currency,
+          tokenAmount: value,
+          tokenRequested: currency,
           collateralAmount,
-          collateralCurrency,
-          term,
+          collateralToken: collateralCurrency,
+          duration: term,
           interest,
           lender,
           borrower,
