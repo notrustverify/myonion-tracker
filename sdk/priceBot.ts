@@ -96,7 +96,7 @@ async function updatePair(pair: string, price: bigint) {
           attoAlphAmount: DUST_AMOUNT
         })
 
-        console.log(`Update Sent To Chain: ${tx.txId}`)
+        console.log(`${pair}: Update Sent To Chain: ${tx.txId}`)
       }
 }
 
