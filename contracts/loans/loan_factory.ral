@@ -93,7 +93,7 @@ Contract LoanFactory (
             // Compute collateral-to-loan ratio in basis points (10000 = 100%)
             let ratio = (collateralValueUSD * 10000) / loanValueUSD // Multiply before division to avoid precision loss
 
-            if (ratio < threshhold) {
+            if (ratio > threshhold) {
                 return ratio, true
             }
 
@@ -161,7 +161,7 @@ Contract LoanFactory (
         )
 
         // collateral is over 150 %
-        if (canLiquidate && condition) {
+        if (canLiquidate) {
             assert!(condition == true, 2)
         }
 
