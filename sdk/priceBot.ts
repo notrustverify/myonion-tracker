@@ -9,7 +9,7 @@ let node = new NodeProvider("https://node.alphaga.app");
 
 // insert private key here / bot address that updates script
 
-const Signer = new PrivateKeyWallet({ privateKey:  })
+// const Signer = new PrivateKeyWallet({ privateKey:  })
 
 
 // List of ALPH/TOKEN pools and their decimals
@@ -80,6 +80,7 @@ async function getTokenPrice(
 }
 
 // function call to contract
+/*
 async function updatePair(pair: string, price: bigint) {
     const deployScript: DeployFunction<Settings> = async (
         deployer: Deployer,
@@ -99,6 +100,7 @@ async function updatePair(pair: string, price: bigint) {
         console.log(`${pair}: Update Sent To Chain: ${tx.txId}`)
       }
 }
+*/
 
 // oracle address, incoming price
 async function updateAlpacaFiPair(oracleAddress: string, newPrice: bigint, oracleIndex: number) {
