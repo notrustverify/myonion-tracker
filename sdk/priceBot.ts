@@ -9,8 +9,9 @@ let pools: [string, number, number, string][] = [
 ];
 
 // oracle mapping address for token price comparison
-let oracle_values: [string][] = [
-    [""]
+// [address, pair, price] // <mapping_addy> | <pair> | <price>
+let oracle_values: [string, string, number][] = [
+    //[""]
 ]
 
 // Function to get ALPH price in USD from the ALPH/USDT pool
