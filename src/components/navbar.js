@@ -107,7 +107,7 @@ export function Navbar() {
 
           <nav className="z-50 hidden space-x-6 md:flex">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Loan
+              P2P Loans
             </Link>
             {wallet?.account?.address && (
               <Link href="/dashboard" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
