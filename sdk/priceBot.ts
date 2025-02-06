@@ -125,7 +125,7 @@ async function updateAlpacaFiPair(oracleAddress: string, newPrice: bigint, oracl
         if (percentageChange > 5) {
             console.log(`Updating price for ${oracle_values[oracleIndex][1]} as the change is above 5%`);
             // Call contract update function here
-            await updatePair(oracle_values[oracleIndex][1], newPrice)
+            // await updatePair(oracle_values[oracleIndex][1], newPrice)
         } else {
             console.log("No significant price change. Skipping update.");
         }
