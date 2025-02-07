@@ -64,8 +64,11 @@ Contract Loan (
             // Avoid integer truncation: multiply first, then divide
             let gain = (tokenAmount * interest * elapsedTime) / (31556926000 * 10000)
     
-            // Return the original amount plus interest
-            return tokenAmount + gain
+            // Calculate 7% flat interest (tokenAmount * 7 / 100)
+            let flatInterest = (tokenAmount * 7) / 100
+    
+            // Return the original amount + accrued interest + flat interest
+            return tokenAmount + gain + flatInterest
         } else {
             return tokenAmount
         }

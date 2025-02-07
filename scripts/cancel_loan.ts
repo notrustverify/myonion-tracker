@@ -22,7 +22,7 @@ const deployScript: DeployFunction<Settings> = async (
     await CancelLoan.execute(signer, {
       initialFields: {
           loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
-          contract: "7612ec079a19541d3136a2ff935bd69ad64b743df3df17948bacf6dd6646bc00"
+          contract: "c8d5a83b2a60a2ffc5d17eb0609d2da04587e5e0be4bdbbf376145c5233cef00"
       },
       attoAlphAmount: DUST_AMOUNT,
     })
