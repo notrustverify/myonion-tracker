@@ -22,8 +22,8 @@ const deployScript: DeployFunction<Settings> = async (
     
     await UpdateBotAddress.execute(signer, {
       initialFields: {
-          oracle: "79b75a922382f264422a1a4a7a874ee63340ab703612b5ade24b1324176f0b00",
-          newBot: deployer.account.address
+          oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
+          newBot: "1AxRAmNJAg4p6jRmDjLvh1e6z863Cth9wvzU1fRoAeK4i"
           //newBot: "1618v8SuPEQ1jTZnf7ZSaCufBAUZY6rKhXYhQuoHi2AzM"
       },
       attoAlphAmount: DUST_AMOUNT

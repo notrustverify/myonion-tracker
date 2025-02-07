@@ -23,8 +23,8 @@ const deployScript: DeployFunction<Settings> = async (
     await InsertPair.execute(signer, {
       initialFields: {
         oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
-        pair: stringToHex("EX/USD"),
-        token: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
+        pair: stringToHex("APAD/USD"),
+        token: "bb440a66dcffdb75862b6ad6df14d659aa6d1ba8490f6282708aa44ebc80a100",
         price: 0n,
         decimals: 18n
       },

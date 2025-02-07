@@ -9,7 +9,7 @@ let node = new NodeProvider("https://node.alphaga.app");
 
 // insert private key here / bot address that updates script
 
-const Signer = new PrivateKeyWallet({ privateKey: String(process.env.key) })
+const Signer = new PrivateKeyWallet({ privateKey: String(process.env.bot) })
 
 
 // List of ALPH/TOKEN pools and their decimals
@@ -23,7 +23,8 @@ let pools: [string, number, number, string][] = [
 // oracle mapping address for token price comparison
 // [address, pair, price] // <mapping_addy> | <pair> | <price>
 let oracle_values: [string, string, number][] = [
-    ["tyQsV8oZFyqVspcRsUPTUzJ2BusYSJQYBvSnGVD5Ysq1", "EX/USD", 0]
+    ["tyQsV8oZFyqVspcRsUPTUzJ2BusYSJQYBvSnGVD5Ysq1", "EX/USD", 0],
+    ["25B55puFNpHq1UiR1Dc9VNxmAprYnzMNDNebx5gByek8P", "APAD/USD", 0]
 ]
 
 // Function to get ALPH price in USD from the ALPH/USDT pool
