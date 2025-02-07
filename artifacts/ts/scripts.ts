@@ -183,8 +183,8 @@ export const ForfeitLoan = new ExecutableScript<{
 
 export const InsertPair = new ExecutableScript<{
   oracle: HexString;
-  token: HexString;
   pair: HexString;
+  token: HexString;
   price: bigint;
   decimals: bigint;
 }>(
@@ -217,7 +217,7 @@ export const RedeemLoan = new ExecutableScript<{
 
 export const RemovePair = new ExecutableScript<{
   oracle: HexString;
-  token: HexString;
+  pair: HexString;
 }>(
   Script.fromJson(RemovePairScriptJson, "", AllStructs),
   getContractByCodeHash

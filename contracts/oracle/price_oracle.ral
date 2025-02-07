@@ -30,19 +30,22 @@ Contract AlpacaFiOracle (
         prices.insert!(callerAddress!(), pair, b)
     }
 
-    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false, assetsInContract = false)
     pub fn removePair(pair: ByteVec) -> () {
         checkCaller!(callerAddress!() == admin, 0)
 
-        prices.remove!(admin, pair)
+        prices.remove!(callerAddress!(), pair)
     }
 
-    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false)
     pub fn updatePair(pair: ByteVec, price: U256) -> () {
-        checkCaller!(callerAddress!() == updateBot, 0)
+        // check caller
+        checkCaller!(callerAddress!() == updateBot, 1)
 
-        assert!(prices.contains!(pair) == true, 0)
+        // assert that it exists
+        assert!(prices.contains!(pair) == true, 2)
 
+        // update the value
         prices[pair].value = price
     }
 
@@ -69,19 +72,19 @@ Contract AlpacaFiOracle (
 
 TxScript InsertPair (
     oracle: AlpacaFiOracle,
-    token: ByteVec,
     pair: ByteVec,
+    token: ByteVec,
     price: U256,
     decimals: U256
 ) {
-    oracle.insertPair{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, pair, price, decimals)
+    oracle.insertPair{callerAddress!() -> ALPH: mapEntryDeposit!()}(pair, token, price, decimals)
 }
 
 TxScript RemovePair (
     oracle: AlpacaFiOracle,
-    token: ByteVec
+    pair: ByteVec
 ) {
-    oracle.removePair(token)
+    oracle.removePair(pair)
 }
 
 TxScript UpdatePair (

@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { InsertPair, TokenMapping, UpdateBotAddress } from "../artifacts/ts";
+import { RemovePair } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -20,15 +20,12 @@ const deployScript: DeployFunction<Settings> = async (
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
     
-    await InsertPair.execute(signer, {
+    await RemovePair.execute(signer, {
       initialFields: {
-        oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
-        pair: stringToHex("EX/USD"),
-        token: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
-        price: 0n,
-        decimals: 18n
+        oracle: "79b75a922382f264422a1a4a7a874ee63340ab703612b5ade24b1324176f0b00",
+        pair: ""
       },
-      attoAlphAmount: DUST_AMOUNT + MINIMAL_CONTRACT_DEPOSIT
+      attoAlphAmount: DUST_AMOUNT
     })
   }
   

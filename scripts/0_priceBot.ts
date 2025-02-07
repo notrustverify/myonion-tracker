@@ -9,7 +9,7 @@ let node = new NodeProvider("https://node.alphaga.app");
 
 // insert private key here / bot address that updates script
 
-// const Signer = new PrivateKeyWallet({ privateKey:  })
+const Signer = new PrivateKeyWallet({ privateKey: String(process.env.key) })
 
 
 // List of ALPH/TOKEN pools and their decimals
@@ -23,7 +23,7 @@ let pools: [string, number, number, string][] = [
 // oracle mapping address for token price comparison
 // [address, pair, price] // <mapping_addy> | <pair> | <price>
 let oracle_values: [string, string, number][] = [
-    ["29jag3ovmVhEfGbxvtxrwZfVSm9uwmCz38gGfj14KAs7u", "EX/USD", 0]
+    ["tyQsV8oZFyqVspcRsUPTUzJ2BusYSJQYBvSnGVD5Ysq1", "EX/USD", 0]
 ]
 
 // Function to get ALPH price in USD from the ALPH/USDT pool
@@ -80,27 +80,18 @@ async function getTokenPrice(
 }
 
 // function call to contract
-/*
 async function updatePair(pair: string, price: bigint) {
-    const deployScript: DeployFunction<Settings> = async (
-        deployer: Deployer,
-        network: Network<Settings>
-      ): Promise<void> => {
-        const upgradeNetwork = getNetwork()
-        
-        let tx = await UpdatePair.execute(Signer, {
-          initialFields: {
-              oracle: "79b75a922382f264422a1a4a7a874ee63340ab703612b5ade24b1324176f0b00",
-              pair: stringToHex(pair),
-              price: price
-          },
-          attoAlphAmount: DUST_AMOUNT
-        })
+    let tx = await UpdatePair.execute(Signer, {
+        initialFields: {
+            oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
+            pair: stringToHex(pair),
+            price: price
+        },
+        attoAlphAmount: DUST_AMOUNT
+    })
 
-        console.log(`${pair}: Update Sent To Chain: ${tx.txId}`)
-      }
+    console.log(`${pair}: Update Sent To Chain: ${tx.txId}`)
 }
-*/
 
 // oracle address, incoming price
 async function updateAlpacaFiPair(oracleAddress: string, newPrice: bigint, oracleIndex: number) {
@@ -125,7 +116,7 @@ async function updateAlpacaFiPair(oracleAddress: string, newPrice: bigint, oracl
         if (percentageChange > 5) {
             console.log(`Updating price for ${oracle_values[oracleIndex][1]} as the change is above 5%`);
             // Call contract update function here
-            // await updatePair(oracle_values[oracleIndex][1], newPrice)
+            await updatePair(oracle_values[oracleIndex][1], newPrice)
         } else {
             console.log("No significant price change. Skipping update.");
         }
@@ -172,4 +163,12 @@ function sleep(seconds: number) {
 }
 
 // Start the loop
-main();
+const deployScript: DeployFunction<Settings> = async (
+    deployer: Deployer,
+    network: Network<Settings>
+): Promise<void> => {
+    const upgradeNetwork = getNetwork()
+    main();
+}
+
+export default deployScript

@@ -31,9 +31,9 @@
     },
     "AlpacaFiOracle": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
-      "bytecodeDebugPatch": "=10-2+9a=2+d=1-1=1-3+117=1-3+12b=2+4=1-1=155-1+9=82+7a7e0214696e73657274206174206d617020706174683a2000=30+1=1-1=60+7a7e021472656d6f7665206174206d617020706174683a2000=210",
-      "codeHashDebug": "300f6b4f855687a40e8165f4974cc1e7ee4d5db1a87eb269a0e57f2cb6b23d66"
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
+      "bytecodeDebugPatch": "=10-4+9=1-1=2-1+d9=1+116=1-3+12a=2-2+3f=155-1+9=82+7a7e0214696e73657274206174206d617020706174683a2000=30+1=1-1=58+7a7e021472656d6f7665206174206d617020706174683a2000=210",
+      "codeHashDebug": "283959a0b1c28e53ce218461de67a4ca4414583686d3120a0ddebcf6993d838b"
     },
     "BidLoan": {
       "sourceFile": "loans/loan_factory.ral",
@@ -115,7 +115,7 @@
     },
     "InsertPair": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -145,7 +145,7 @@
     },
     "OracleData": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -169,7 +169,7 @@
     },
     "RemovePair": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -181,7 +181,7 @@
     },
     "UpdateBotAddress": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -223,13 +223,13 @@
     },
     "UpdateOracleCode": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "UpdatePair": {
       "sourceFile": "oracle/price_oracle.ral",
-      "sourceCodeHash": "2520724f403ed6041bc1540c83e138c8a6aa0fbe3c4894964f7d41449227ae51",
+      "sourceCodeHash": "e5d1aecf196a1d891a9ea9fad4c0b52a26d4979455fbc53fccba99847c3855c3",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
