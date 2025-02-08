@@ -14,10 +14,11 @@ const Signer = new PrivateKeyWallet({ privateKey: String(process.env.bot) })
 
 // List of ALPH/TOKEN pools and their decimals
 let pools: [string, number, number, string][] = [
-    ["27Ub32AhfC9ULKGKGUTdDGU2ehvUN55aLS4oU8nmW3x9M", 18, 1, "Elexium"], // ALPH / EX pool
-    ["vX4iFtkRjPWpyUFiHBDmtq8FETxbMUD7Y8W37xfnAU7Z", 18, 0, "AlphPad"], // ALPH / APAD pool
-    ["25ywM8iGxKpZWuGA5z6DXKGcZCXtPBmnbQyJEsjvjjWTy", 18, 1, "Ayin"]
-    // Add more ALPH/TOKEN pools here, format: ["POOL_ADDRESS", TOKEN_DECIMALS]
+    ["27Ub32AhfC9ULKGKGUTdDGU2ehvUN55aLS4oU8nmW3x9M", 18, 1, "Elexium"], 
+    ["vX4iFtkRjPWpyUFiHBDmtq8FETxbMUD7Y8W37xfnAU7Z", 18, 0, "AlphPad"], 
+    ["xnRk82YPb61ygM63ozXHjELdpFhGtSjMR7H1wbfQDBY3", 18, 0, "RalphBuilder"],
+    ["zXbdgDuFe82CwhnxVMfJHhJNGT78MWXELf53BRnwXFps", 9, 0, "ALPHBanx"],
+    ["zWgFBQP8UDivtStTpVbp7JL3JBxvJ5VLvpu1kQU1kUwZ", 18, 0, "Binance Coin"]
 ];
 
 // oracle mapping address for token price comparison
