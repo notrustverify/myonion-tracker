@@ -1,0 +1,5 @@
+Contract PoolFactory () {
+    pub fn returnBen() -> ByteVec {
+        return #ben
+    }
+}

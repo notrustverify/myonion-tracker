@@ -5,8 +5,8 @@
   "fieldsSig": {
     "names": [
       "oracle",
-      "token",
       "pair",
+      "token",
       "price",
       "decimals"
     ],

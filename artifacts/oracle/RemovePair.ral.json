@@ -5,7 +5,7 @@
   "fieldsSig": {
     "names": [
       "oracle",
-      "token"
+      "pair"
     ],
     "types": [
       "AlpacaFiOracle",

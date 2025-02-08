@@ -71,8 +71,17 @@ export function Navbar() {
           </div>
 
           <nav className="z-50 hidden space-x-6 md:flex">
+            {/* P2P Loans */}
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Loan
+              P2P Loans
+            </Link>
+            {/* Instant Loans from Liquity Providers with selective requirements */}
+            <Link href="/" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
+              Instant Loans
+            </Link>
+            {/* Liquidation Auctions */}
+            <Link href="/" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
+              Liquidation Auctions
             </Link>
           </nav>
 
@@ -107,7 +116,13 @@ export function Navbar() {
 
           <nav className="z-50 hidden space-x-6 md:flex">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Loan
+              P2P Loans
+            </Link>
+            <Link href="/" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
+              Instant Loans
+            </Link>
+            <Link href="/" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
+              Liquidation Auctions
             </Link>
             {wallet?.account?.address && (
               <Link href="/dashboard" className="text-gray-300 hover:text-green-400 transition-colors duration-200">

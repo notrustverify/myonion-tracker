@@ -64,8 +64,11 @@ Contract Loan (
             // Avoid integer truncation: multiply first, then divide
             let gain = (tokenAmount * interest * elapsedTime) / (31556926000 * 10000)
     
-            // Return the original amount plus interest
-            return tokenAmount + gain
+            // Calculate 7% flat interest (tokenAmount * 7 / 100)
+            let flatInterest = (tokenAmount * 7) / 100
+    
+            // Return the original amount + accrued interest + flat interest
+            return tokenAmount + gain + flatInterest
         } else {
             return tokenAmount
         }
@@ -202,9 +205,9 @@ Contract Loan (
         // confirm it's active
         assert!(active == true, 3)
 
-        // ratio is under 150
+        // ratio is under 150% = 15000
         ratio = collateralLevel
-        assert!(ratio < 150, 5)
+        assert!(ratio < 15000, 5)
 
         // liquidation to true
         liquidation = true
