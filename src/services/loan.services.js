@@ -1,5 +1,5 @@
 import { DUST_AMOUNT, MINIMAL_CONTRACT_DEPOSIT } from "@alephium/web3"
-import { CreateLoan, CancelLoan, PayLoan, AcceptLoan } from "../../artifacts/ts"
+import { CreateLoan, CancelLoan, PayLoan, AcceptLoan, AddFunds } from "../../artifacts/ts"
 
 export const CreateLoanService = async (
     signerProvider,
@@ -29,7 +29,6 @@ export const CreateLoanService = async (
       tokens: [{id: collateralToken, amount: collateralAmount}]
     })
 }
-
 
 export const CancelLoanService = async (
     signerProvider,
@@ -85,5 +84,3 @@ export const AcceptLoanService = async (
       tokens: [{id: tokenId, amount: amount}]
     })
 }
-
-

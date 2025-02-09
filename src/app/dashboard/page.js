@@ -10,7 +10,7 @@ import LoanCard from '../../components/LoanCard';
 import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
 import axios from 'axios';
-import { getTokensList } from '../../lib/configs';
+import { getTokensList, getBackendUrl } from '../../lib/configs';
 import DashboardLoanCard from '../../components/dashboard/DashboardLoanCard';
 
 export default function Dashboard() {
@@ -19,6 +19,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const wallet = useWallet();
+  const backendUrl = getBackendUrl();
 
   const tokensList = getTokensList();
 
@@ -33,28 +34,30 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [createdResponse, borrowedResponse] = await Promise.all([
-        axios.get(`https://backend.alpacafi.app/api/loans/creator/${wallet.account.address}`),
-        axios.get(`https://backend.alpacafi.app/api/loans/loanee/${wallet.account.address}`)
+        axios.get(`${backendUrl}/api/loans/creator/${wallet.account.address}`),
+        axios.get(`${backendUrl}/api/loans/loanee/${wallet.account.address}`)
       ]);
 
       const createdData = createdResponse.data;
       const borrowedData = borrowedResponse.data;
       
+
       const transformLoan = loan => ({
-        tokenAmount: loan.tokenAmount,
-        tokenRequested: loan.tokenRequested,
+        value: loan.tokenAmount,
+        currency: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
-        collateralToken: loan.collateralToken,
-        duration: loan.duration,
+        collateralCurrency: loan.collateralToken,
+        term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
         interest: Number(loan.interest),
-        creator: loan.creator,
-        loanee: loan.loanee,
-        active: loan.active,
+        lender: loan.creator,
+        borrower: loan.loanee,
         status: loan.active ? 'active' : 'pending',
         id: loan.id,
         type: loan.creator === wallet.account.address ? 'created' : 'borrowed',
-        liquidation: loan.liquidation
+        liquidation: loan.liquidation,
+        canLiquidate: loan.canLiquidate
       });
+
 
       const allLoans = [
         ...createdData.map(loan => transformLoan(loan)),
@@ -77,8 +80,8 @@ export default function Dashboard() {
     {
       title: "Total Value",
       value: `${loans.reduce((acc, loan) => {
-        const tokenDecimals = getTokenDecimals(loan.tokenRequested);
-        return acc + (Number(loan.tokenAmount) / Math.pow(10, tokenDecimals));
+        const tokenDecimals = getTokenDecimals(loan.currency);
+        return acc + (Number(loan.value) / Math.pow(10, tokenDecimals));
       }, 0).toLocaleString()} ALPH`,
       change: "+12.5%",
       isPositive: true,
@@ -87,7 +90,7 @@ export default function Dashboard() {
     {
       title: "Collateral Locked",
       value: `${loans.reduce((acc, loan) => {
-        const collateralDecimals = getTokenDecimals(loan.collateralToken);
+        const collateralDecimals = getTokenDecimals(loan.collateralCurrency);
         return acc + (Number(loan.collateralAmount) / Math.pow(10, collateralDecimals));
       }, 0).toLocaleString()} ALPH`,
       change: "+8.2%",

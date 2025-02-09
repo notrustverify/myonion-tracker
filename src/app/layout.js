@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AlephiumWalletProvider } from "@alephium/web3-react";
+import ToastContainer from "../components/ToastContainer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -14,6 +15,7 @@ export default function RootLayout({ children }) {
     <AlephiumWalletProvider network={"mainnet"}>
     <html lang="en">
         <body className={inter.className}>{children}</body>
+        <ToastContainer />
     </html>
     </AlephiumWalletProvider>
   );
