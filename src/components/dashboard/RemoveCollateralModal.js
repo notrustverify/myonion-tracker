@@ -16,7 +16,6 @@ const getTokenInfo = (tokenId) => {
 }
 
 const adjustAmountWithDecimals = (amount, decimals) => {
-  const amountStr = amount.toString()
   return amount * Math.pow(10, decimals)
 }
 
@@ -26,6 +25,12 @@ const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const config = getAlephiumLoanConfig()
+
+  const maxAmount = loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)
+
+  const handleSetMaxAmount = () => {
+    setAmount(maxAmount.toString())
+  }
 
   const handleRemoveCollateral = async () => {
     if (!amount || isNaN(amount) || amount <= 0) {
@@ -106,7 +111,16 @@ const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
                       placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50
                       [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <button
+                      onClick={handleSetMaxAmount}
+                      className="px-2 py-1 text-xs font-medium text-red-400 hover:text-red-300 
+                        bg-red-500/10 hover:bg-red-500/20 
+                        border border-red-500/20 hover:border-red-500/30 
+                        rounded-lg transition-colors duration-200"
+                    >
+                      MAX
+                    </button>
                     <img
                       src={getTokenInfo(loan.collateralToken).logoURI}
                       alt={getTokenInfo(loan.collateralToken).symbol}
@@ -116,6 +130,9 @@ const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
                       {getTokenInfo(loan.collateralToken).symbol}
                     </span>
                   </div>
+                </div>
+                <div className="mt-2 text-sm text-gray-400">
+                  Max amount: {maxAmount.toFixed(6)} {getTokenInfo(loan.collateralToken).symbol}
                 </div>
               </div>
 

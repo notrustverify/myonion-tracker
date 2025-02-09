@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { getTokensList, getBackendUrl } from '../lib/configs'
 import LoanModal from './LoanModal'
+import { getAlephiumLoanConfig } from '../lib/configs'
+import { ANS } from '@alph-name-service/ans-sdk'
 
 const backendUrl = getBackendUrl()
 
@@ -34,9 +36,9 @@ const getTokenInfo = (tokenId) => {
   }
 }
 
-const truncateAddress = (address) => {
-  if (!address || address === DEFAULT_ADDRESS) return 'No borrower yet'
-  return `${address.slice(0, 6)}...${address.slice(-4)}`
+const shortenAddress = (address) => {
+  if (!address || address === DEFAULT_ADDRESS) return "No borrower yet"
+  return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
 const LoanCard = ({ 
@@ -56,7 +58,9 @@ const LoanCard = ({
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
   const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoading, setIsLoading] = useState(true)
+  const [creatorAnsName, setCreatorAnsName] = useState('')
+  const [loaneeAnsName, setLoaneeAnsName] = useState('')
+  const config = getAlephiumLoanConfig()
 
   useEffect(() => {
     const fetchTokenPrices = async () => {
@@ -71,15 +75,39 @@ const LoanCard = ({
         }
         
         setTokenPrices(prices)
-        setIsLoading(false)
       } catch (error) {
         console.error('Error fetching token prices:', error)
-        setIsLoading(false)
       }
     }
 
     fetchTokenPrices()
   }, [currency, collateralCurrency])
+
+  useEffect(() => {
+    const getProfiles = async () => {
+      try {
+        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
+        
+        if (borrower) {
+          const creatorProfile = await ans.getProfile(borrower)
+          if (creatorProfile?.name) {
+            setCreatorAnsName(creatorProfile.name)
+          }
+        }
+
+        if (lender && lender !== DEFAULT_ADDRESS && lender !== borrower) {
+          const loaneeProfile = await ans.getProfile(lender)
+          if (loaneeProfile?.name) {
+            setLoaneeAnsName(loaneeProfile.name)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching ANS profiles:', error)
+      }
+    }
+
+    getProfiles()
+  }, [borrower, lender, config.defaultNodeUrl, config.defaultExplorerUrl])
 
   const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
@@ -202,12 +230,14 @@ const LoanCard = ({
             <div className="flex justify-between">
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-gray-400">Lender</span>
-                <span className="text-sm font-medium">{truncateAddress(lender)}</span>
+                <span className="text-sm font-medium">
+                  {loaneeAnsName || shortenAddress(lender)}
+                </span>
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-gray-400">Borrower</span>
                 <span className="text-sm font-medium text-gray-400">
-                  {borrower === DEFAULT_ADDRESS ? 'No borrower yet' : truncateAddress(borrower)}
+                  {creatorAnsName || shortenAddress(borrower)}
                 </span>
               </div>
             </div>
@@ -244,12 +274,13 @@ const LoanCard = ({
               collateralToken: collateralCurrency,
               duration: term,
               interest,
-              creator: lender,
-              loanee: borrower === DEFAULT_ADDRESS ? null : borrower,
+              lender: lender === DEFAULT_ADDRESS ? null : lender,
+              borrower: borrower === DEFAULT_ADDRESS ? null : borrower,
               status,
               liquidation,
               canLiquidate,
               id
+
             }}
           />
         </div>,

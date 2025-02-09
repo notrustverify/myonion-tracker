@@ -1,6 +1,6 @@
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { addressFromContractId, NodeProvider, node, web3, hexToString, number256ToBigint, prettifyNumber, prettifyNumberConfig } from '@alephium/web3'
+import { addressFromContractId, web3, hexToString, number256ToBigint, prettifyNumber, prettifyNumberConfig } from '@alephium/web3'
 import axios from 'axios';
 
 const TOKEN_LIST_URL = 'https://raw.githubusercontent.com/alephium/token-list/master/tokens/mainnet.json';
@@ -38,8 +38,14 @@ export function checkHexString(value, expected) {
   }
 }
 
-export const alphBalanceOf = async (contractid) => {
+export const contractAlphBalanceOf = async (contractid) => {
   const balances = await web3.getCurrentNodeProvider().addresses.getAddressesAddressBalance(addressFromContractId(contractid))
+  const balance = balances.balance
+  return balance === undefined ? 0n : BigInt(balance)
+}
+
+export const alphBalanceOf = async (address) => {
+  const balances = await web3.getCurrentNodeProvider().addresses.getAddressesAddressBalance(address)
   const balance = balances.balance
   return balance === undefined ? 0n : BigInt(balance)
 }

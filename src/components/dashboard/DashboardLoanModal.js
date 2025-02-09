@@ -15,6 +15,7 @@ import {
 import { getBackendUrl } from '../../lib/configs'
 import AddCollateralModal from './AddCollateralModal'
 import RemoveCollateralModal from './RemoveCollateralModal'
+import RepayLoanModal from './RepayLoanModal'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -58,18 +59,18 @@ const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
 
 const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
   const { account, signer } = useWallet()
-  const [creatorAnsName, setCreatorAnsName] = useState('')
-  const [creatorAnsUri, setCreatorAnsUri] = useState('')
-  const [loaneeAnsName, setLoaneeAnsName] = useState('')
-  const [loaneeAnsUri, setLoaneeAnsUri] = useState('')
+  const [lenderAnsName, setLenderAnsName] = useState('')
+  const [lenderAnsUri, setLenderAnsUri] = useState('')
+  const [borrowerAnsName, setBorrowerAnsName] = useState('')
+  const [borrowerAnsUri, setBorrowerAnsUri] = useState('')
   const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const config = getAlephiumLoanConfig()
   const backendUrl = getBackendUrl()
   const [isAddCollateralModalOpen, setIsAddCollateralModalOpen] = useState(false)
   const [isRemoveCollateralModalOpen, setIsRemoveCollateralModalOpen] = useState(false)
+  const [isRepayModalOpen, setIsRepayModalOpen] = useState(false)
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
@@ -82,25 +83,26 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
   const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
   const riskLevel = getRiskLevel(collateralRatio)
 
-  const isCreator = account?.address === loan.creator
-  const isBorrower = account?.address === loan.loanee
+  const isBorrower = account?.address === loan.borrower
+  const isLender = account?.address === loan.lender
 
   useEffect(() => {
     const getProfiles = async () => {
       try {
         const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
         
-        if (loan.creator) {
-          const creatorProfile = await ans.getProfile(loan.creator)
-          if (creatorProfile?.name) setCreatorAnsName(creatorProfile.name)
-          if (creatorProfile?.imgUri) setCreatorAnsUri(creatorProfile.imgUri)
+        if (loan.lender) {
+          const lenderProfile = await ans.getProfile(loan.lender)
+          if (lenderProfile?.name) setLenderAnsName(lenderProfile.name)
+          if (lenderProfile?.imgUri) setLenderAnsUri(lenderProfile.imgUri)
         }
 
-        if (loan.loanee && loan.loanee !== loan.creator) {
-          const loaneeProfile = await ans.getProfile(loan.loanee)
-          if (loaneeProfile?.name) setLoaneeAnsName(loaneeProfile.name)
-          if (loaneeProfile?.imgUri) setLoaneeAnsUri(loaneeProfile.imgUri)
+        if (loan.borrower && loan.borrower !== loan.lender) {
+          const borrowerProfile = await ans.getProfile(loan.borrower)
+          if (borrowerProfile?.name) setBorrowerAnsName(borrowerProfile.name)
+          if (borrowerProfile?.imgUri) setBorrowerAnsUri(borrowerProfile.imgUri)
         }
+
       } catch (error) {
         console.error("Error fetching ANS profiles:", error)
       }
@@ -118,10 +120,8 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
         }
         
         setTokenPrices(prices)
-        setIsLoadingPrices(false)
       } catch (error) {
         console.error('Error fetching token prices:', error)
-        setIsLoadingPrices(false)
       }
     }
 
@@ -130,33 +130,6 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
       fetchTokenPrices()
     }
   }, [isOpen, loan, config.defaultNodeUrl, config.defaultExplorerUrl, backendUrl])
-
-  const handleRepayLoan = async () => {
-    if (!signer) {
-      setError('Please connect your wallet')
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const result = await PayLoanService(
-        signer,
-        config.loanFactoryContractId,
-        loan.id,
-        loan.tokenRequested,
-        loan.tokenAmount
-      )
-      
-      onClose()
-    } catch (err) {
-      console.error("Error repaying loan:", err)
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
 
   const handleCancelLoan = async () => {
     if (!signer) {
@@ -208,17 +181,6 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
     }
   }
 
-  const handleWithdrawCollateral = async () => {
-    setIsLoading(true)
-    try {
-      console.log("Withdrawing collateral for loan:", loan.id)
-    } catch (error) {
-      console.error("Error withdrawing collateral:", error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose()
@@ -265,12 +227,13 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
 
               <div className="p-6 space-y-6">
                 <div className="grid grid-cols-2 gap-6">
+                  {loan.lender && loan.lender !== DEFAULT_ADDRESS && (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="block text-sm text-gray-400 mb-3">Creator</span>
+                    <span className="block text-sm text-gray-400 mb-3">Lender</span>
                     <div className="flex items-center gap-3">
-                      {creatorAnsUri ? (
+                      {lenderAnsUri ? (
                         <img 
-                          src={creatorAnsUri} 
+                          src={lenderAnsUri} 
                           className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                           alt="" 
                         />
@@ -281,22 +244,23 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                       )}
                       <div>
                         <h4 className="font-medium text-[15px] text-white">
-                          {creatorAnsName || "Unnamed"}
+                          {lenderAnsName || "Unnamed"}
                         </h4>
                         <p className="text-xs text-gray-400">
-                          {shortenAddress(loan.creator)}
+                          {shortenAddress(loan.lender)}
                         </p>
                       </div>
                     </div>
                   </div>
+                  )}
 
-                  {loan.loanee && loan.loanee !== DEFAULT_ADDRESS && (
+                  {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && (
                     <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                       <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                       <div className="flex items-center gap-3">
-                        {loaneeAnsUri ? (
+                        {borrowerAnsUri ? (
                           <img 
-                            src={loaneeAnsUri} 
+                            src={borrowerAnsUri} 
                             className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                             alt="" 
                           />
@@ -307,10 +271,10 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                         )}
                         <div>
                           <h4 className="font-medium text-[15px] text-white">
-                            {loaneeAnsName || "Unnamed"}
+                            {borrowerAnsName || "Unnamed"}
                           </h4>
                           <p className="text-xs text-gray-400">
-                            {shortenAddress(loan.loanee)}
+                            {shortenAddress(loan.borrower)}
                           </p>
                         </div>
                       </div>
@@ -465,10 +429,11 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                       {error}
                     </div>
                   )}
-                  
-                  <button 
-                    onClick={() => setIsAddCollateralModalOpen(true)}
-                    className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
+                  {isBorrower && (
+                    <>
+                    <button 
+                      onClick={() => setIsAddCollateralModalOpen(true)}
+                      className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
                       hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
                       border border-blue-500/20 hover:border-blue-500/30 
                       transition-all duration-300 ease-out
@@ -501,36 +466,31 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                         d="M20 12H4" />
                     </svg>
                   </button>
+                  </>
+                  )}
 
-                  {isBorrower && loan.status === 'active' && (
+                  {isLender && loan.status === 'active' && (
                     <button 
-                      onClick={handleRepayLoan}
-                      disabled={isLoading}
+
+                      onClick={() => setIsRepayModalOpen(true)}
                       className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
                         hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
                         border border-green-500/20 hover:border-green-500/30 
                         transition-all duration-300 ease-out
                         text-green-400 hover:text-green-300 font-medium 
                         shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-                        flex items-center justify-center gap-2
-                        disabled:opacity-50 disabled:cursor-not-allowed"
+                        flex items-center justify-center gap-2"
                     >
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <span>Repay Loan</span>
-                          <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                              d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </>
-                      )}
+                      <span>Repay Loan</span>
+                      <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                          d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                      </svg>
                     </button>
                   )}
                   
-                  {isCreator && loan.status === 'pending' && (
+                  {isBorrower && loan.status === 'pending' && (
                     <button 
                       onClick={handleCancelLoan}
                       disabled={isLoading}
@@ -558,7 +518,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                     </button>
                   )}
                   
-                  {!isCreator && loan.status === 'pending' && (
+                  {!isBorrower && loan.status === 'pending' && (
                     <button 
                       onClick={handleAcceptLoan}
                       disabled={isLoading}
@@ -599,6 +559,12 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
           <RemoveCollateralModal
             isOpen={isRemoveCollateralModalOpen}
             onClose={() => setIsRemoveCollateralModalOpen(false)}
+            loan={loan}
+          />
+
+          <RepayLoanModal
+            isOpen={isRepayModalOpen}
+            onClose={() => setIsRepayModalOpen(false)}
             loan={loan}
           />
         </>
