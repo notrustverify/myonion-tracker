@@ -1,11 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWallet } from '@alephium/web3-react'
 import { getTokensList, getAlephiumLoanConfig } from '../../lib/configs'
-import { AddCollateralService } from '../../services/loan.services'
-import { balanceOf, alphBalanceOf } from '../../lib/utils'
+import { PayLoanService } from '../../services/loan.services'
 
 const getTokenInfo = (tokenId) => {
   const tokens = getTokensList()
@@ -17,36 +16,23 @@ const getTokenInfo = (tokenId) => {
 }
 
 const adjustAmountWithDecimals = (amount, decimals) => {
-  const amountStr = amount.toString()
   return amount * Math.pow(10, decimals)
 }
 
-const AddCollateralModal = ({ isOpen, onClose, loan }) => {
+const RepayLoanModal = ({ isOpen, onClose, loan }) => {
   const { signer } = useWallet()
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const [maxBalance, setMaxBalance] = useState(0)
   const config = getAlephiumLoanConfig()
 
-  useEffect(() => {
-    const fetchBalance = async () => {
-      if (loan?.borrower && loan?.collateralToken) {
-        const balance = loan.collateralToken === '0000000000000000000000000000000000000000000000000000000000000000'
-          ? await alphBalanceOf(loan.borrower)
-          : await balanceOf(loan.collateralToken, loan.borrower)
-        setMaxBalance(Number(balance) / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
-      }
-    }
-    fetchBalance()
-  }, [loan?.borrower, loan?.collateralToken])
-
+  const maxAmount = loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)
 
   const handleSetMaxAmount = () => {
-    setAmount(maxBalance.toString())
+    setAmount(maxAmount.toString())
   }
 
-  const handleAddCollateral = async () => {
+  const handleRepayLoan = async () => {
     if (!amount || isNaN(amount) || amount <= 0) {
       setError('Please enter a valid amount')
       return
@@ -56,11 +42,17 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
     setError(null)
 
     try {
-      const result = await AddCollateralService(signer, config.loanFactoryContractId, loan.id, loan.collateralToken, adjustAmountWithDecimals(amount, getTokenInfo(loan.collateralToken).decimals))
-      window.addTransactionToast('Add Collateral', result.txId)
+      const result = await PayLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id,
+        loan.tokenRequested,
+        adjustAmountWithDecimals(amount, getTokenInfo(loan.tokenRequested).decimals)
+      )
+      window.addTransactionToast('Repay Loan', result.txId)
       onClose()
     } catch (err) {
-      console.error('Error adding collateral:', err)
+      console.error('Error repaying loan:', err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -93,7 +85,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
           >
             <div className="border-b border-gray-700/50 p-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold text-white">Add Collateral</h3>
+                <h3 className="text-2xl font-semibold text-white">Repay Loan</h3>
                 <button
                   onClick={onClose}
                   className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
@@ -108,7 +100,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
             <div className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount to Add
+                  Amount to Repay
                 </label>
                 <div className="relative">
                   <input
@@ -117,31 +109,31 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
-                      placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                      placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-green-500/50
                       [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     <button
                       onClick={handleSetMaxAmount}
-                      className="px-2 py-1 text-xs font-medium text-blue-400 hover:text-blue-300 
-                        bg-blue-500/10 hover:bg-blue-500/20 
-                        border border-blue-500/20 hover:border-blue-500/30 
+                      className="px-2 py-1 text-xs font-medium text-green-400 hover:text-green-300 
+                        bg-green-500/10 hover:bg-green-500/20 
+                        border border-green-500/20 hover:border-green-500/30 
                         rounded-lg transition-colors duration-200"
                     >
                       MAX
                     </button>
                     <img
-                      src={getTokenInfo(loan.collateralToken).logoURI}
-                      alt={getTokenInfo(loan.collateralToken).symbol}
+                      src={getTokenInfo(loan.tokenRequested).logoURI}
+                      alt={getTokenInfo(loan.tokenRequested).symbol}
                       className="w-6 h-6 rounded-full"
                     />
                     <span className="text-gray-400">
-                      {getTokenInfo(loan.collateralToken).symbol}
+                      {getTokenInfo(loan.tokenRequested).symbol}
                     </span>
                   </div>
                 </div>
                 <div className="mt-2 text-sm text-gray-400">
-                  Available balance: {maxBalance.toFixed(6)} {getTokenInfo(loan.collateralToken).symbol}
+                  Max amount: {maxAmount.toFixed(6)} {getTokenInfo(loan.tokenRequested).symbol}
                 </div>
               </div>
 
@@ -152,26 +144,26 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
               )}
 
               <button
-                onClick={handleAddCollateral}
+                onClick={handleRepayLoan}
                 disabled={isLoading}
-                className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                  hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                  border border-blue-500/20 hover:border-blue-500/30 
+                className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+                  hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+                  border border-green-500/20 hover:border-green-500/30 
                   transition-all duration-300 ease-out
-                  text-blue-400 hover:text-blue-300 font-medium 
-                  shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                  text-green-400 hover:text-green-300 font-medium 
+                  shadow-lg shadow-green-900/20 hover:shadow-green-900/30
                   flex items-center justify-center gap-2
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Add Collateral</span>
+                    <span>Repay Loan</span>
                     <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5"
                       fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>
                   </>
                 )}
@@ -184,4 +176,4 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
   )
 }
 
-export default AddCollateralModal 
+export default RepayLoanModal 

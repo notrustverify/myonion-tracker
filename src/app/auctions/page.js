@@ -80,7 +80,8 @@ export default function LiquidationPage() {
             collateralValueUSD,
             loanValueUSD,
             collateralRatio,
-            status: loan.active ? 'active' : 'pending'
+            status: loan.active ? 'active' : 'pending',
+            canLiquidate: loan.canLiquidate
           })
 
           return {
@@ -102,8 +103,8 @@ export default function LiquidationPage() {
           }
         })
         .filter(loan => {
-          console.log(`Filtering loan ${loan.id}: ratio=${loan.collateralRatio}, status=${loan.status}`)
-          return loan.collateralRatio <= 150
+          console.log(`Filtering loan ${loan.id}: ratio=${loan.collateralRatio}, status=${loan.status}, canLiquidate=${loan.canLiquidate}`)
+          return loan.collateralRatio <= 150 && loan.canLiquidate === true
         })
         .sort((a, b) => a.collateralRatio - b.collateralRatio)
 

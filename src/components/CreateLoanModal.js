@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { CreateLoanService } from '../services/loan.services'
 import { getAlephiumLoanConfig, getBackendUrl, getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
+import { alphBalanceOf, balanceOf } from '../lib/utils'
 
 const formatNumber = (number) => {
   if (number === undefined || number === null) return '0'
@@ -103,7 +104,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const tokensList = getTokensList()
   const [loanToken, setLoanToken] = useState(tokensList[0].symbol)
   const [collateralToken, setCollateralToken] = useState(tokensList[0].symbol)
-  const { signer } = useWallet()
+  const { account, signer } = useWallet()
   const [loanAmount, setLoanAmount] = useState('')
   const [collateralAmount, setCollateralAmount] = useState('')
   const [enableLiquidation, setEnableLiquidation] = useState(false)
@@ -113,8 +114,32 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const config = getAlephiumLoanConfig()
   const [tokenPrices, setTokenPrices] = useState({})
   const [isLoadingPrices, setIsLoadingPrices] = useState(true)
+  const [loanTokenBalance, setLoanTokenBalance] = useState(0)
+  const [collateralTokenBalance, setCollateralTokenBalance] = useState(0)
   const tokens = tokensList.map(token => token.symbol)
   const backendUrl = getBackendUrl()
+
+  useEffect(() => {
+    const fetchBalances = async () => {
+      if (account?.address) {
+        const loanTokenInfo = tokensList.find(t => t.symbol === loanToken)
+        const collateralTokenInfo = tokensList.find(t => t.symbol === collateralToken)
+
+        const getLoanBalance = loanTokenInfo.id === '0000000000000000000000000000000000000000000000000000000000000000'
+          ? await alphBalanceOf(account.address)
+          : await balanceOf(loanTokenInfo.id, account.address)
+        
+        const getCollateralBalance = collateralTokenInfo.id === '0000000000000000000000000000000000000000000000000000000000000000'
+          ? await alphBalanceOf(account.address)
+          : await balanceOf(collateralTokenInfo.id, account.address)
+
+        setLoanTokenBalance(Number(getLoanBalance) / Math.pow(10, loanTokenInfo.decimals))
+        setCollateralTokenBalance(Number(getCollateralBalance) / Math.pow(10, collateralTokenInfo.decimals))
+      }
+    }
+
+    fetchBalances()
+  }, [account?.address, loanToken, collateralToken])
 
   useEffect(() => {
     const fetchTokenPrices = async () => {
@@ -181,8 +206,15 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const riskLevel = getRiskLevel(riskRatio)
 
   const adjustAmountWithDecimals = (amount, decimals) => {
-    const amountStr = amount.toString()
     return amount * Math.pow(10, decimals)
+  }
+
+  const handleSetMaxLoanAmount = () => {
+    setLoanAmount(loanTokenBalance.toString())
+  }
+
+  const handleSetMaxCollateralAmount = () => {
+    setCollateralAmount(collateralTokenBalance.toString())
   }
 
   const handleSubmit = async (e) => {
@@ -215,6 +247,30 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const isCollateralRatioValid = () => {
+    const ratio = calculateRiskRatio()
+    return ratio >= 150
+  }
+
+  const isFormValid = () => {
+    return (
+      loanAmount && 
+      collateralAmount && 
+      term && 
+      interestRate && 
+      isCollateralRatioValid()
+    )
+  }
+
+  const getSubmitButtonText = () => {
+    if (isSubmitting) return 'Creating...'
+    if (!loanAmount || !collateralAmount) return 'Enter amounts'
+    if (!term) return 'Enter loan term'
+    if (!interestRate) return 'Enter interest rate'
+    if (!isCollateralRatioValid()) return 'Collateral ratio must be at least 150%'
+    return 'Create Loan Request'
   }
 
   return (
@@ -272,17 +328,31 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
                       />
-                      {!isLoadingPrices && loanAmount && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                          ≈ ${formatNumber(calculateUSDValue(loanAmount, loanToken))}
-                        </div>
-                      )}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <button
+                          onClick={handleSetMaxLoanAmount}
+                          className="px-2 py-1 text-xs font-medium text-green-400 hover:text-green-300 
+                            bg-green-500/10 hover:bg-green-500/20 
+                            border border-green-500/20 hover:border-green-500/30 
+                            rounded-lg transition-colors duration-200"
+                        >
+                          MAX
+                        </button>
+                        {!isLoadingPrices && loanAmount && (
+                          <span className="text-sm text-gray-400">
+                            ≈ ${formatNumber(calculateUSDValue(loanAmount, loanToken))}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <CustomTokenSelect 
                       value={loanToken}
                       onChange={(e) => setLoanToken(e.target.value)}
                       options={tokens}
                     />
+                  </div>
+                  <div className="mt-2 text-sm text-gray-400">
+                    Available balance: {formatNumber(loanTokenBalance)} {loanToken}
                   </div>
                 </div>
 
@@ -302,17 +372,31 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
                       />
-                      {!isLoadingPrices && collateralAmount && (
-                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
-                          ≈ ${formatNumber(calculateUSDValue(collateralAmount, collateralToken))}
-                        </div>
-                      )}
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                        <button
+                          onClick={handleSetMaxCollateralAmount}
+                          className="px-2 py-1 text-xs font-medium text-green-400 hover:text-green-300 
+                            bg-green-500/10 hover:bg-green-500/20 
+                            border border-green-500/20 hover:border-green-500/30 
+                            rounded-lg transition-colors duration-200"
+                        >
+                          MAX
+                        </button>
+                        {!isLoadingPrices && collateralAmount && (
+                          <span className="text-sm text-gray-400">
+                            ≈ ${formatNumber(calculateUSDValue(collateralAmount, collateralToken))}
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <CustomTokenSelect 
                       value={collateralToken}
                       onChange={(e) => setCollateralToken(e.target.value)}
                       options={tokens}
                     />
+                  </div>
+                  <div className="mt-2 text-sm text-gray-400">
+                    Available balance: {formatNumber(collateralTokenBalance)} {collateralToken}
                   </div>
                 </div>
 
@@ -486,7 +570,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                 <div className="pt-4">
                   <button
                     type="submit"
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !isFormValid()}
                     className="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
                     hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
                     border border-green-500/20 hover:border-green-500/30 
@@ -494,9 +578,11 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                     text-green-400 hover:text-green-300 font-medium 
                     shadow-lg shadow-green-900/20 hover:shadow-green-900/30
                     flex items-center justify-center gap-2
-                    disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled:opacity-50 disabled:cursor-not-allowed
+                    disabled:hover:from-green-500/20 disabled:hover:via-green-500/30 disabled:hover:to-green-400/20
+                    disabled:hover:border-green-500/20 disabled:hover:text-green-400"
                   >
-                    <span>{isSubmitting ? 'Creating...' : 'Create Loan Request'}</span>
+                    <span>{getSubmitButtonText()}</span>
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
                     </svg>

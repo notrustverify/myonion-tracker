@@ -41,14 +41,12 @@ const shortenAddress = (address) => {
 }
 
 const LoanModal = ({ isOpen, onClose, loan }) => {
-  const { account, signer } = useWallet()
-  console.log(loan)
-  const [creatorAnsName, setCreatorAnsName] = useState('')
-  const [creatorAnsUri, setCreatorAnsUri] = useState('')
-  const [loaneeAnsName, setLoaneeAnsName] = useState('')
-  const [loaneeAnsUri, setLoaneeAnsUri] = useState('')
+  const { signer } = useWallet()
+  const [lenderAnsName, setLenderAnsName] = useState('')
+  const [lenderAnsUri, setLenderAnsUri] = useState('')
+  const [borrowerAnsName, setBorrowerAnsName] = useState('')
+  const [borrowerAnsUri, setBorrowerAnsUri] = useState('')
   const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const config = getAlephiumLoanConfig();
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
@@ -80,26 +78,34 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
       try {
         const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
         
-        if (loan.creator) {
-          const creatorProfile = await ans.getProfile(loan.creator)
+        if (loan.lender) {
+          const lenderProfile = await ans.getProfile(loan.lender)
         
-          if (creatorProfile?.name) {
-            setCreatorAnsName(creatorProfile.name)
+
+
+          if (lenderProfile?.name) {
+            setLenderAnsName(lenderProfile.name)
           }
-          if (creatorProfile?.imgUri) {
-            setCreatorAnsUri(creatorProfile.imgUri)
+
+
+          if (lenderProfile?.imgUri) {
+            setLenderAnsUri(lenderProfile.imgUri)
           }
         }
 
-        if (loan.loanee && loan.loanee !== DEFAULT_ADDRESS && loan.loanee !== loan.creator) {
-          const loaneeProfile = await ans.getProfile(loan.loanee)
-          
-          if (loaneeProfile?.name) {
-            setLoaneeAnsName(loaneeProfile.name)
+        if (loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender) {
+          const borrowerProfile = await ans.getProfile(loan.borrower)
+
+
+          if (borrowerProfile?.name) {
+            setBorrowerAnsName(borrowerProfile.name)
           }
-          if (loaneeProfile?.imgUri) {
-            setLoaneeAnsUri(loaneeProfile.imgUri)
+
+
+          if (borrowerProfile?.imgUri) {
+            setBorrowerAnsUri(borrowerProfile.imgUri)
           }
+
         }
       } catch (error) {
         console.error('Error fetching ANS profiles:', error)
@@ -124,10 +130,8 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
         }
         
         setTokenPrices(prices)
-        setIsLoadingPrices(false)
       } catch (error) {
         console.error('Error fetching token prices:', error)
-        setIsLoadingPrices(false)
       }
     }
 
@@ -229,6 +233,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
       )
     }
 
+    if (loan.status === 'pending') {
     return (
       <button 
         onClick={handleAcceptLoan}
@@ -256,6 +261,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
         )}
       </button>
     )
+    }
   }
 
   return (
@@ -297,12 +303,13 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-6">
+                {loan.lender && loan.lender !== DEFAULT_ADDRESS && loan.lender !== loan.borrower && (
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="block text-sm text-gray-400 mb-3">Creator</span>
+                  <span className="block text-sm text-gray-400 mb-3">Lender</span>
                   <div className="flex items-center gap-3">
-                    {creatorAnsUri ? (
+                    {lenderAnsUri ? (
                       <img 
-                        src={creatorAnsUri} 
+                        src={lenderAnsUri} 
                         className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                         alt="" 
                       />
@@ -313,22 +320,23 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                     )}
                     <div>
                       <h4 className="font-medium text-[15px] text-white">
-                        {creatorAnsName || "Unnamed"}
+                        {lenderAnsName || "Unnamed"}
                       </h4>
                       <p className="text-xs text-gray-400">
-                        {shortenAddress(loan.creator)}
+                        {shortenAddress(loan.lender)}
                       </p>
                     </div>
                   </div>
                 </div>
+                )}
 
-                {loan.loanee && loan.loanee !== DEFAULT_ADDRESS && loan.loanee !== loan.creator && (
+                {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender && (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                     <div className="flex items-center gap-3">
-                      {loaneeAnsUri ? (
+                      {borrowerAnsUri ? (
                         <img 
-                          src={loaneeAnsUri} 
+                          src={borrowerAnsUri} 
                           className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                           alt="" 
                         />
@@ -339,10 +347,10 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                       )}
                       <div>
                         <h4 className="font-medium text-[15px] text-white">
-                          {loaneeAnsName || "Unnamed"}
+                          {borrowerAnsName || "Unnamed"}
                         </h4>
                         <p className="text-xs text-gray-400">
-                          {shortenAddress(loan.loanee)}
+                          {shortenAddress(loan.borrower)}
                         </p>
                       </div>
                     </div>
