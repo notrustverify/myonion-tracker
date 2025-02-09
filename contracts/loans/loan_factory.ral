@@ -30,6 +30,10 @@ Contract LoanFactory (
     event AcceptedLoan(contract: ByteVec, who: Address)
     event LoanRemoved(contract: ByteVec, who: Address)
     event LoanWithdraw(contract: ByteVec, forfeit: Bool, who: Address)
+
+    event AddCollateralLoan(contract: ByteVec, who: Address, token: ByteVec, amount: U256)
+    event RemoveCollateralLoan(contract: ByteVec, who: Address, token: ByteVec, amount: U256)
+
     event LoanLiquidation(contract: ByteVec, token: ByteVec, startingBid: U256)
 
     event AuctionRedeem(contract: ByteVec, who: Address)
@@ -434,6 +438,8 @@ Contract LoanFactory (
         )
 
         loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
+
+        emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
 
     // loanee market functions - editMinInt, editMaxTime, canLiquidate, add, withdraw, destroy 
@@ -626,6 +632,34 @@ Contract LoanFactory (
             }
         }
     }
+
+    // removeCollateral from loan
+
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
+    pub fn removeCollateral(contractId: ByteVec, amount: U256, tokenOracle: Bool, collateralOracle: Bool) -> () {
+        let loan = Loan(contractId)
+
+        let caller = callerAddress!()
+
+        let (token, tokenAmount) = loan.getTokenRequested()
+        let (collateral, collateralAmount) = loan.getTokenCollateral()
+
+        let (ratio, _) = determineCollateralRatio(
+            token, 
+            tokenAmount,
+            tokenOracle,
+            collateral, 
+            collateralAmount - amount, // remove collateral and perform calculation
+            collateralOracle,
+            0
+        )
+
+        assert!(ratio > 15000, 1) // prevent falling into liquidation
+
+        loan.removeCollateral(caller, amount, ratio)
+
+        emit RemoveCollateralLoan(contractId, caller, collateral, collateralAmount - amount)
+    }
 }
 
 TxScript CreateLoan (
@@ -713,6 +747,30 @@ TxScript ForfeitLoan (
 }
 
 // liquidation and auctions
+
+TxScript AddCollateral (
+    loanFactory: LoanFactory,
+    contractId: ByteVec, 
+    amount: U256, 
+    tokenOracle: Bool, 
+    collateralOracle: Bool
+) {
+    let (token, _) = Loan(contractId).getTokenCollateral()
+
+    loanFactory.addCollateral{callerAddress!() -> token: amount}(contractId, amount, tokenOracle, collateralOracle)
+}
+
+TxScript RemoveCollateral (
+    loanFactory: LoanFactory,
+    contractId: ByteVec, 
+    amount: U256, 
+    tokenOracle: Bool, 
+    collateralOracle: Bool
+) {
+    let (token, _) = Loan(contractId).getTokenCollateral()
+
+    loanFactory.removeCollateral(contractId, amount, tokenOracle, collateralOracle)
+}
 
 TxScript LiquidationLoan (
     loanFactory: LoanFactory,

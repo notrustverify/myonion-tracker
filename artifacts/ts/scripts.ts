@@ -14,6 +14,7 @@ import {
 import { getContractByCodeHash } from "./contracts";
 import { default as AcceptLoanScriptJson } from "../loans/AcceptLoan.ral.json";
 import { default as AcceptMarketScriptJson } from "../loans/AcceptMarket.ral.json";
+import { default as AddCollateralScriptJson } from "../loans/AddCollateral.ral.json";
 import { default as AddFundsScriptJson } from "../loans/AddFunds.ral.json";
 import { default as BidLoanScriptJson } from "../loans/BidLoan.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
@@ -30,6 +31,7 @@ import { default as InsertPairScriptJson } from "../oracle/InsertPair.ral.json";
 import { default as LiquidationLoanScriptJson } from "../loans/LiquidationLoan.ral.json";
 import { default as PayLoanScriptJson } from "../loans/PayLoan.ral.json";
 import { default as RedeemLoanScriptJson } from "../loans/RedeemLoan.ral.json";
+import { default as RemoveCollateralScriptJson } from "../loans/RemoveCollateral.ral.json";
 import { default as RemovePairScriptJson } from "../oracle/RemovePair.ral.json";
 import { default as TokenMappingScriptJson } from "../loans/TokenMapping.ral.json";
 import { default as UpdateBotAddressScriptJson } from "../oracle/UpdateBotAddress.ral.json";
@@ -69,6 +71,17 @@ export const AcceptMarket = new ExecutableScript<{
   loaneeMarket: HexString;
 }>(
   Script.fromJson(AcceptMarketScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const AddCollateral = new ExecutableScript<{
+  loanFactory: HexString;
+  contractId: HexString;
+  amount: bigint;
+  tokenOracle: boolean;
+  collateralOracle: boolean;
+}>(
+  Script.fromJson(AddCollateralScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -212,6 +225,17 @@ export const RedeemLoan = new ExecutableScript<{
   contract: HexString;
 }>(
   Script.fromJson(RedeemLoanScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const RemoveCollateral = new ExecutableScript<{
+  loanFactory: HexString;
+  contractId: HexString;
+  amount: bigint;
+  tokenOracle: boolean;
+  collateralOracle: boolean;
+}>(
+  Script.fromJson(RemoveCollateralScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

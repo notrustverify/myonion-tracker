@@ -75,6 +75,18 @@ export namespace LoanFactoryTypes {
     forfeit: boolean;
     who: Address;
   }>;
+  export type AddCollateralLoanEvent = ContractEvent<{
+    contract: HexString;
+    who: Address;
+    token: HexString;
+    amount: bigint;
+  }>;
+  export type RemoveCollateralLoanEvent = ContractEvent<{
+    contract: HexString;
+    who: Address;
+    token: HexString;
+    amount: bigint;
+  }>;
   export type LoanLiquidationEvent = ContractEvent<{
     contract: HexString;
     token: HexString;
@@ -303,6 +315,15 @@ export namespace LoanFactoryTypes {
       }>;
       result: CallContractResult<null>;
     };
+    removeCollateral: {
+      params: CallContractParams<{
+        contractId: HexString;
+        amount: bigint;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -517,6 +538,15 @@ export namespace LoanFactoryTypes {
       }>;
       result: SignExecuteScriptTxResult;
     };
+    removeCollateral: {
+      params: SignExecuteContractMethodParams<{
+        contractId: HexString;
+        amount: bigint;
+        tokenOracle: boolean;
+        collateralOracle: boolean;
+      }>;
+      result: SignExecuteScriptTxResult;
+    };
   }
   export type SignExecuteMethodParams<T extends keyof SignExecuteMethodTable> =
     SignExecuteMethodTable[T]["params"];
@@ -543,12 +573,14 @@ class Factory extends ContractFactory<
     AcceptedLoan: 1,
     LoanRemoved: 2,
     LoanWithdraw: 3,
-    LoanLiquidation: 4,
-    AuctionRedeem: 5,
-    AuctionBid: 6,
-    MarketCreated: 7,
-    MarketUpdated: 8,
-    MarketDestroyed: 9,
+    AddCollateralLoan: 4,
+    RemoveCollateralLoan: 5,
+    LoanLiquidation: 6,
+    AuctionRedeem: 7,
+    AuctionBid: 8,
+    MarketCreated: 9,
+    MarketUpdated: 10,
+    MarketDestroyed: 11,
   };
   consts = {
     LoanCodes: { NotAdmin: BigInt("0"), TokenSizeTooSmall: BigInt("1") },
@@ -906,6 +938,25 @@ class Factory extends ContractFactory<
     ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
       return testMethod(this, "upgradeContract", params, getContractByCodeHash);
     },
+    removeCollateral: async (
+      params: TestContractParams<
+        LoanFactoryTypes.Fields,
+        {
+          contractId: HexString;
+          amount: bigint;
+          tokenOracle: boolean;
+          collateralOracle: boolean;
+        },
+        LoanFactoryTypes.Maps
+      >
+    ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
+      return testMethod(
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(
@@ -922,8 +973,8 @@ class Factory extends ContractFactory<
 export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
-    "=81-1+72=1-1=2-2+43=2-2+5c=2-2+70=2-2+88=2-2+e0=3430-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=360",
-    "9d7f12c882c8829a54661a52508e060104b25eaa282f9771c295a3a34654c524",
+    "=82-2+3e=2-2+52=2-2+6b=2-2+7f=2-2+97=2-2+ef=2-2+4d=3460-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=548",
+    "34a4d95b599c948beaf2f8f7086cc59d2bf738aa04ca0fd1a5fea7397d031070",
     AllStructs
   )
 );
@@ -999,6 +1050,32 @@ export class LoanFactoryInstance extends ContractInstance {
       this,
       options,
       "LoanWithdraw",
+      fromCount
+    );
+  }
+
+  subscribeAddCollateralLoanEvent(
+    options: EventSubscribeOptions<LoanFactoryTypes.AddCollateralLoanEvent>,
+    fromCount?: number
+  ): EventSubscription {
+    return subscribeContractEvent(
+      LoanFactory.contract,
+      this,
+      options,
+      "AddCollateralLoan",
+      fromCount
+    );
+  }
+
+  subscribeRemoveCollateralLoanEvent(
+    options: EventSubscribeOptions<LoanFactoryTypes.RemoveCollateralLoanEvent>,
+    fromCount?: number
+  ): EventSubscription {
+    return subscribeContractEvent(
+      LoanFactory.contract,
+      this,
+      options,
+      "RemoveCollateralLoan",
       fromCount
     );
   }
@@ -1087,6 +1164,8 @@ export class LoanFactoryInstance extends ContractInstance {
       | LoanFactoryTypes.AcceptedLoanEvent
       | LoanFactoryTypes.LoanRemovedEvent
       | LoanFactoryTypes.LoanWithdrawEvent
+      | LoanFactoryTypes.AddCollateralLoanEvent
+      | LoanFactoryTypes.RemoveCollateralLoanEvent
       | LoanFactoryTypes.LoanLiquidationEvent
       | LoanFactoryTypes.AuctionRedeemEvent
       | LoanFactoryTypes.AuctionBidEvent
@@ -1386,6 +1465,17 @@ export class LoanFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    removeCollateral: async (
+      params: LoanFactoryTypes.CallMethodParams<"removeCollateral">
+    ): Promise<LoanFactoryTypes.CallMethodResult<"removeCollateral">> => {
+      return callMethod(
+        LoanFactory,
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -1549,6 +1639,13 @@ export class LoanFactoryInstance extends ContractInstance {
       params: LoanFactoryTypes.SignExecuteMethodParams<"upgradeContract">
     ): Promise<LoanFactoryTypes.SignExecuteMethodResult<"upgradeContract">> => {
       return signExecuteMethod(LoanFactory, this, "upgradeContract", params);
+    },
+    removeCollateral: async (
+      params: LoanFactoryTypes.SignExecuteMethodParams<"removeCollateral">
+    ): Promise<
+      LoanFactoryTypes.SignExecuteMethodResult<"removeCollateral">
+    > => {
+      return signExecuteMethod(LoanFactory, this, "removeCollateral", params);
     },
   };
 
