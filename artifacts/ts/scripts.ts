@@ -14,6 +14,7 @@ import {
 import { getContractByCodeHash } from "./contracts";
 import { default as AcceptLoanScriptJson } from "../loans/AcceptLoan.ral.json";
 import { default as AcceptMarketScriptJson } from "../loans/AcceptMarket.ral.json";
+import { default as AddCollateralScriptJson } from "../loans/AddCollateral.ral.json";
 import { default as AddFundsScriptJson } from "../loans/AddFunds.ral.json";
 import { default as BidLoanScriptJson } from "../loans/BidLoan.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
@@ -69,6 +70,17 @@ export const AcceptMarket = new ExecutableScript<{
   loaneeMarket: HexString;
 }>(
   Script.fromJson(AcceptMarketScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const AddCollateral = new ExecutableScript<{
+  loanFactory: HexString;
+  contractId: HexString;
+  amount: bigint;
+  tokenOracle: boolean;
+  collateralOracle: boolean;
+}>(
+  Script.fromJson(AddCollateralScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

@@ -714,6 +714,18 @@ TxScript ForfeitLoan (
 
 // liquidation and auctions
 
+TxScript AddCollateral (
+    loanFactory: LoanFactory,
+    contractId: ByteVec, 
+    amount: U256, 
+    tokenOracle: Bool, 
+    collateralOracle: Bool
+) {
+    let (token, _) = Loan(contractId).getTokenCollateral()
+
+    loanFactory.addCollateral{callerAddress!() -> token: amount}(contractId, amount, tokenOracle, collateralOracle)
+}
+
 TxScript LiquidationLoan (
     loanFactory: LoanFactory,
     contract: ByteVec,

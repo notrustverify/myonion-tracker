@@ -33,7 +33,7 @@ const deployScript: DeployFunction<Settings> = async (
         addressVal(deployer.account.address),
         byteVecVal("38d777236fc0553ea388b43355f01e3ffb8047b2d7c9fe07d9b6fb5aa506be00"),
         byteVecVal("8457244d771cb3097dbf07b141a9eda9863292b4f5954b2ace53eceb9cef7d00"),
-        addressVal("285zrkZTPpUCpjKg9E3z238VmpUBQEAbESGsJT6yX7Rod"),
+        byteVecVal("c70f64b8d77fa03c807c1a6c133878481b640efbd9b36d30412d828f01000f00"), // alephium oracle
         byteVecVal("02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00")
       ])
     
