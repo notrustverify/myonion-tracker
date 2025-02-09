@@ -316,6 +316,9 @@ Contract Loan (
         // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
 
+        // cannot remove if the loan is active
+        assert!(active == false, 7)
+
         // transfer additional collateral to offset liquidation
         transferToken!(selfAddress!(), caller, ALPH, dustAmount!())
         transferToken!(selfAddress!(), caller, collateralToken, collateralRemoved)
