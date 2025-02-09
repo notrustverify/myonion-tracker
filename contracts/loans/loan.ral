@@ -182,9 +182,6 @@ Contract Loan (
         // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
 
-        // confirm it's active
-        assert!(active == true, 3)
-
         // transfer additional collateral to offset liquidation
         transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
         collateralAmount = collateralAmount + collateralAdded
@@ -309,6 +306,26 @@ Contract Loan (
 
         migrateWithFields!(newCode, immFields, mutFields)
     } 
+
+    // remove collateral
+
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    pub fn removeCollateral(caller: Address, collateralRemoved: U256, newRatio: U256) -> (U256) {
+        checkCaller!(callerAddress!() == parentContract, 0)
+
+        // confirm the contract is a liquid contract and can be given collateral
+        assert!(canLiquidate == true, 6)
+
+        // transfer additional collateral to offset liquidation
+        transferToken!(selfAddress!(), caller, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), caller, collateralToken, collateralRemoved)
+        collateralAmount = collateralAmount - collateralRemoved
+        
+        // assign new ratio
+        ratio = newRatio
+
+        return collateralAmount
+    }
 }
 
 TxScript ForceCancel (

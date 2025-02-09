@@ -13,25 +13,25 @@
   "infos": {
     "AcceptLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "AcceptMarket": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "AddCollateral": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "AddFunds": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -43,61 +43,61 @@
     },
     "BidLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "CancelLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "CreateLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "CreateLoaneeMarket": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "DIAOracleValue": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "DestroyLoanFactory": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "DestroyMarket": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "EditLoanRate": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "EditMarketValues": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "ForceCancel": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "1aea04b5b1d30e261e230f50af77febd9cd4a9e492055bd053f44aa9a08e024d",
+      "sourceCodeHash": "9a6f185894beed3c72563f068779cb5bfc8c92fb8800653732dfad194ac0e039",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -109,13 +109,13 @@
     },
     "ForfeitLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "IDIAOracle": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -127,21 +127,21 @@
     },
     "LiquidationLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "Loan": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "1aea04b5b1d30e261e230f50af77febd9cd4a9e492055bd053f44aa9a08e024d",
+      "sourceCodeHash": "9a6f185894beed3c72563f068779cb5bfc8c92fb8800653732dfad194ac0e039",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "dec78f5aef860c3aeff65d79d8e8e6c4db344b6b62c051c45d83cdf57a9eb6c5"
+      "codeHashDebug": "857d9d261e385d1a10da67a0bfd71dee062d26e9946b2ef18beb7e80980649b5"
     },
     "LoanFactory": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
-      "bytecodeDebugPatch": "=81-1+72=1-1=2-2+43=2-2+5c=2-2+70=2-2+88=2-2+e0=3430-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=360",
-      "codeHashDebug": "9d7f12c882c8829a54661a52508e060104b25eaa282f9771c295a3a34654c524"
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
+      "bytecodeDebugPatch": "=82-2+3e=2-2+52=2-2+6b=2-2+7f=2-2+97=2-2+ef=2-2+4d=3460-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=548",
+      "codeHashDebug": "34a4d95b599c948beaf2f8f7086cc59d2bf738aa04ca0fd1a5fea7397d031070"
     },
     "LoanMarket": {
       "sourceFile": "loans/loan_market.ral",
@@ -157,19 +157,25 @@
     },
     "PairInfo": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "PayLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "RedeemLoan": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
+      "bytecodeDebugPatch": "",
+      "codeHashDebug": ""
+    },
+    "RemoveCollateral": {
+      "sourceFile": "loans/loan_factory.ral",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -181,7 +187,7 @@
     },
     "TokenMapping": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -193,25 +199,25 @@
     },
     "UpdateLoanCode": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "1aea04b5b1d30e261e230f50af77febd9cd4a9e492055bd053f44aa9a08e024d",
+      "sourceCodeHash": "9a6f185894beed3c72563f068779cb5bfc8c92fb8800653732dfad194ac0e039",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "UpdateLoanFactoryCode": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "UpdateLoanFactoryFields": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "UpdateLoanFields": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "1aea04b5b1d30e261e230f50af77febd9cd4a9e492055bd053f44aa9a08e024d",
+      "sourceCodeHash": "9a6f185894beed3c72563f068779cb5bfc8c92fb8800653732dfad194ac0e039",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -241,19 +247,19 @@
     },
     "UpgradeContract": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "WithdrawFunds": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "WithdrawLoanFactoryFees": {
       "sourceFile": "loans/loan_factory.ral",
-      "sourceCodeHash": "9a75547cafecab6f0ccb8ecdd8d6e4d95cde9d9998894cf04201b01b73ab73bd",
+      "sourceCodeHash": "e4ff1ceec5cc22c180103ff52a313acdf837ab39efc451e3de329c04f1214a83",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     }

@@ -143,6 +143,14 @@ export namespace LoanTypes {
       }>;
       result: CallContractResult<null>;
     };
+    removeCollateral: {
+      params: CallContractParams<{
+        caller: Address;
+        collateralRemoved: bigint;
+        newRatio: bigint;
+      }>;
+      result: CallContractResult<bigint>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -244,6 +252,14 @@ export namespace LoanTypes {
         newCode: HexString;
         immFields: HexString;
         mutFields: HexString;
+      }>;
+      result: SignExecuteScriptTxResult;
+    };
+    removeCollateral: {
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        collateralRemoved: bigint;
+        newRatio: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -442,6 +458,19 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         getContractByCodeHash
       );
     },
+    removeCollateral: async (
+      params: TestContractParamsWithoutMaps<
+        LoanTypes.Fields,
+        { caller: Address; collateralRemoved: bigint; newRatio: bigint }
+      >
+    ): Promise<TestContractResultWithoutMaps<bigint>> => {
+      return testMethod(
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(initFields: LoanTypes.Fields, asset?: Asset, address?: string) {
@@ -454,7 +483,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "dec78f5aef860c3aeff65d79d8e8e6c4db344b6b62c051c45d83cdf57a9eb6c5",
+    "857d9d261e385d1a10da67a0bfd71dee062d26e9946b2ef18beb7e80980649b5",
     AllStructs
   )
 );
@@ -651,6 +680,17 @@ export class LoanInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    removeCollateral: async (
+      params: LoanTypes.CallMethodParams<"removeCollateral">
+    ): Promise<LoanTypes.CallMethodResult<"removeCollateral">> => {
+      return callMethod(
+        Loan,
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -743,6 +783,11 @@ export class LoanInstance extends ContractInstance {
       params: LoanTypes.SignExecuteMethodParams<"updateLoanFields">
     ): Promise<LoanTypes.SignExecuteMethodResult<"updateLoanFields">> => {
       return signExecuteMethod(Loan, this, "updateLoanFields", params);
+    },
+    removeCollateral: async (
+      params: LoanTypes.SignExecuteMethodParams<"removeCollateral">
+    ): Promise<LoanTypes.SignExecuteMethodResult<"removeCollateral">> => {
+      return signExecuteMethod(Loan, this, "removeCollateral", params);
     },
   };
 

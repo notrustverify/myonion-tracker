@@ -31,6 +31,7 @@ import { default as InsertPairScriptJson } from "../oracle/InsertPair.ral.json";
 import { default as LiquidationLoanScriptJson } from "../loans/LiquidationLoan.ral.json";
 import { default as PayLoanScriptJson } from "../loans/PayLoan.ral.json";
 import { default as RedeemLoanScriptJson } from "../loans/RedeemLoan.ral.json";
+import { default as RemoveCollateralScriptJson } from "../loans/RemoveCollateral.ral.json";
 import { default as RemovePairScriptJson } from "../oracle/RemovePair.ral.json";
 import { default as TokenMappingScriptJson } from "../loans/TokenMapping.ral.json";
 import { default as UpdateBotAddressScriptJson } from "../oracle/UpdateBotAddress.ral.json";
@@ -224,6 +225,17 @@ export const RedeemLoan = new ExecutableScript<{
   contract: HexString;
 }>(
   Script.fromJson(RedeemLoanScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const RemoveCollateral = new ExecutableScript<{
+  loanFactory: HexString;
+  contractId: HexString;
+  amount: bigint;
+  tokenOracle: boolean;
+  collateralOracle: boolean;
+}>(
+  Script.fromJson(RemoveCollateralScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
