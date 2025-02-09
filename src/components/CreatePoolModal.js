@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
@@ -9,9 +9,21 @@ const CustomTokenSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false)
   const tokensList = getTokensList()
   const selectedToken = tokensList.find(t => t.symbol === value)
+  const dropdownRef = useRef(null)
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
-    <div className="relative min-w-[140px]">
+    <div className="relative min-w-[140px]" ref={dropdownRef}>
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
