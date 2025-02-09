@@ -7,7 +7,7 @@ import { ANS } from '@alph-name-service/ans-sdk'
 import { AiOutlineUser } from "react-icons/ai"
 import { getAlephiumLoanConfig } from '../lib/configs';
 import { useWallet } from '@alephium/web3-react'
-import { AcceptLoanService } from '../services/loan.services'
+import { AcceptLoanService, LiquidateLoanService } from '../services/loan.services'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -160,7 +160,8 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
         loan.tokenRequested,
         loan.tokenAmount
       )
-      
+      window.addTransactionToast('Accepting Loan', result.txId)
+
       onClose()
     } catch (err) {
       console.error("Error accepting loan:", err)
@@ -168,6 +169,93 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  const handleLiquidate = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const result = await LiquidateLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id
+      )
+      window.addTransactionToast('Liquidating Loan', result.txId)
+      
+      onClose()
+    } catch (err) {
+      console.error("Error liquidating loan:", err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const renderActionButton = () => {
+    const isLiquidatable = (parseFloat(collateralRatio) <= 150)
+    
+    if (isLiquidatable) {
+      return (
+        <button 
+          onClick={handleLiquidate}
+          disabled={isLoading}
+          className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+            hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+            border border-red-500/20 hover:border-red-500/30 
+            transition-all duration-300 ease-out
+            text-red-400 hover:text-red-300 font-medium 
+            shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+            flex items-center justify-center gap-2
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>Liquidate Loan</span>
+              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
+          )}
+        </button>
+      )
+    }
+
+    return (
+      <button 
+        onClick={handleAcceptLoan}
+        disabled={isLoading}
+        className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+          hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+          border border-green-500/20 hover:border-green-500/30 
+          transition-all duration-300 ease-out
+          text-green-400 hover:text-green-300 font-medium 
+          shadow-lg shadow-green-900/20 hover:shadow-green-900/30
+          flex items-center justify-center gap-2
+          disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isLoading ? (
+          <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+        ) : (
+          <>
+            <span>Accept Loan</span>
+            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </>
+        )}
+      </button>
+    )
   }
 
   return (
@@ -410,31 +498,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   </div>
                 )}
                 
-                <button 
-                  onClick={handleAcceptLoan}
-                  disabled={isLoading}
-                  className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-                    hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-                    border border-green-500/20 hover:border-green-500/30 
-                    transition-all duration-300 ease-out
-                    text-green-400 hover:text-green-300 font-medium 
-                    shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-                    flex items-center justify-center gap-2
-                    disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isLoading ? (
-                    <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-                  ) : (
-                    <>
-                      <span>Accept Loan</span>
-                      <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                        fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    </>
-                  )}
-                </button>
+                {renderActionButton()}
               </div>
             </div>
           </motion.div>
