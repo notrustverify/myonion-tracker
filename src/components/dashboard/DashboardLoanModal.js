@@ -14,6 +14,7 @@ import {
 } from '../../services/loan.services'
 import { getBackendUrl } from '../../lib/configs'
 import AddCollateralModal from './AddCollateralModal'
+import RemoveCollateralModal from './RemoveCollateralModal'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -68,6 +69,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
   const config = getAlephiumLoanConfig()
   const backendUrl = getBackendUrl()
   const [isAddCollateralModalOpen, setIsAddCollateralModalOpen] = useState(false)
+  const [isRemoveCollateralModalOpen, setIsRemoveCollateralModalOpen] = useState(false)
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
@@ -482,6 +484,24 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                     </svg>
                   </button>
 
+                  <button 
+                    onClick={() => setIsRemoveCollateralModalOpen(true)}
+                    className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                      hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                      border border-red-500/20 hover:border-red-500/30 
+                      transition-all duration-300 ease-out
+                      text-red-400 hover:text-red-300 font-medium 
+                      shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+                      flex items-center justify-center gap-2"
+                  >
+                    <span>Remove Collateral</span>
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                        d="M20 12H4" />
+                    </svg>
+                  </button>
+
                   {isBorrower && loan.status === 'active' && (
                     <button 
                       onClick={handleRepayLoan}
@@ -570,13 +590,17 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
             </motion.div>
           </motion.div>
 
-          {isAddCollateralModalOpen && (
-            <AddCollateralModal
-              isOpen={isAddCollateralModalOpen}
-              onClose={() => setIsAddCollateralModalOpen(false)}
-              loan={loan}
-            />
-          )}
+          <AddCollateralModal
+            isOpen={isAddCollateralModalOpen}
+            onClose={() => setIsAddCollateralModalOpen(false)}
+            loan={loan}
+          />
+
+          <RemoveCollateralModal
+            isOpen={isRemoveCollateralModalOpen}
+            onClose={() => setIsRemoveCollateralModalOpen(false)}
+            loan={loan}
+          />
         </>
       )}
     </AnimatePresence>

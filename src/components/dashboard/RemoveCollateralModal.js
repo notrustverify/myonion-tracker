@@ -4,7 +4,8 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useWallet } from '@alephium/web3-react'
 import { getTokensList, getAlephiumLoanConfig } from '../../lib/configs'
-import { AddCollateralService } from '../../services/loan.services'
+import { RemoveCollateralService } from '../../services/loan.services'
+
 const getTokenInfo = (tokenId) => {
   const tokens = getTokensList()
   return tokens.find(t => t.id === tokenId) || {
@@ -19,14 +20,14 @@ const adjustAmountWithDecimals = (amount, decimals) => {
   return amount * Math.pow(10, decimals)
 }
 
-const AddCollateralModal = ({ isOpen, onClose, loan }) => {
+const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
   const { signer } = useWallet()
   const [amount, setAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const config = getAlephiumLoanConfig()
 
-  const handleAddCollateral = async () => {
+  const handleRemoveCollateral = async () => {
     if (!amount || isNaN(amount) || amount <= 0) {
       setError('Please enter a valid amount')
       return
@@ -36,13 +37,16 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
     setError(null)
 
     try {
-      const result = await AddCollateralService(signer, config.loanFactoryContractId, loan.id, loan.collateralToken, adjustAmountWithDecimals(amount, getTokenInfo(loan.collateralToken).decimals))
-      window.addTransactionToast('Add Collateral', result.txId)
+      const result = await RemoveCollateralService(
+        signer, 
+        config.loanFactoryContractId, 
+        loan.id, 
+        adjustAmountWithDecimals(amount, getTokenInfo(loan.collateralToken).decimals)
+      )
+      window.addTransactionToast('Remove Collateral', result.txId)
       onClose()
     } catch (err) {
-
-
-      console.error('Error adding collateral:', err)
+      console.error('Error removing collateral:', err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -75,7 +79,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
           >
             <div className="border-b border-gray-700/50 p-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold text-white">Add Collateral</h3>
+                <h3 className="text-2xl font-semibold text-white">Remove Collateral</h3>
                 <button
                   onClick={onClose}
                   className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
@@ -90,7 +94,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
             <div className="p-6 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-300 mb-2">
-                  Amount to Add
+                  Amount to Remove
                 </label>
                 <div className="relative">
                   <input
@@ -99,7 +103,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
                     onChange={(e) => setAmount(e.target.value)}
                     placeholder="0.00"
                     className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
-                      placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50
+                      placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-red-500/50
                       [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2 pointer-events-none">
@@ -122,26 +126,26 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
               )}
 
               <button
-                onClick={handleAddCollateral}
+                onClick={handleRemoveCollateral}
                 disabled={isLoading}
-                className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                  hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                  border border-blue-500/20 hover:border-blue-500/30 
+                className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                  hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                  border border-red-500/20 hover:border-red-500/30 
                   transition-all duration-300 ease-out
-                  text-blue-400 hover:text-blue-300 font-medium 
-                  shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                  text-red-400 hover:text-red-300 font-medium 
+                  shadow-lg shadow-red-900/20 hover:shadow-red-900/30
                   flex items-center justify-center gap-2
                   disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                  <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>Add Collateral</span>
+                    <span>Remove Collateral</span>
                     <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5"
                       fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        d="M20 12H4" />
                     </svg>
                   </>
                 )}
@@ -154,4 +158,4 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
   )
 }
 
-export default AddCollateralModal 
+export default RemoveCollateralModal 

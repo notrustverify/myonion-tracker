@@ -6,7 +6,7 @@ import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
-import { getBackendUrl } from '../../lib/configs'
+import { getBackendUrl, getTokensList } from '../../lib/configs'
 
 export default function LoanPage() {
   const [activeFilter, setActiveFilter] = useState('all loans')
@@ -19,6 +19,37 @@ export default function LoanPage() {
     totalPages: 1,
     total: 0
   })
+  const [tokenPrices, setTokenPrices] = useState({})
+
+  const fetchTokenPrices = useCallback(async () => {
+    try {
+      const tokensList = getTokensList()
+      const prices = {}
+      
+      for (const token of tokensList) {
+        const response = await fetch(`${backendUrl}/api/market-data?assetId=${token.id}`, {
+          method: 'GET',
+          mode: 'cors',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        })
+        const data = await response.json()
+        prices[token.id] = data.priceUSD
+      }
+      
+      setTokenPrices(prices)
+    } catch (error) {
+      console.error('Error fetching token prices:', error)
+    }
+  }, [backendUrl])
+
+  useEffect(() => {
+    fetchTokenPrices()
+    // Refresh prices every minute
+    const interval = setInterval(fetchTokenPrices, 60000)
+    return () => clearInterval(interval)
+  }, [fetchTokenPrices])
 
   const fetchLoans = useCallback(async (page = 1) => {
     setLoading(true)
@@ -43,35 +74,44 @@ export default function LoanPage() {
       const response = await fetch(url)
       const data = await response.json()
       
-      const transformedLoans = data.loans.map(loan => {
-        return {
-          value: loan.tokenAmount,
-          currency: loan.tokenRequested,
-          collateralAmount: loan.collateralAmount,
-          collateralCurrency: loan.collateralToken,
-          term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
-          interest: Number(loan.interest),
-          lender: loan.creator,
-          borrower: loan.loanee,
-          status: loan.active ? 'active' : 'pending',
-          id: loan.id,
-          liquidation: loan.liquidation,
-          canLiquidate: loan.canLiquidate
-        }
-      })
+      const transformedLoans = data.loans
+        .map(loan => {
+          const collateralValueUSD = (loan.collateralAmount * tokenPrices[loan.collateralToken]) || 0
+          const loanValueUSD = (loan.tokenAmount * tokenPrices[loan.tokenRequested]) || 0
+          const collateralRatio = loanValueUSD > 0 ? (collateralValueUSD / loanValueUSD) * 100 : 0
+
+          return {
+            value: loan.tokenAmount,
+            currency: loan.tokenRequested,
+            collateralAmount: loan.collateralAmount,
+            collateralCurrency: loan.collateralToken,
+            term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
+            interest: Number(loan.interest),
+            lender: loan.creator,
+            borrower: loan.loanee,
+            status: loan.active ? 'active' : 'pending',
+            id: loan.id,
+            liquidation: loan.liquidation,
+            canLiquidate: loan.canLiquidate,
+            collateralRatio: collateralRatio,
+            collateralValueUSD,
+            loanValueUSD
+          }
+        })
+        .filter(loan => loan.collateralRatio >= 150)
 
       setLoans(transformedLoans)
       setPagination({
         currentPage: data.page,
-        totalPages: data.totalPages,
-        total: data.total
+        totalPages: Math.ceil(transformedLoans.length / limit),
+        total: transformedLoans.length
       })
     } catch (error) {
       console.error('Error fetching loans:', error)
     } finally {
       setLoading(false)
     }
-  }, [activeFilter])
+  }, [activeFilter, tokenPrices, backendUrl])
 
   useEffect(() => {
     fetchLoans(1)
