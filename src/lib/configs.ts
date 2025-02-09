@@ -1,4 +1,4 @@
-import { NetworkId } from "@alephium/web3"
+import { NetworkId, NodeProvider } from "@alephium/web3"
 import { loadDeployments } from "../../artifacts/ts/deployments"
 
 export interface AlephiumLoanConfig {
@@ -28,9 +28,14 @@ export function getNetwork(): NetworkId {
   return network
 }
 
+export function getNodeProvider(): NodeProvider {
+  return new NodeProvider(getDefaultNodeUrl())
+}
+
 export function getDefaultNodeUrl(): string {
   return 'https://node.alphaga.app'
 }
+
 
 export function getDefaultExplorerUrl(): string {
   return 'https://backend.mainnet.alephium.org'
@@ -117,7 +122,7 @@ export function getTokensList(): TokenInfo[] {
       decimals: 18,
       description: "USDT Bridged to Alephium from BSC via Alephium Bridge",
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTbsc.png",
-    },
+    },*/
     {
       id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
       name: "AlphBanX",
@@ -125,6 +130,30 @@ export function getTokensList(): TokenInfo[] {
       decimals: 9,
       description: "AlphBanX is a decentralized lending platform that allows you to borrow AlphBanX Dollars using ALPH as collateral. Choose your own interest rate and bet on liquidations - earning yield from borrowing fees and from liquidated loans.",
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ABX.png"
-    },*/
+    },
+    {
+      id: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
+      name: "Elexium",
+      symbol: "EX",
+      decimals: 18,
+      description: "Elexium: The People’s Choice. The first VE dex on Alephium Blockchain",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/EX.png"
+    },
+    {
+      id: "bb440a66dcffdb75862b6ad6df14d659aa6d1ba8490f6282708aa44ebc80a100",
+      name: "AlphPad",
+      symbol: "APAD",
+      decimals: 18,
+      description: "AlphPad The Premier Launchpad on Alephium - Elevating Projects to New Heights!",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/APAD.png"
+    },
+    {
+      id: "c1a33b163fc45db6b8466ee78d20c61072b6aac07baa37ffbf33a3dec9f17800",
+      name: "Wrapped BNB (AlphBridge)",
+      symbol: "WBNB",
+      decimals: 18,
+      description: "BNB Bridged to Alephium from Alephium Bridge",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/WBNB.png"
+    },
   ]
 }

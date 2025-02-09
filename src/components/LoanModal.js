@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getTokensList } from '../lib/configs'
+import { getBackendUrl, getTokensList } from '../lib/configs'
 import { ANS } from '@alph-name-service/ans-sdk'
 import { AiOutlineUser } from "react-icons/ai"
 import { getAlephiumLoanConfig } from '../lib/configs';
@@ -33,23 +33,34 @@ const getTokenInfo = (tokenId) => {
   }
 }
 
+const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
+
 const shortenAddress = (address) => {
-  if (!address) return "Unknown"
+  if (!address || address === DEFAULT_ADDRESS) return "No borrower yet"
   return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
 const LoanModal = ({ isOpen, onClose, loan }) => {
   const { account, signer } = useWallet()
+  console.log(loan)
   const [creatorAnsName, setCreatorAnsName] = useState('')
   const [creatorAnsUri, setCreatorAnsUri] = useState('')
   const [loaneeAnsName, setLoaneeAnsName] = useState('')
   const [loaneeAnsUri, setLoaneeAnsUri] = useState('')
+  const [tokenPrices, setTokenPrices] = useState({})
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const config = getAlephiumLoanConfig();
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
+  const backendUrl = getBackendUrl()
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
+
+  const usdTokenAmount = tokenPrices[loan.tokenRequested] ? 
+    formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
+  const usdCollateralAmount = tokenPrices[loan.collateralToken] ? 
+    formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
 
   const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
 
@@ -80,7 +91,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
           }
         }
 
-        if (loan.loanee && loan.loanee !== loan.creator) {
+        if (loan.loanee && loan.loanee !== DEFAULT_ADDRESS && loan.loanee !== loan.creator) {
           const loaneeProfile = await ans.getProfile(loan.loanee)
           
           if (loaneeProfile?.name) {
@@ -91,7 +102,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
           }
         }
       } catch (error) {
-        console.error("Error fetching ANS profiles:", error)
+        console.error('Error fetching ANS profiles:', error)
       }
     }
 
@@ -99,6 +110,31 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
       getProfiles()
     }
   }, [isOpen, loan])
+
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      try {
+        const tokens = [loan.tokenRequested, loan.collateralToken]
+        const prices = {}
+        
+        for (const token of tokens) {
+          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
+          const data = await response.json()
+          prices[token] = data.priceUSD
+        }
+        
+        setTokenPrices(prices)
+        setIsLoadingPrices(false)
+      } catch (error) {
+        console.error('Error fetching token prices:', error)
+        setIsLoadingPrices(false)
+      }
+    }
+
+    if (isOpen) {
+      fetchTokenPrices()
+    }
+  }, [isOpen, loan.tokenRequested, loan.collateralToken, backendUrl])
 
   if (!isOpen) return null
 
@@ -198,7 +234,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   </div>
                 </div>
 
-                {loan.loanee && loan.loanee !== loan.creator && (
+                {loan.loanee && loan.loanee !== DEFAULT_ADDRESS && loan.loanee !== loan.creator && (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                     <div className="flex items-center gap-3">
@@ -243,6 +279,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                         {getTokenInfo(loan.tokenRequested).symbol}
                       </span>
                     </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      ≈ ${usdTokenAmount}
+                    </div>
                   </div>
                 </div>
                 <div>
@@ -260,6 +299,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                       <span className="text-gray-400">
                         {getTokenInfo(loan.collateralToken).symbol}
                       </span>
+                    </div>
+                    <div className="mt-1 text-sm text-gray-500">
+                      ≈ ${usdCollateralAmount}
                     </div>
                   </div>
                 </div>
@@ -286,108 +328,80 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                 </div>
               </div>
 
-              <AnimatePresence mode="wait">
-                {loan.liquidation && (
+              <div className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Risk Level</span>
+                  <div className="flex items-center gap-2">
+                    <motion.span className={`font-medium ${
+                      riskLevel === 'conservative' ? 'text-green-500' :
+                      riskLevel === 'moderate' ? 'text-yellow-500' :
+                      riskLevel === 'aggressive' ? 'text-orange-500' :
+                      riskLevel === 'high' ? 'text-red-500' :
+                      'text-red-600'
+                    }`}>
+                      {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
+                    </motion.span>
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex">
+                    <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                    <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                    <div className="w-[34%] h-full"></div>
+                  </div>
+
+                  <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: `${(() => {
+                          const ratio = parseFloat(collateralRatio);
+                          if (ratio <= 150) return 0;
+                          if (ratio <= 200) return ((ratio - 150) / 50) * 33;
+                          if (ratio <= 300) return 33 + ((ratio - 200) / 100) * 33;
+                          if (ratio <= 400) return 66 + ((ratio - 300) / 100) * 34;
+                          return 100;
+                        })()}%`,
+                        transition: { duration: 0.5, ease: "easeOut" }
+                      }}
+                      className={`h-full transition-all duration-300 ${
+                        riskLevel === 'conservative' ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                        riskLevel === 'moderate' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
+                        riskLevel === 'aggressive' ? 'bg-gradient-to-r from-orange-500 to-orange-400' :
+                        riskLevel === 'high' ? 'bg-gradient-to-r from-red-500 to-red-400' :
+                        'bg-gradient-to-r from-red-700 to-red-600'
+                      }`}
+                    />
+                  </div>
+
                   <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ 
-                      opacity: 1, 
-                      height: 'auto',
-                      transition: {
-                        height: {
-                          duration: 0.3
-                        },
-                        opacity: {
-                          duration: 0.2,
-                          delay: 0.1
-                        }
-                      }
-                    }}
-                    exit={{ 
-                      opacity: 0,
-                      height: 0,
-                      transition: {
-                        height: {
-                          duration: 0.2
-                        },
-                        opacity: {
-                          duration: 0.1
-                        }
-                      }
-                    }}
-                    className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-between text-xs mt-1 px-1"
                   >
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-400">Risk Level</span>
-                      <motion.span 
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className={`font-medium ${
-                          riskLevel === 'conservative' ? 'text-green-500' :
-                          riskLevel === 'moderate' ? 'text-yellow-500' :
-                          riskLevel === 'aggressive' ? 'text-orange-500' :
-                          riskLevel === 'high' ? 'text-red-500' :
-                          'text-red-600'
-                        }`}
-                      >
-                        {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
-                      </motion.span>
-                    </div>
-                    
-                    <div className="relative">
-                      <div className="absolute inset-0 flex">
-                        <div className="w-[30%] h-full border-r border-gray-700/50"></div>
-                        <div className="w-[20%] h-full border-r border-gray-700/50"></div>
-                        <div className="w-[20%] h-full border-r border-gray-700/50"></div>
-                        <div className="w-[30%] h-full"></div>
-                      </div>
-
-                      <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ 
-                            width: `${Math.min(100, (parseFloat(collateralRatio) / 500) * 100)}%`,
-                            transition: { duration: 0.5, ease: "easeOut" }
-                          }}
-                          className={`h-full transition-all duration-300 ${
-                            riskLevel === 'conservative' ? 'bg-gradient-to-r from-green-500 to-green-400' :
-                            riskLevel === 'moderate' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
-                            riskLevel === 'aggressive' ? 'bg-gradient-to-r from-orange-500 to-orange-400' :
-                            riskLevel === 'high' ? 'bg-gradient-to-r from-red-500 to-red-400' :
-                            'bg-gradient-to-r from-red-700 to-red-600'
-                          }`}
-                        />
-                      </div>
-
-                      <motion.div 
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.2 }}
-                        className="flex justify-between text-xs mt-1 px-1"
-                      >
-                        <span className="text-red-500">150%</span>
-                        <span className="text-orange-500">200%</span>
-                        <span className="text-yellow-500">300%</span>
-                        <span className="text-green-500">400%+</span>
-                      </motion.div>
-                    </div>
-
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.3 }}
-                      className="flex items-center space-x-2 mt-2"
-                    >
-                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <span className="text-xs text-gray-400">
-                        Minimum collateral ratio: 150%. Lower ratios risk liquidation.
-                      </span>
-                    </motion.div>
+                    <span className="text-red-500">150%</span>
+                    <span className="text-orange-500">200%</span>
+                    <span className="text-yellow-500">300%</span>
+                    <span className="text-green-500">400%+</span>
                   </motion.div>
-                )}
-              </AnimatePresence>
+                </div>
+
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex items-center space-x-2 mt-2"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs text-gray-400">
+                    Minimum collateral ratio: 150%. Lower ratios risk liquidation.
+                  </span>
+                </motion.div>
+              </div>
 
               <div className="pt-2">
                 {error && (

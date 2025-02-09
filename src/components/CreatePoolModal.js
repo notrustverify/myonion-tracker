@@ -40,31 +40,33 @@ const CustomTokenSelect = ({ value, onChange, options }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          {options.map(symbol => {
-            const token = tokensList.find(t => t.symbol === symbol)
-            return (
-              <button
-                key={symbol}
-                type="button"
-                onClick={() => {
-                  onChange({ target: { value: symbol } })
-                  setIsOpen(false)
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 text-white text-left"
-              >
-                <img 
-                  src={token?.logoURI}
-                  alt={symbol}
-                  className="w-6 h-6 rounded-full"
-                />
-                <div className="flex flex-col">
-                  <span>{symbol}</span>
-                  <span className="text-xs text-gray-400">{token?.name}</span>
-                </div>
-              </button>
-            )
-          })}
+        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-lg">
+          <div className="max-h-[240px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-600 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+            {options.map(symbol => {
+              const token = tokensList.find(t => t.symbol === symbol)
+              return (
+                <button
+                  key={symbol}
+                  type="button"
+                  onClick={() => {
+                    onChange({ target: { value: symbol } })
+                    setIsOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 text-white text-left"
+                >
+                  <img 
+                    src={token?.logoURI}
+                    alt={symbol}
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <div className="flex flex-col">
+                    <span>{symbol}</span>
+                    <span className="text-xs text-gray-400">{token?.name}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

@@ -1,10 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CreateLoanService } from '../services/loan.services'
-import { getAlephiumLoanConfig, getTokensList } from '../lib/configs'
+import { getAlephiumLoanConfig, getBackendUrl, getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
+
+const formatNumber = (number) => {
+  if (number === undefined || number === null) return '0'
+  
+  if (number < 0.01 && number > 0) {
+    return '< 0.01'
+  }
+
+  return new Intl.NumberFormat('en-US', {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(number)
+}
 
 const CustomTokenSelect = ({ value, onChange, options }) => {
   const [isOpen, setIsOpen] = useState(false)
@@ -41,31 +54,33 @@ const CustomTokenSelect = ({ value, onChange, options }) => {
       </button>
 
       {isOpen && (
-        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-          {options.map(symbol => {
-            const token = tokensList.find(t => t.symbol === symbol)
-            return (
-              <button
-                key={symbol}
-                type="button"
-                onClick={() => {
-                  onChange({ target: { value: symbol } })
-                  setIsOpen(false)
-                }}
-                className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 text-white text-left"
-              >
-                <img 
-                  src={token?.logoURI}
-                  alt={symbol}
-                  className="w-6 h-6 rounded-full"
-                />
-                <div className="flex flex-col">
-                  <span>{symbol}</span>
-                  <span className="text-xs text-gray-400">{token?.name}</span>
-                </div>
-              </button>
-            )
-          })}
+        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-lg">
+          <div className="max-h-[240px] overflow-y-auto [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-gray-600 hover:[&::-webkit-scrollbar-thumb]:bg-gray-500">
+            {options.map(symbol => {
+              const token = tokensList.find(t => t.symbol === symbol)
+              return (
+                <button
+                  key={symbol}
+                  type="button"
+                  onClick={() => {
+                    onChange({ target: { value: symbol } })
+                    setIsOpen(false)
+                  }}
+                  className="w-full flex items-center gap-2 px-3 py-2 hover:bg-gray-800 text-white text-left"
+                >
+                  <img 
+                    src={token?.logoURI}
+                    alt={symbol}
+                    className="w-6 h-6 rounded-full"
+                  />
+                  <div className="flex flex-col">
+                    <span>{symbol}</span>
+                    <span className="text-xs text-gray-400">{token?.name}</span>
+                  </div>
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -84,6 +99,42 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const [interestRate, setInterestRate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const config = getAlephiumLoanConfig()
+  const [tokenPrices, setTokenPrices] = useState({})
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
+  const tokens = tokensList.map(token => token.symbol)
+  const backendUrl = getBackendUrl()
+
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      try {
+        const tokens = [loanToken, collateralToken]
+        const prices = {}
+        
+        for (const token of tokens) {
+          const tokenInfo = tokensList.find(t => t.symbol === token)
+          const response = await fetch(`${backendUrl}/api/market-data?assetId=${tokenInfo.id}`, {
+            method: 'GET',
+            mode: 'cors',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+          const data = await response.json()
+          prices[token] = data.priceUSD
+        }
+        
+        setTokenPrices(prices)
+        setIsLoadingPrices(false)
+      } catch (error) {
+        console.error('Error fetching token prices:', error)
+        setIsLoadingPrices(false)
+      }
+    }
+
+    if (loanToken && collateralToken) {
+      fetchTokenPrices()
+    }
+  }, [loanToken, collateralToken])
   
   if (!isOpen) return null
 
@@ -92,12 +143,17 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
       onClose()
     }
   }
-  
-  const tokens = tokensList.map(token => token.symbol)
+
+  const calculateUSDValue = (amount, token) => {
+    if (!amount || !tokenPrices[token]) return 0
+    return parseFloat(amount) * tokenPrices[token]
+  }
 
   const calculateRiskRatio = () => {
     if (!loanAmount || !collateralAmount) return 0
-    return (parseFloat(collateralAmount) / parseFloat(loanAmount)) * 100
+    const loanUSDValue = calculateUSDValue(loanAmount, loanToken)
+    const collateralUSDValue = calculateUSDValue(collateralAmount, collateralToken)
+    return loanUSDValue ? (collateralUSDValue / loanUSDValue) * 100 : 0
   }
 
   const getRiskLevel = (ratio) => {
@@ -128,18 +184,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
       const adjustedLoanAmount = adjustAmountWithDecimals(parseFloat(loanAmount), loanTokenInfo?.decimals)
       const adjustedCollateralAmount = adjustAmountWithDecimals(parseFloat(collateralAmount), collateralTokenInfo?.decimals)
 
-      console.log('Loan Service Args:', {
-        signer,
-        loanFactoryContractId: config.loanFactoryContractId,
-        loanTokenId: loanTokenInfo?.id,
-        loanAmount: adjustedLoanAmount,
-        collateralTokenId: collateralTokenInfo?.id,
-        collateralAmount: adjustedCollateralAmount,
-        interestRate: parseFloat(interestRate),
-        term: parseInt(term) * 30 * 24 * 60 * 60 * 1000
-      })
-
-      await CreateLoanService(
+      const createLoanResponse = await CreateLoanService(
         signer,
         config.loanFactoryContractId,
         loanTokenInfo?.id,
@@ -150,6 +195,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
         parseInt(term) * 30 * 24 * 60 * 60 * 1000,
         enableLiquidation
       )
+      window.addTransactionToast('New Loan Request', createLoanResponse.txId)
       onClose()
 
     } catch (error) {
@@ -214,9 +260,11 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
                       />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                        <span className="text-gray-500">$</span>
-                      </div>
+                      {!isLoadingPrices && loanAmount && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                          ≈ ${formatNumber(calculateUSDValue(loanAmount, loanToken))}
+                        </div>
+                      )}
                     </div>
                     <CustomTokenSelect 
                       value={loanToken}
@@ -242,6 +290,11 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                         placeholder="0.00"
                       />
+                      {!isLoadingPrices && collateralAmount && (
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                          ≈ ${formatNumber(calculateUSDValue(collateralAmount, collateralToken))}
+                        </div>
+                      )}
                     </div>
                     <CustomTokenSelect 
                       value={collateralToken}
@@ -340,34 +393,41 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                       >
                         <div className="flex justify-between text-sm">
                           <span className="text-gray-400">Risk Level</span>
-                          <motion.span 
-                            initial={{ opacity: 0, x: 20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            className={`font-medium ${
+                          <div className="flex items-center gap-2">
+                            <motion.span className={`font-medium ${
                               riskLevel === 'conservative' ? 'text-green-500' :
                               riskLevel === 'moderate' ? 'text-yellow-500' :
                               riskLevel === 'aggressive' ? 'text-orange-500' :
                               riskLevel === 'high' ? 'text-red-500' :
                               riskLevel === 'liquidation' ? 'text-red-600' : 'text-gray-500'
-                            }`}
-                          >
-                            {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
-                          </motion.span>
+                            }`}>
+                              {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
+                            </motion.span>
+                            <span className="text-gray-500">
+                              ({formatNumber(riskRatio)}%)
+                            </span>
+                          </div>
                         </div>
                         
                         <div className="relative">
                           <div className="absolute inset-0 flex">
-                            <div className="w-[30%] h-full border-r border-gray-700/50"></div>
-                            <div className="w-[20%] h-full border-r border-gray-700/50"></div>
-                            <div className="w-[20%] h-full border-r border-gray-700/50"></div>
-                            <div className="w-[30%] h-full"></div>
+                            <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                            <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                            <div className="w-[34%] h-full"></div>
                           </div>
 
                           <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
                             <motion.div
                               initial={{ width: 0 }}
                               animate={{ 
-                                width: `${Math.min(100, (riskRatio / 500) * 100)}%`,
+                                width: `${(() => {
+                                  const ratio = riskRatio;
+                                  if (ratio <= 150) return 0;
+                                  if (ratio <= 200) return ((ratio - 150) / 50) * 33;
+                                  if (ratio <= 300) return 33 + ((ratio - 200) / 100) * 33;
+                                  if (ratio <= 400) return 66 + ((ratio - 300) / 100) * 34;
+                                  return 100;
+                                })()}%`,
                                 transition: { duration: 0.5, ease: "easeOut" }
                               }}
                               className={`h-full transition-all duration-300 ${

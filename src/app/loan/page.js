@@ -6,9 +6,11 @@ import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
+import { getBackendUrl } from '../../lib/configs'
 
 export default function LoanPage() {
   const [activeFilter, setActiveFilter] = useState('all loans')
+  const backendUrl = getBackendUrl();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
@@ -24,7 +26,7 @@ export default function LoanPage() {
       const limit = 12
       const skip = (page - 1) * limit
 
-      let url = `https://backend.alpacafi.app/api/loans?limit=${limit}&skip=${skip}`
+      let url = `${backendUrl}/api/loans?limit=${limit}&skip=${skip}`
 
       if (activeFilter !== 'all') {
         if (activeFilter === 'active') {
@@ -53,7 +55,8 @@ export default function LoanPage() {
           borrower: loan.loanee,
           status: loan.active ? 'active' : 'pending',
           id: loan.id,
-          liquidation: loan.liquidation
+          liquidation: loan.liquidation,
+          canLiquidate: loan.canLiquidate
         }
       })
 
@@ -118,7 +121,7 @@ export default function LoanPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-4xl font-bold text-white mb-4"
             >
-              Loan Market
+              P2P Loan
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, x: -20 }}

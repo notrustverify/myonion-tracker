@@ -1,10 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { getTokensList } from '../lib/configs'
+import { getTokensList, getBackendUrl } from '../lib/configs'
 import LoanModal from './LoanModal'
+
+const backendUrl = getBackendUrl()
+
+const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -31,7 +35,7 @@ const getTokenInfo = (tokenId) => {
 }
 
 const truncateAddress = (address) => {
-  if (!address) return ''
+  if (!address || address === DEFAULT_ADDRESS) return 'No borrower yet'
   return `${address.slice(0, 6)}...${address.slice(-4)}`
 }
 
@@ -46,14 +50,45 @@ const LoanCard = ({
   borrower,
   status = 'active',
   liquidation,
+  canLiquidate,
   id
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
+  const [tokenPrices, setTokenPrices] = useState({})
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchTokenPrices = async () => {
+      try {
+        const tokens = [currency, collateralCurrency]
+        const prices = {}
+        
+        for (const token of tokens) {
+          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
+          const data = await response.json()
+          prices[token] = data.priceUSD
+        }
+        
+        setTokenPrices(prices)
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching token prices:', error)
+        setIsLoading(false)
+      }
+    }
+
+    fetchTokenPrices()
+  }, [currency, collateralCurrency])
 
   const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
   
+  const usdValue = tokenPrices[currency] ? 
+    formatNumber((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) : '...'
+  const usdCollateral = tokenPrices[collateralCurrency] ? 
+    formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
+
   const collateralRatio = ((collateralAmount / value) * 100).toFixed(0)
 
   const getStatusBadge = (status) => {
@@ -104,6 +139,7 @@ const LoanCard = ({
                 />
                 <span className="text-2xl font-semibold">{displayValue}</span>
                 <span className="text-sm text-gray-400">{getTokenInfo(currency).symbol}</span>
+                <span className="text-xs text-gray-500">(${usdValue})</span>
               </div>
             </motion.div>
             <motion.div
@@ -134,6 +170,7 @@ const LoanCard = ({
               <div>
                 <span className="font-medium text-lg">{displayCollateral}</span>
                 <span className="text-gray-400 ml-2">{getTokenInfo(collateralCurrency).symbol}</span>
+                <span className="text-xs text-gray-500 ml-2">(${usdCollateral})</span>
               </div>
             </div>
           </motion.div>
@@ -169,7 +206,9 @@ const LoanCard = ({
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-gray-400">Borrower</span>
-                <span className="text-sm font-medium">{truncateAddress(borrower)}</span>
+                <span className="text-sm font-medium text-gray-400">
+                  {borrower === DEFAULT_ADDRESS ? 'No borrower yet' : truncateAddress(borrower)}
+                </span>
               </div>
             </div>
           </motion.div>
@@ -206,10 +245,11 @@ const LoanCard = ({
               duration: term,
               interest,
               creator: lender,
-              loanee: borrower,
+              loanee: borrower === DEFAULT_ADDRESS ? null : borrower,
               status,
-              liquidation: liquidation,
-              id: id
+              liquidation,
+              canLiquidate,
+              id
             }}
           />
         </div>,
