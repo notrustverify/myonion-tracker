@@ -182,6 +182,9 @@ Contract Loan (
         // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
 
+        // should not be able to add collateral during liquidation
+        assert!(liquidation == false, 7)
+
         // transfer additional collateral to offset liquidation
         transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
         collateralAmount = collateralAmount + collateralAdded
@@ -206,7 +209,7 @@ Contract Loan (
         ratio = collateralLevel
         assert!(ratio < 15000, 5)
 
-        // liquidation to true
+        // liquidation to true -> auction begins
         liquidation = true
         timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
 
