@@ -4,6 +4,14 @@ Contract PoolFactory () {
     alpacaPoolTemplate: ByteVec,
     comissionRate: U256
 } {
+    event Borrow(
+        who: Caller, 
+        pair: ByteVec, 
+        token: U256, 
+        amount: ByteVec, 
+        path: ByteVec
+    )
+
     // create pool
 
 
@@ -14,7 +22,7 @@ Contract PoolFactory () {
 
         let caller = callerAddress!()
 
-        // get token
+        let (token, _) = pool.getPoolTokens()
 
         pool.deposit{caller -> token: amount}(amount)
 
@@ -30,47 +38,55 @@ Contract PoolFactory () {
 
         // get token
 
-        pool.withdraw{caller -> token: amount}(amount)
+        pool.withdraw(amount)
 
         //emit Deposited(caller, amount)
     }
 
-    // Provide collateral to borrow against
+    // Provide collateral to borrow against -> collateral account
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = false)
     pub fn depositCollateral(amount: U256) -> () {
         let pool = Pool(subContractId!(pair))
 
         let caller = callerAddress!()
 
-        // get token
+        let (_, collateral) = pool.getPoolTokens()
 
-        pool.depositCollateral{caller -> token: amount}(amount)
+        pool.depositCollateral{caller -> collateral: amount}(amount)
 
         //emit Deposited(caller, amount)
     }
 
-    // borrow
+    // borrow -> borrow (create loan + mapping)
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn borrow(amount: U256) -> () {
+    pub fn borrow(pair: ByteVec, amount: U256) -> () {
         let pool = Pool(subContractId!(pair))
 
         let caller = callerAddress!()
+        let time = blockTimeStamp!()
 
         // get token
+        let (token, _) = pool.getPoolTokens()
 
-        pool.borrow{caller -> token: amount}(amount)
+        pool.borrow(caller, amount, encodeToByteVec!(caller, time))
 
-        //emit Deposited(caller, amount)
+        emit Borrow(
+            caller,
+            pair,
+            token,
+            amount,
+            encodeToByteVec!(caller, time)
+        )
     }
 
     // repay
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn repay(amount: U256) -> () {
+    pub fn repay(pair: ByteVec, path: ByteVec, amount: U256) -> () {
         let pool = Pool(subContractId!(pair))
 
         let caller = callerAddress!()
 
-        // get token
+        // calculate repayment
 
         pool.repay{caller -> token: amount}(amount)
 

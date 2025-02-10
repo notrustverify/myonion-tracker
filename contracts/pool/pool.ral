@@ -21,7 +21,6 @@ Contract Pool (
 ) implements IFungibleToken {
     // mapping
     mapping [Address, U256] loans
-    mapping [Address, U256] deposits
     mapping [Address, U256] collateral
 
     // events
@@ -53,6 +52,10 @@ Contract Pool (
 
     pub fn getTotalSupply() -> (U256) {
         return 100000000000000000000000000000 // 100 billion sPoolTokens
+    }
+
+    pub fn getPoolTokens() -> (ByteVec, ByteVec) {
+        return poolToken, collateralToken
     }
 
     fn determineCollateralRatio(
@@ -92,12 +95,10 @@ Contract Pool (
         mintedShares = (amount / exchangeRate)
 
         sPoolSupply = sPoolSupply + mintedShares
-        deposits[caller] = deposits[caller] + amount
+
+        transferToken!(selfAddress!(), caller, selfContractId!(), mintedShares)
 
         emit Deposited(caller, amount)
-
-        // Mint synthetic token to caller
-        transferToken!(selfAddress!(), caller, selfContractId!(), mintedShares)
     }
 
     // withdraw
@@ -122,7 +123,7 @@ Contract Pool (
 
     // Provide collateral to borrow against
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = false)
-    pub fn depositCollateral(amount: U256) -> () {
+    fn depositCollateral(amount: U256) -> () {
         assert!(amount > 0, PoolCodes.CannotDepositZero)
 
         let caller = callerAddress!()
@@ -139,11 +140,11 @@ Contract Pool (
 
     // borrow
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn borrow(amount: U256) -> () {
+    pub fn borrow(caller: Address, amount: U256, collat: U256, path: ByteVec) -> () {
         assert!(amount > 0, PoolCodes.CannotBorrowZero)
         assert!(totalDeposits - totalBorrowed >= amount, PoolCodes.InsuffcientLiquidity)
 
-        let caller = callerAddress!()
+        depositCollateral{caller -> collateralToken: collat}(collat)
 
         // Calculate required collateral (e.g., 150% of loan amount)
         let collateralRatio = determineCollateralRatio(amount, collateral[caller], collateralFactor)
@@ -152,12 +153,7 @@ Contract Pool (
 
         let interest = (amount * interestRate) / 10000 // Calculate interest
 
-        if (loans.contains!(caller)) {
-            loans[caller] = loans[caller] + (amount + interest)
-        }
-        else {
-            loans.insert!(caller, caller, amount + interest)
-        }
+        loans.insert!(caller, caller, amount + interest)
 
         totalBorrowed = totalBorrowed + (amount + interest)
 
