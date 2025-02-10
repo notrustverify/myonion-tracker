@@ -11,17 +11,19 @@ export const CreateLoanService = async (
     collateralAmount,
     interest,
     duration,
-    canLiquidate
+    canLiquidate,
+    collateralOracle,
+    tokenOracle
   ) => {
     return await CreateLoan.execute(signerProvider, {
       initialFields: {
           loanFactory: loanFactory,
           tokenRequested: tokenRequested,
           tokenAmount: BigInt(tokenAmount),
-          tokenOracle: true,
+          tokenOracle: tokenOracle,
           collateralToken: collateralToken,
           collateralAmount: BigInt(collateralAmount),  
-          collateralOracle: true,
+          collateralOracle: collateralOracle,
           interest: interest,
           duration: duration,
           canLiquidate: canLiquidate
@@ -36,15 +38,17 @@ export const AddCollateralService = async (
     loanFactory,
     loanId,
     collateralToken,
-    collateralAmount
+    collateralAmount,
+    collateralOracle,
+    tokenOracle
 ) => {
   return await AddCollateral.execute(signerProvider, {
     initialFields: {
       loanFactory: loanFactory,
       contractId: loanId,
       amount: BigInt(collateralAmount),
-      tokenOracle: true,
-      collateralOracle: true
+      tokenOracle: tokenOracle,
+      collateralOracle: collateralOracle
     },
     attoAlphAmount: DUST_AMOUNT * 2n,
     tokens: [{id: collateralToken, amount: BigInt(collateralAmount)}]
@@ -55,15 +59,17 @@ export const RemoveCollateralService = async (
     signerProvider,
     loanFactory,
     loanId,
-    collateralAmount
+    collateralAmount,
+    collateralOracle,
+    tokenOracle
 ) => {
   return await RemoveCollateral.execute(signerProvider, {
     initialFields: {
       loanFactory: loanFactory,
       contractId: loanId,
       amount: BigInt(collateralAmount),
-      tokenOracle: true,
-      collateralOracle: true
+      tokenOracle: tokenOracle,
+      collateralOracle: collateralOracle
     },
     attoAlphAmount: DUST_AMOUNT * 2n
   })
@@ -72,17 +78,18 @@ export const RemoveCollateralService = async (
 export const LiquidateLoanService = async (
     signerProvider,
     loanFactory,
-    loanId
+    loanId,
+    collateralOracle,
+    tokenOracle
 ) => {
   return await LiquidationLoan.execute(signerProvider, {
     initialFields: {
       loanFactory: loanFactory,
       contract: loanId,
-      tokenOracle: true,
-      collateralOracle: true
+      tokenOracle: tokenOracle,
+      collateralOracle: collateralOracle
     },
     attoAlphAmount: DUST_AMOUNT * 2n
-
   })
 }
 
@@ -127,14 +134,16 @@ export const AcceptLoanService = async (
     loanFactory,
     contractId,
     tokenId,
-    amount
+    amount,
+    tokenOracle,
+    collateralOracle
   ) => {
     return await AcceptLoan.execute(signerProvider, {
       initialFields: {
           loanFactory: loanFactory,
           contract: contractId,
-          tokenOracle: true,
-          collateralOracle: true
+          tokenOracle: tokenOracle,
+          collateralOracle: collateralOracle
       },
       attoAlphAmount: (DUST_AMOUNT * 2n ),
       tokens: [{id: tokenId, amount: BigInt(amount)}]

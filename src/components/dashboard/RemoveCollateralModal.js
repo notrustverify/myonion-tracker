@@ -25,8 +25,10 @@ const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const config = getAlephiumLoanConfig()
+  const collateralInfo = getTokenInfo(loan.collateralToken)
+  const tokenInfo = getTokenInfo(loan.tokenRequested)
 
-  const maxAmount = loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)
+  const maxAmount = loan.collateralAmount / Math.pow(10, collateralInfo.decimals)
 
   const handleSetMaxAmount = () => {
     setAmount(maxAmount.toString())
@@ -46,7 +48,9 @@ const RemoveCollateralModal = ({ isOpen, onClose, loan }) => {
         signer, 
         config.loanFactoryContractId, 
         loan.id, 
-        adjustAmountWithDecimals(amount, getTokenInfo(loan.collateralToken).decimals)
+        adjustAmountWithDecimals(amount, collateralInfo.decimals),
+        collateralInfo.isOracle,
+        tokenInfo.isOracle
       )
       window.addTransactionToast('Remove Collateral', result.txId)
       onClose()

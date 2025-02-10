@@ -156,13 +156,17 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
     setIsLoading(true)
     setError(null)
+    const tokenInfo = getTokenInfo(loan.tokenRequested)
+    const collateralInfo = getTokenInfo(loan.collateralToken)
     try {
       const result = await AcceptLoanService(
         signer,
         config.loanFactoryContractId,
         loan.id,
         loan.tokenRequested,
-        loan.tokenAmount
+        loan.tokenAmount,
+        collateralInfo.isOracle,
+        tokenInfo.isOracle
       )
       window.addTransactionToast('Accepting Loan', result.txId)
 
@@ -183,11 +187,15 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
     setIsLoading(true)
     setError(null)
+    const tokenInfo = getTokenInfo(loan.tokenRequested)
+    const collateralInfo = getTokenInfo(loan.collateralToken)
     try {
       const result = await LiquidateLoanService(
         signer,
         config.loanFactoryContractId,
-        loan.id
+        loan.id,
+        collateralInfo.isOracle,
+        tokenInfo.isOracle
       )
       window.addTransactionToast('Liquidating Loan', result.txId)
       

@@ -237,7 +237,9 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
         adjustedCollateralAmount,
         parseFloat(interestRate),
         parseInt(term) * 30 * 24 * 60 * 60 * 1000,
-        enableLiquidation
+        enableLiquidation,
+        loanTokenInfo?.isOracle,
+        collateralTokenInfo?.isOracle
       )
       window.addTransactionToast('New Loan Request', createLoanResponse.txId)
       onClose()

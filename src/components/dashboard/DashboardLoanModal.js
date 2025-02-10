@@ -164,12 +164,16 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
 
     setIsLoading(true)
     setError(null)
+    const tokenInfo = getTokenInfo(loan.tokenRequested)
+    const collateralInfo = getTokenInfo(loan.collateralToken)
 
     try {
       const result = await AcceptLoanService(
         signer,
         config.loanFactoryContractId,
-        loan.id
+        loan.id,
+        collateralInfo.isOracle,
+        tokenInfo.isOracle
       )
       window.addTransactionToast('Accepting Loan', result.txId)
       onClose()
