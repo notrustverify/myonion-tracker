@@ -152,7 +152,7 @@ Contract Loan (
         destroySelf!(creator)
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true)
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
     pub fn acceptForfeit() -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
@@ -162,13 +162,30 @@ Contract Loan (
         // if the loan duration has passed any loan should be forfeit bound
         // assert!(canLiquidate == false, 6) -> this code makes no sense
 
-        let totalCommission = getCommission(collateralAmount)
+        if (canLiquidate == false) {
+            let totalCommission = getCommission(collateralAmount)
 
-        transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
+            transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
 
-        // claim collateral
-        destroySelf!(loanee)
+            // claim collateral
+            destroySelf!(loanee)
+        }
+
+        else {
+            // confirm the contract is a liquid contracts
+            assert!(canLiquidate == true, 6)
+
+            // confirm it's active
+            assert!(active == true, 3)
+
+            // liquidation to true -> auction begins
+            liquidation = true
+            timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
+
+            //! need to edit this on the factory side too
+            highestBid = getInterest() // Start bid at the current owed amount
+        }
     }
 
     // liquidation functions
