@@ -1,5 +1,92 @@
 Contract PoolFactory () {
-    pub fn returnBen() -> ByteVec {
-        return #ben
+    admin: Address,
+    poolTemplate: ByteVec,
+    alpacaPoolTemplate: ByteVec,
+    comissionRate: U256
+} {
+    // create pool
+
+
+    // deposit
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn deposit(pair: ByteVec, amount: U256) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.deposit{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
+    }
+
+    // withdraw
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn withdraw(sPoolAmount: U256) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.withdraw{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
+    }
+
+    // Provide collateral to borrow against
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = false)
+    pub fn depositCollateral(amount: U256) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.depositCollateral{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
+    }
+
+    // borrow
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn borrow(amount: U256) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.borrow{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
+    }
+
+    // repay
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn repay(amount: U256) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.repay{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    pub fn liquidate(borrower: Address) -> () {
+        let pool = Pool(subContractId!(pair))
+
+        let caller = callerAddress!()
+
+        // get token
+
+        pool.liquidate{caller -> token: amount}(amount)
+
+        //emit Deposited(caller, amount)
     }
 }

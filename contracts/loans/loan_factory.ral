@@ -437,7 +437,7 @@ Contract LoanFactory (
             0
         )
 
-        loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
+        let _ = loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
 
         emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
@@ -571,6 +571,7 @@ Contract LoanFactory (
         }
     }
 
+    // remove this as well
     @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false, assetsInContract = true)
     pub fn destroyLoanFactory() -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -605,7 +606,7 @@ Contract LoanFactory (
         migrateWithFields!(newCode, immFields, mutFields)
     } 
 
-    // send upgrade to contract specified
+    // send upgrade to contract specified - this needs to be removed
     pub fn upgradeContract(contract: ByteVec, newCode: ByteVec, imm: ByteVec, mutt: ByteVec, fields: Bool, isLoan: Bool) -> () {
         let caller = callerAddress!()
 
@@ -656,7 +657,7 @@ Contract LoanFactory (
 
         assert!(ratio > 15000, 1) // prevent falling into liquidation
 
-        loan.removeCollateral(caller, amount, ratio)
+        let _ = loan.removeCollateral(caller, amount, ratio)
 
         emit RemoveCollateralLoan(contractId, caller, collateral, collateralAmount - amount)
     }
