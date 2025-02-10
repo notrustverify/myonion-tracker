@@ -17,7 +17,6 @@ const getTokenInfo = (tokenId) => {
 }
 
 const adjustAmountWithDecimals = (amount, decimals) => {
-  const amountStr = amount.toString()
   return amount * Math.pow(10, decimals)
 }
 
@@ -32,13 +31,16 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
   useEffect(() => {
     const fetchBalance = async () => {
       if (loan?.borrower && loan?.collateralToken) {
+        const collateralInfo = getTokenInfo(loan.collateralToken)
+        const tokenInfo = getTokenInfo(loan.tokenRequested)
         const balance = loan.collateralToken === '0000000000000000000000000000000000000000000000000000000000000000'
           ? await alphBalanceOf(loan.borrower)
           : await balanceOf(loan.collateralToken, loan.borrower)
-        setMaxBalance(Number(balance) / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
+        setMaxBalance(Number(balance) / Math.pow(10, collateralInfo.decimals), collateralInfo.isOracle, tokenInfo.isOracle)
       }
     }
     fetchBalance()
+
   }, [loan?.borrower, loan?.collateralToken])
 
 

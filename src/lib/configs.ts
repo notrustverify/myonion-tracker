@@ -21,6 +21,7 @@ export interface TokenInfo {
   decimals: number
   description: string
   logoURI: string
+  isOracle: boolean
 }
 
 export function getNetwork(): NetworkId {
@@ -81,9 +82,19 @@ export function getTokensList(): TokenInfo[] {
       symbol: "ALPH",
       decimals: 18,
       description: "Alephium is a scalable, decentralized, and secure blockchain platform that enables the creation of fast and secure applications.",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ALPH.png"
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ALPH.png",
+      isOracle: true
     },
     /*{
+      id: "1a281053ba8601a658368594da034c2e99a0fb951b86498d05e76aedfe666800",
+      name: "AYIN",
+      symbol: "AYIN",
+      decimals: 18,
+      description: "$AYIN is a DEX token, that incentivises users through fees and other mechanisms to participate in trading on Alephium",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/AYIN.png",
+      isOracle: true
+    },
+    {
       id: "722954d9067c5a5ad532746a024f2a9d7a18ed9b90e27d0a3a504962160b5600",
       name: "USD Coin (Ethereum via AlphBridge)",
       symbol: "USDCeth",
@@ -129,7 +140,8 @@ export function getTokensList(): TokenInfo[] {
       symbol: "ABX",
       decimals: 9,
       description: "AlphBanX is a decentralized lending platform that allows you to borrow AlphBanX Dollars using ALPH as collateral. Choose your own interest rate and bet on liquidations - earning yield from borrowing fees and from liquidated loans.",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ABX.png"
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ABX.png",
+      isOracle: false
     },
     {
       id: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
@@ -137,7 +149,8 @@ export function getTokensList(): TokenInfo[] {
       symbol: "EX",
       decimals: 18,
       description: "Elexium: The People’s Choice. The first VE dex on Alephium Blockchain",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/EX.png"
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/EX.png",
+      isOracle: false
     },
     {
       id: "bb440a66dcffdb75862b6ad6df14d659aa6d1ba8490f6282708aa44ebc80a100",
@@ -145,7 +158,8 @@ export function getTokensList(): TokenInfo[] {
       symbol: "APAD",
       decimals: 18,
       description: "AlphPad The Premier Launchpad on Alephium - Elevating Projects to New Heights!",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/APAD.png"
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/APAD.png",
+      isOracle: false
     },
     {
       id: "c1a33b163fc45db6b8466ee78d20c61072b6aac07baa37ffbf33a3dec9f17800",
@@ -153,7 +167,8 @@ export function getTokensList(): TokenInfo[] {
       symbol: "WBNB",
       decimals: 18,
       description: "BNB Bridged to Alephium from Alephium Bridge",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/WBNB.png"
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/WBNB.png",
+      isOracle: false
     },
   ]
 }
