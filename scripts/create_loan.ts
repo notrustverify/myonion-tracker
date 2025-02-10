@@ -25,15 +25,15 @@ const deployScript: DeployFunction<Settings> = async (
           tokenRequested: ALPH_TOKEN_ID,
           tokenAmount: ONE_ALPH * 1n,
           tokenOracle: true,
-          collateralToken: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
-          collateralAmount: 4200000000000000000n,  
+          collateralToken: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
+          collateralAmount: 20000000000n,  
           collateralOracle: false,
           interest: 800n,
           duration: 86400000n,
           canLiquidate: true
       },
       attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
-      tokens: [{id: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200", amount: ONE_ALPH * 5n}]
+      tokens: [{id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00", amount: 20000000000n}]
     })
 
     // should add this everywhere

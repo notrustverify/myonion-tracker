@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { InsertPair, TokenMapping, UpdateBotAddress } from "../artifacts/ts";
+import { InsertPair, RemovePair, TokenMapping, UpdateBotAddress } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -23,13 +23,24 @@ const deployScript: DeployFunction<Settings> = async (
     await InsertPair.execute(signer, {
       initialFields: {
         oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
-        pair: stringToHex("BNB/USD"),
-        token: "c1a33b163fc45db6b8466ee78d20c61072b6aac07baa37ffbf33a3dec9f17800",
+        pair: stringToHex("ABX/USD"),
+        token: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
         price: 0n,
-        decimals: 18n
+        decimals: 9n
       },
       attoAlphAmount: DUST_AMOUNT + MINIMAL_CONTRACT_DEPOSIT
     })
+
+    /*
+    await RemovePair.execute(signer, {
+      initialFields: {
+        oracle: "02a2a321f3bbab2ecc834191ad9b3db6eafdbd8d791db7fb77c341aeff0e8a00",
+        pair: stringToHex("ABX/USD")
+      },
+      attoAlphAmount: DUST_AMOUNT + MINIMAL_CONTRACT_DEPOSIT
+    })
+    */
+    
   }
   
   export default deployScript
