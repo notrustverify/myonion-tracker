@@ -301,7 +301,7 @@ Contract Loan (
         checkCaller!(callerAddress!() == parentContract, 9)
 
         // add addtional security param -> would stop parentContract / factory updates
-        // assert!(creator == parentContract, 10)
+        assert!(creator == parentContract, 10)
 
         migrate!(newCode)
     }
@@ -311,7 +311,7 @@ Contract Loan (
         checkCaller!(callerAddress!() == parentContract, 9)
 
         // add addtional security param -> would stop parentContract / factory updates
-        // assert!(creator == parentContract, 10)
+        assert!(creator == parentContract, 10)
 
         migrateWithFields!(newCode, immFields, mutFields)
     } 
