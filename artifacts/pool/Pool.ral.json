@@ -1,0 +1,325 @@
+{
+  "version": "v3.11.2",
+  "name": "Pool",
+  "bytecode": "0e0c09121b4031404140c340fe414441bb424942ce438701000000010214000201000000010214000201000000010213120201000000010213c901431e0fae6d7217caa000000002010000000204d33a714eb0ce00ce03020000030e014048ce020d0ece08d4a0e6c231170b170a160a1703ce050d0ece08d4a0e6c231170d170c160c170416030c2f16040c2f1b4c020c021601130a1312842c130ace04842d1705160516042c130a1308842d17061600130a1312842c130ace01842d1707160716032c130a1308842d170816061367102c16082d170916090201010103004020d3d385e15c16000c330c7bb417011601b2ce001600aa0c17021600a0002d1702a00116022aa101b21601b11602aa05160116005f01010103004027d30fb898ce16000c330c7bb417011600a0002c1702a0021602340e7ba00116002ba101a00216022ba102b21601ce001602aa1601b2b11600aa06160116025f0001010200403216000c330c7bb417011601b2ce031600aa140a5f5f6d61705f5f315f5f16014744cbc54c150c0d0d140a5f5f6d61705f5f315f5f16014744cb010116002a0c0e0c140a5f5f6d61705f5f315f5f16014744cb01024a0a1601d1a2140a5f5f6d61705f5f315f5f16014744b11600d2010101010406004047d3be979d8d16010c330d7ba002a0032b1601340e7b1600ce031602a31602000816010c0d0d140a5f5f6d61705f5f315f5f16004744cb0101ce06000517041604ce06340f7b1601ce072c1367102d17051600d1a2140a5f5f6d61705f5f305f5f16004744b1160116052ad20101a003160116052a2aa103b21600ce001601aa07160016011604600101010300403ed3e27f97e5b41701140a5f5f6d61705f5f305f5f16014744cbc5107b1601b2ce001600aa1600ce072c1367102d17020c0d0d140a5f5f6d61705f5f305f5f16014744cb010116002b0c0e0c140a5f5f6d61705f5f305f5f16014744cb010216020c334c04a00216022aa102a0010c334c04a002a0012da10008160116005f01020107004052d31a41a95ab41701140a5f5f6d61705f5f305f5f16004744cbc5107b0c0d0d140a5f5f6d61705f5f305f5f16004744cb010117020c0d0d140a5f5f6d61705f5f315f5f16004744cb0101170316021603ce06000517041604ce06310f7b1603130a2c1340642d1705160316052b1706b21601ce031605aa16010d0c140a5f5f6d61705f5f305f5f16004744cb010316010d0c140a5f5f6d61705f5f315f5f16004744cb0103a00316022ba10309160016015f",
+  "codeHash": "59284d6b810d18fa88267f7f1ec817b39ac5244c64eae64e53014aead27cdac6",
+  "fieldsSig": {
+    "names": [
+      "poolToken",
+      "poolDecimals",
+      "poolPair",
+      "collateralToken",
+      "collateralDecimals",
+      "collateralPair",
+      "exchangeRate",
+      "sPoolSupply",
+      "totalDeposits",
+      "totalBorrowed",
+      "collateralFactor",
+      "interestRate",
+      "oracle",
+      "__stdInterfaceId"
+    ],
+    "types": [
+      "ByteVec",
+      "U256",
+      "ByteVec",
+      "ByteVec",
+      "U256",
+      "ByteVec",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "IDIAOracle",
+      "ByteVec"
+    ],
+    "isMutable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "eventsSig": [
+    {
+      "name": "Deposited",
+      "fieldNames": [
+        "who",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "U256"
+      ]
+    },
+    {
+      "name": "Withdrawn",
+      "fieldNames": [
+        "who",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "U256"
+      ]
+    },
+    {
+      "name": "Borrowed",
+      "fieldNames": [
+        "who",
+        "amount",
+        "collateralAmount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "U256",
+        "U256"
+      ]
+    },
+    {
+      "name": "Repaid",
+      "fieldNames": [
+        "who",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "U256"
+      ]
+    },
+    {
+      "name": "Liquidated",
+      "fieldNames": [
+        "who",
+        "liquidator"
+      ],
+      "fieldTypes": [
+        "Address",
+        "Address"
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "getSymbol",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec"
+      ]
+    },
+    {
+      "name": "getName",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec"
+      ]
+    },
+    {
+      "name": "getDecimals",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getTotalSupply",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getPoolTokens",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "ByteVec",
+        "ByteVec"
+      ]
+    },
+    {
+      "name": "determineCollateralRatio",
+      "paramNames": [
+        "tokenAmount",
+        "collateralAmount",
+        "threshhold"
+      ],
+      "paramTypes": [
+        "U256",
+        "U256",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false
+      ],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "deposit",
+      "paramNames": [
+        "amount"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "withdraw",
+      "paramNames": [
+        "sPoolAmount"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "depositCollateral",
+      "paramNames": [
+        "amount"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "borrow",
+      "paramNames": [
+        "caller",
+        "amount",
+        "collat",
+        "path"
+      ],
+      "paramTypes": [
+        "Address",
+        "U256",
+        "U256",
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "repay",
+      "paramNames": [
+        "amount"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "liquidate",
+      "paramNames": [
+        "borrower"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": [
+    {
+      "name": "PoolCodes",
+      "fields": [
+        {
+          "name": "CannotDepositZero",
+          "value": {
+            "type": "U256",
+            "value": "0"
+          }
+        },
+        {
+          "name": "CannotBorrowZero",
+          "value": {
+            "type": "U256",
+            "value": "1"
+          }
+        },
+        {
+          "name": "InsuffcientLiquidity",
+          "value": {
+            "type": "U256",
+            "value": "2"
+          }
+        },
+        {
+          "name": "InsuffcientCollateral",
+          "value": {
+            "type": "U256",
+            "value": "3"
+          }
+        },
+        {
+          "name": "NoActiveLoan",
+          "value": {
+            "type": "U256",
+            "value": "4"
+          }
+        }
+      ]
+    }
+  ],
+  "mapsSig": {
+    "names": [
+      "loans",
+      "collateral"
+    ],
+    "types": [
+      "Map[Address,U256]",
+      "Map[Address,U256]"
+    ]
+  },
+  "stdInterfaceId": "0001"
+}

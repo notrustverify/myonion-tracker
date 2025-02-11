@@ -152,7 +152,7 @@ Contract Loan (
         destroySelf!(creator)
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true)
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
     pub fn acceptForfeit() -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
@@ -162,13 +162,31 @@ Contract Loan (
         // if the loan duration has passed any loan should be forfeit bound
         // assert!(canLiquidate == false, 6) -> this code makes no sense
 
-        let totalCommission = getCommission(collateralAmount)
+        if (canLiquidate == false) {
+            let totalCommission = getCommission(collateralAmount)
 
-        transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
+            transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
 
-        // claim collateral
-        destroySelf!(loanee)
+            // claim collateral
+            destroySelf!(loanee)
+        }
+
+        else {
+            // confirm the contract is a liquid contracts
+            assert!(canLiquidate == true, 6)
+
+            // confirm it's active
+            assert!(active == true, 3)
+
+            if (liquidation == false) {
+                liquidation = true
+                timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
+    
+                //! need to edit this on the factory side too
+                highestBid = getInterest() // Start bid at the current owed amount
+            }
+        }
     }
 
     // liquidation functions
@@ -181,6 +199,9 @@ Contract Loan (
 
         // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
+
+        // should not be able to add collateral during liquidation
+        assert!(liquidation == false, 7)
 
         // transfer additional collateral to offset liquidation
         transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
@@ -206,12 +227,14 @@ Contract Loan (
         ratio = collateralLevel
         assert!(ratio < 15000, 5)
 
-        // liquidation to true
-        liquidation = true
-        timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
+        // liquidation to true -> auction begins
+        if (liquidation == false) {
+            liquidation = true
+            timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
 
-        //! need to edit this on the factory side too
-        highestBid = getInterest() // Start bid at the current owed amount
+            //! need to edit this on the factory side too
+            highestBid = getInterest() // Start bid at the current owed amount
+        }
     }
 
     // should return timeEnd + token + newHighestBid + newHighestBidder
@@ -225,6 +248,7 @@ Contract Loan (
 
         // confirm it's active
         assert!(active == true, 3)
+        assert!(liquidation == true, 4)
 
         // newBid must be greater than current bid
         assert!(bidAmount > highestBid, 7)
@@ -266,6 +290,7 @@ Contract Loan (
 
         // confirm it's active
         assert!(active == true, 3)
+        assert!(liquidation == true, 4)
 
         // Ensure the auction has ended
         assert!(blockTimeStamp!() > timeToEnd, Loan.AuctionActive)
@@ -297,12 +322,18 @@ Contract Loan (
     pub fn updateLoanCode(newCode: ByteVec) -> () {
         checkCaller!(callerAddress!() == parentContract, 9)
 
+        // add addtional security param -> would stop parentContract / factory updates
+        assert!(creator == parentContract, 10)
+
         migrate!(newCode)
     }
 
     @using(updateFields = true, checkExternalCaller = true)
     pub fn updateLoanFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
         checkCaller!(callerAddress!() == parentContract, 9)
+
+        // add addtional security param -> would stop parentContract / factory updates
+        assert!(creator == parentContract, 10)
 
         migrateWithFields!(newCode, immFields, mutFields)
     } 

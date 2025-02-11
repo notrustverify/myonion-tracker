@@ -305,14 +305,7 @@ export namespace LoanFactoryTypes {
       result: CallContractResult<null>;
     };
     upgradeContract: {
-      params: CallContractParams<{
-        contract: HexString;
-        newCode: HexString;
-        imm: HexString;
-        mutt: HexString;
-        fields: boolean;
-        isLoan: boolean;
-      }>;
+      params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<null>;
     };
     removeCollateral: {
@@ -528,14 +521,7 @@ export namespace LoanFactoryTypes {
       result: SignExecuteScriptTxResult;
     };
     upgradeContract: {
-      params: SignExecuteContractMethodParams<{
-        contract: HexString;
-        newCode: HexString;
-        imm: HexString;
-        mutt: HexString;
-        fields: boolean;
-        isLoan: boolean;
-      }>;
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
     removeCollateral: {
@@ -923,17 +909,13 @@ class Factory extends ContractFactory<
       );
     },
     upgradeContract: async (
-      params: TestContractParams<
-        LoanFactoryTypes.Fields,
-        {
-          contract: HexString;
-          newCode: HexString;
-          imm: HexString;
-          mutt: HexString;
-          fields: boolean;
-          isLoan: boolean;
-        },
-        LoanFactoryTypes.Maps
+      params: Omit<
+        TestContractParams<
+          LoanFactoryTypes.Fields,
+          never,
+          LoanFactoryTypes.Maps
+        >,
+        "testArgs"
       >
     ): Promise<TestContractResult<null, LoanFactoryTypes.Maps>> => {
       return testMethod(this, "upgradeContract", params, getContractByCodeHash);
@@ -973,8 +955,8 @@ class Factory extends ContractFactory<
 export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
-    "=82-2+3e=2-2+52=2-2+6b=2-2+7f=2-2+97=2-2+ef=2-2+4d=3460-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=548",
-    "34a4d95b599c948beaf2f8f7086cc59d2bf738aa04ca0fd1a5fea7397d031070",
+    "=82-8=1-1+e=3-1+f=3-1+8=3-1+c4794=2-1+a548=1+3=3460-2+4023=28-2+11=52+7a7e0214696e73657274206174206d617020706174683a2000=19-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=400",
+    "558528f7315852dfa31b03b02e81b2569c3e458eea4b13f791f76e24a6edfc15",
     AllStructs
   )
 );
@@ -1455,13 +1437,13 @@ export class LoanFactoryInstance extends ContractInstance {
       );
     },
     upgradeContract: async (
-      params: LoanFactoryTypes.CallMethodParams<"upgradeContract">
+      params?: LoanFactoryTypes.CallMethodParams<"upgradeContract">
     ): Promise<LoanFactoryTypes.CallMethodResult<"upgradeContract">> => {
       return callMethod(
         LoanFactory,
         this,
         "upgradeContract",
-        params,
+        params === undefined ? {} : params,
         getContractByCodeHash
       );
     },

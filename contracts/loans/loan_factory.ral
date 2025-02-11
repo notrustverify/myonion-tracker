@@ -437,7 +437,7 @@ Contract LoanFactory (
             0
         )
 
-        loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
+        let _ = loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
 
         emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
@@ -571,13 +571,9 @@ Contract LoanFactory (
         }
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false, assetsInContract = true)
+    // dead Function
     pub fn destroyLoanFactory() -> () {
-        checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
-
-        destroySelf!(admin)
-
-        // emit event
+        assert!(callerAddress!() != admin, 1)
     }
 
     // withdraw fees
@@ -605,36 +601,12 @@ Contract LoanFactory (
         migrateWithFields!(newCode, immFields, mutFields)
     } 
 
-    // send upgrade to contract specified
-    pub fn upgradeContract(contract: ByteVec, newCode: ByteVec, imm: ByteVec, mutt: ByteVec, fields: Bool, isLoan: Bool) -> () {
-        let caller = callerAddress!()
-
-        checkCaller!(caller == admin, LoanCodes.NotAdmin)
-
-        if (isLoan) {
-            let loan = Loan(contract)
-
-            if (fields) {
-                loan.updateLoanFields(newCode, imm, mutt)
-            }
-            else {
-                loan.updateLoanCode(newCode)
-            }
-        }
-        else {
-            let market = LoanMarket(contract)
-
-            if (fields) {
-                market.updateMarketFields(newCode, imm, mutt)
-            }
-            else {
-                market.updateMarketCode(newCode)
-            }
-        }
+    // dead function
+    pub fn upgradeContract() -> () {
+        assert!(callerAddress!() != admin, 1)
     }
 
     // removeCollateral from loan
-
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
     pub fn removeCollateral(contractId: ByteVec, amount: U256, tokenOracle: Bool, collateralOracle: Bool) -> () {
         let loan = Loan(contractId)
@@ -656,7 +628,7 @@ Contract LoanFactory (
 
         assert!(ratio > 15000, 1) // prevent falling into liquidation
 
-        loan.removeCollateral(caller, amount, ratio)
+        let _ = loan.removeCollateral(caller, amount, ratio)
 
         emit RemoveCollateralLoan(contractId, caller, collateral, collateralAmount - amount)
     }
@@ -911,25 +883,5 @@ TxScript UpdateLoanFactoryFields (
     mutFields: ByteVec
 ) {
     loanFactory.updateLoanFactoryFields(newCode, immFields, mutFields)
-}
-
-// upgrade call to inidividual contracts
-
-TxScript UpgradeContract (
-    loanFactory: LoanFactory,
-    contract: ByteVec,
-    newCode: ByteVec,
-    imm: ByteVec,
-    mutt: ByteVec,
-    fields: Bool,
-    isLoan: Bool
-) {
-    loanFactory.upgradeContract(contract, newCode, imm, mutt, fields, isLoan)
-}
-
-TxScript DestroyLoanFactory (
-    loanFactory: LoanFactory
-) {
-    loanFactory.destroyLoanFactory()
 }
 

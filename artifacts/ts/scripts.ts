@@ -20,7 +20,6 @@ import { default as BidLoanScriptJson } from "../loans/BidLoan.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
 import { default as CreateLoaneeMarketScriptJson } from "../loans/CreateLoaneeMarket.ral.json";
-import { default as DestroyLoanFactoryScriptJson } from "../loans/DestroyLoanFactory.ral.json";
 import { default as DestroyMarketScriptJson } from "../loans/DestroyMarket.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
 import { default as EditMarketValuesScriptJson } from "../loans/EditMarketValues.ral.json";
@@ -43,7 +42,6 @@ import { default as UpdateMarketCodeScriptJson } from "../loans/UpdateMarketCode
 import { default as UpdateMarketFieldsScriptJson } from "../loans/UpdateMarketFields.ral.json";
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
-import { default as UpgradeContractScriptJson } from "../loans/UpgradeContract.ral.json";
 import { default as WithdrawFundsScriptJson } from "../loans/WithdrawFunds.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
 import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
@@ -136,13 +134,6 @@ export const CreateLoaneeMarket = new ExecutableScript<{
   ratio: bigint;
 }>(
   Script.fromJson(CreateLoaneeMarketScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const DestroyLoanFactory = new ExecutableScript<{
-  loanFactory: HexString;
-}>(
-  Script.fromJson(DestroyLoanFactoryScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -334,19 +325,6 @@ export const UpdatePair = new ExecutableScript<{
   price: bigint;
 }>(
   Script.fromJson(UpdatePairScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const UpgradeContract = new ExecutableScript<{
-  loanFactory: HexString;
-  contract: HexString;
-  newCode: HexString;
-  imm: HexString;
-  mutt: HexString;
-  fields: boolean;
-  isLoan: boolean;
-}>(
-  Script.fromJson(UpgradeContractScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

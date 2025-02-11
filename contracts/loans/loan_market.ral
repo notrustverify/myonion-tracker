@@ -101,12 +101,18 @@ Contract LoanMarket (
     pub fn updateMarketCode(newCode: ByteVec) -> () {
         checkCaller!(callerAddress!() == parentContract, 9)
 
+        // add addtional security param -> would stop parentContract / factory updates
+        assert!(creator == parentContract, 10)
+
         migrate!(newCode)
     }
 
     @using(updateFields = true, checkExternalCaller = true)
     pub fn updateMarketFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
         checkCaller!(callerAddress!() == parentContract, 9)
+
+        // add addtional security param -> would stop parentContract / factory updates
+        assert!(creator == parentContract, 10)
 
         migrateWithFields!(newCode, immFields, mutFields)
     } 
