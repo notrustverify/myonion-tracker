@@ -117,7 +117,9 @@ const LoanCard = ({
   const usdCollateral = tokenPrices[collateralCurrency] ? 
     formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
 
-  const collateralRatio = ((collateralAmount / value) * 100).toFixed(0)
+  const collateralRatio = tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
+    (((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) / 
+    ((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) * 100).toFixed(0) : '...'
 
   const getStatusBadge = (status) => {
     if (status === 'active') {

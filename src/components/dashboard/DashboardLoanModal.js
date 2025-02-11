@@ -10,7 +10,8 @@ import { getAlephiumLoanConfig } from '../../lib/configs'
 import { 
   CancelLoanService, 
   PayLoanService, 
-  AcceptLoanService 
+  AcceptLoanService, 
+  ForfeitLoanService
 } from '../../services/loan.services'
 import { getBackendUrl } from '../../lib/configs'
 import AddCollateralModal from './AddCollateralModal'
@@ -86,6 +87,16 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
   const isBorrower = account?.address === loan.borrower
   const isLender = account?.address === loan.lender
 
+  const getLoanStatus = () => {
+    if (loan.status === 'pending') return 'pending'
+    const createdAtTimestamp = new Date(loan.createdAt).getTime()
+    const endDate = createdAtTimestamp + loan.duration
+    if (Date.now() > endDate) return 'terminated'
+    return 'active'
+  }
+
+  const currentStatus = getLoanStatus()
+
   useEffect(() => {
     const getProfiles = async () => {
       try {
@@ -150,6 +161,30 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
       onClose()
     } catch (err) {
       console.error("Error cancelling loan:", err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleForfeit = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    try {
+      const result = await ForfeitLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id
+      )
+      window.addTransactionToast('Forfeiting Loan', result.txId)
+      onClose()
+    } catch (err) {
+      console.error("Error accepting loan:", err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -335,7 +370,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Term</span>
                     <span className="text-lg font-medium text-white">
-                      {loan.duration} months
+                      {loan.term} months
                     </span>
                   </div>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
@@ -433,121 +468,143 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                       {error}
                     </div>
                   )}
-                  {isBorrower && (
-                    <>
+                  
+                  {currentStatus === 'terminated' ? (
                     <button 
-                      onClick={() => setIsAddCollateralModalOpen(true)}
-                      className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                      hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                      border border-blue-500/20 hover:border-blue-500/30 
-                      transition-all duration-300 ease-out
-                      text-blue-400 hover:text-blue-300 font-medium 
-                      shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
-                      flex items-center justify-center gap-2"
-                  >
-                    <span>Add Collateral</span>
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                  </button>
-
-                  <button 
-                    onClick={() => setIsRemoveCollateralModalOpen(true)}
-                    className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
-                      hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
-                      border border-red-500/20 hover:border-red-500/30 
-                      transition-all duration-300 ease-out
-                      text-red-400 hover:text-red-300 font-medium 
-                      shadow-lg shadow-red-900/20 hover:shadow-red-900/30
-                      flex items-center justify-center gap-2"
-                  >
-                    <span>Remove Collateral</span>
-                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                        d="M20 12H4" />
-                    </svg>
-                  </button>
-                  </>
-                  )}
-
-                  {isLender && loan.status === 'active' && (
-                    <button 
-
-                      onClick={() => setIsRepayModalOpen(true)}
-                      className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-                        hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-                        border border-green-500/20 hover:border-green-500/30 
+                      onClick={handleForfeit}
+                      className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                        hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                        border border-red-500/20 hover:border-red-500/30 
                         transition-all duration-300 ease-out
-                        text-green-400 hover:text-green-300 font-medium 
-                        shadow-lg shadow-green-900/20 hover:shadow-green-900/30
+                        text-red-400 hover:text-red-300 font-medium 
+                        shadow-lg shadow-red-900/20 hover:shadow-red-900/30
                         flex items-center justify-center gap-2"
                     >
-                      <span>Repay Loan</span>
+                      <span>Forfeit</span>
                       <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                           d="M13 7l5 5m0 0l-5 5m5-5H6" />
                       </svg>
                     </button>
-                  )}
-                  
-                  {isBorrower && loan.status === 'pending' && (
-                    <button 
-                      onClick={handleCancelLoan}
-                      disabled={isLoading}
-                      className="group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
-                        hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
-                        border border-red-500/20 hover:border-red-500/30 
-                        transition-all duration-300 ease-out
-                        text-red-400 hover:text-red-300 font-medium 
-                        shadow-lg shadow-red-900/20 hover:shadow-red-900/30
-                        flex items-center justify-center gap-2
-                        disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
+                  ) : (
+                    <>
+                      {isBorrower && (
                         <>
-                          <span>Cancel Loan</span>
-                          <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                              d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          <button 
+                            onClick={() => setIsAddCollateralModalOpen(true)}
+                            className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
+                            hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
+                            border border-blue-500/20 hover:border-blue-500/30 
+                            transition-all duration-300 ease-out
+                            text-blue-400 hover:text-blue-300 font-medium 
+                            shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                            flex items-center justify-center gap-2"
+                          >
+                            <span>Add Collateral</span>
+                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                          </button>
+
+                          <button 
+                            onClick={() => setIsRemoveCollateralModalOpen(true)}
+                            className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                              hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                              border border-red-500/20 hover:border-red-500/30 
+                              transition-all duration-300 ease-out
+                              text-red-400 hover:text-red-300 font-medium 
+                              shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+                              flex items-center justify-center gap-2"
+                          >
+                            <span>Remove Collateral</span>
+                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M20 12H4" />
+                            </svg>
+                          </button>
                         </>
                       )}
-                    </button>
-                  )}
-                  
-                  {!isBorrower && loan.status === 'pending' && (
-                    <button 
-                      onClick={handleAcceptLoan}
-                      disabled={isLoading}
-                      className="group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                        hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                        border border-blue-500/20 hover:border-blue-500/30 
-                        transition-all duration-300 ease-out
-                        text-blue-400 hover:text-blue-300 font-medium 
-                        shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
-                        flex items-center justify-center gap-2
-                        disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isLoading ? (
-                        <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                      ) : (
-                        <>
-                          <span>Accept Loan</span>
+
+                      {isLender && loan.status === 'active' && (
+                        <button 
+                          onClick={() => setIsRepayModalOpen(true)}
+                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+                            hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+                            border border-green-500/20 hover:border-green-500/30 
+                            transition-all duration-300 ease-out
+                            text-green-400 hover:text-green-300 font-medium 
+                            shadow-lg shadow-green-900/20 hover:shadow-green-900/30
+                            flex items-center justify-center gap-2"
+                        >
+                          <span>Repay Loan</span>
                           <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
                               d="M13 7l5 5m0 0l-5 5m5-5H6" />
                           </svg>
-                        </>
+                        </button>
                       )}
-                    </button>
+                      
+                      {isBorrower && loan.status === 'pending' && (
+                        <button 
+                          onClick={handleCancelLoan}
+                          disabled={isLoading}
+                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                            hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                            border border-red-500/20 hover:border-red-500/30 
+                            transition-all duration-300 ease-out
+                            text-red-400 hover:text-red-300 font-medium 
+                            shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+                            flex items-center justify-center gap-2
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <span>Cancel Loan</span>
+                              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                  d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </>
+                          )}
+                        </button>
+                      )}
+                      
+                      {!isBorrower && loan.status === 'pending' && (
+                        <button 
+                          onClick={handleAcceptLoan}
+                          disabled={isLoading}
+                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
+                            hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
+                            border border-blue-500/20 hover:border-blue-500/30 
+                            transition-all duration-300 ease-out
+                            text-blue-400 hover:text-blue-300 font-medium 
+                            shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                            flex items-center justify-center gap-2
+                            disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isLoading ? (
+                            <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <span>Accept Loan</span>
+                              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                  d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              </svg>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -72,10 +72,7 @@ export function Navbar() {
 
           <nav className="z-50 hidden space-x-6 md:flex">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              P2P Loans
-            </Link>
-            <Link href="/market" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Instant Loans
+              Loans
             </Link>
             <Link href="/auctions" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
               Liquidation Auctions
@@ -113,10 +110,7 @@ export function Navbar() {
 
           <nav className="z-50 hidden space-x-6 md:flex">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              P2P Loans
-            </Link>
-            <Link href="/market" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Instant Loans
+              Loans
             </Link>
             <Link href="/auctions" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
               Liquidation Auctions

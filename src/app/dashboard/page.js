@@ -48,6 +48,7 @@ export default function Dashboard() {
         collateralAmount: loan.collateralAmount,
         collateralCurrency: loan.collateralToken,
         term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
+        duration: loan.duration,
         interest: Number(loan.interest),
         lender: loan.loanee,
         borrower: loan.creator,
@@ -55,7 +56,8 @@ export default function Dashboard() {
         id: loan.id,
         type: loan.creator === wallet.account.address ? 'created' : 'borrowed',
         liquidation: loan.liquidation,
-        canLiquidate: loan.canLiquidate
+        canLiquidate: loan.canLiquidate,
+        createdAt: loan.createdAt
       });
 
 

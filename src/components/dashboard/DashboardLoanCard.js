@@ -47,6 +47,7 @@ const DashboardLoanCard = ({
   collateralAmount,
   collateralCurrency,
   term,
+  duration,
   interest,
   lender,
   borrower,
@@ -54,6 +55,7 @@ const DashboardLoanCard = ({
   type,
   liquidation,
   canLiquidate,
+  createdAt,
   id
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -124,6 +126,14 @@ const DashboardLoanCard = ({
   const collateralRatio = ((collateralAmount / value) * 100).toFixed(0)
 
   const getStatusBadge = (status) => {
+    if (status === 'terminated') {
+      return (
+        <div className="px-3 py-1 rounded-full text-xs font-medium bg-gray-500/20 text-gray-400 border border-gray-500/20 flex items-center gap-1">
+          <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+          Terminated
+        </div>
+      )
+    }
     if (status === 'active') {
       return (
         <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/20 flex items-center gap-1">
@@ -139,6 +149,16 @@ const DashboardLoanCard = ({
       </div>
     )
   }
+
+  const checkLoanStatus = () => {
+    if (status === 'pending') return 'pending'
+    const createdAtTimestamp = new Date(createdAt).getTime()
+    const endDate = createdAtTimestamp + duration
+    if (Date.now() > endDate) return 'terminated'
+    return 'active'
+  }
+
+  const currentStatus = checkLoanStatus()
 
   return (
     <>
@@ -178,7 +198,7 @@ const DashboardLoanCard = ({
               animate={{ scale: isHovered ? 1.05 : 1 }}
               transition={{ duration: 0.2 }}
             >
-              {getStatusBadge(status)}
+              {getStatusBadge(currentStatus)}
             </motion.div>
           </div>
 
@@ -277,14 +297,16 @@ const DashboardLoanCard = ({
               tokenRequested: currency,
               collateralAmount,
               collateralToken: collateralCurrency,
-              duration: term,
+              term: term,
+              duration: duration,
               interest,
               borrower: borrower === DEFAULT_ADDRESS ? null : borrower,
               lender: lender === DEFAULT_ADDRESS ? null : lender,
               status,
               type,
               liquidation,
-              canLiquidate
+              canLiquidate,
+              createdAt
             }}
           />
         </div>,

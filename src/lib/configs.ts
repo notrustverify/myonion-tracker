@@ -85,7 +85,7 @@ export function getTokensList(): TokenInfo[] {
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ALPH.png",
       isOracle: true
     },
-    /*{
+    {
       id: "1a281053ba8601a658368594da034c2e99a0fb951b86498d05e76aedfe666800",
       name: "AYIN",
       symbol: "AYIN",
@@ -94,7 +94,7 @@ export function getTokensList(): TokenInfo[] {
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/AYIN.png",
       isOracle: true
     },
-    {
+    /*{
       id: "722954d9067c5a5ad532746a024f2a9d7a18ed9b90e27d0a3a504962160b5600",
       name: "USD Coin (Ethereum via AlphBridge)",
       symbol: "USDCeth",
