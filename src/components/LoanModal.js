@@ -60,7 +60,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
   const usdCollateralAmount = tokenPrices[loan.collateralToken] ? 
     formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
 
-  const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
+  const collateralRatio = tokenPrices[loan.tokenRequested] && tokenPrices[loan.collateralToken] ? 
+    (((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) / 
+    ((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) * 100).toFixed(0) : '...'
 
   const getRiskLevel = (ratio) => {
     const numericRatio = parseFloat(ratio)

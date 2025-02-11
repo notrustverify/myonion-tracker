@@ -3,13 +3,18 @@
 import { Navbar } from '../../components/navbar'
 import { Footer } from '../../components/footer'
 import LoanCard from '../../components/LoanCard'
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
 import { getBackendUrl, getTokensList } from '../../lib/configs'
+import { HiViewGrid } from 'react-icons/hi'
+import Matter from 'matter-js'
+import LoanBubble from '../../components/LoanBubble'
+import { RiBubbleChartLine } from "react-icons/ri";
+
 
 export default function LoanPage() {
-  const [activeFilter, setActiveFilter] = useState('all loans')
+  const [activeFilter, setActiveFilter] = useState('pending')
   const backendUrl = getBackendUrl();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loans, setLoans] = useState([])
@@ -20,6 +25,11 @@ export default function LoanPage() {
     total: 0
   })
   const [tokenPrices, setTokenPrices] = useState({})
+  const [rawLoans, setRawLoans] = useState([])
+  const [viewMode, setViewMode] = useState('grid')
+  const containerRef = useRef(null)
+  const [engine, setEngine] = useState(null)
+  const [runner, setRunner] = useState(null)
 
   const fetchTokenPrices = useCallback(async () => {
     try {
@@ -56,26 +66,19 @@ export default function LoanPage() {
     try {
       const limit = 12
       const skip = (page - 1) * limit
-
-      let url = `${backendUrl}/api/loans?limit=${limit}&skip=${skip}`
-
-      if (activeFilter !== 'all') {
-        if (activeFilter === 'active') {
-          url += '&type=active'
-        } else if (activeFilter === 'pending') {
-          url += '&type=pending'
-        } else if (activeFilter === 'high apr') {
-          url += '&minAmount=50' 
-        } else if (activeFilter === 'low risk') {
-          url += '&maxAmount=20'
-        }
-      }
+      const url = `${backendUrl}/api/loans?limit=${limit}&skip=${skip}`
 
       const response = await fetch(url)
       const data = await response.json()
       
+      setRawLoans(data.loans)
+
       const transformedLoans = data.loans
         .map(loan => {
+          const createdAtTimestamp = new Date(loan.createdAt).getTime()
+          const endDate = createdAtTimestamp + Number(loan.duration)
+          const isTerminated = Date.now() > endDate
+
           const collateralValueUSD = (loan.collateralAmount * tokenPrices[loan.collateralToken]) || 0
           const loanValueUSD = (loan.tokenAmount * tokenPrices[loan.tokenRequested]) || 0
           const collateralRatio = loanValueUSD > 0 ? (collateralValueUSD / loanValueUSD) * 100 : 0
@@ -89,14 +92,25 @@ export default function LoanPage() {
             interest: Number(loan.interest),
             lender: loan.loanee,
             borrower: loan.creator,
-            status: loan.active ? 'active' : 'pending',
+            status: isTerminated ? 'terminated' : (loan.active ? 'active' : 'pending'),
             id: loan.id,
             liquidation: loan.liquidation,
             canLiquidate: loan.canLiquidate,
             collateralRatio: collateralRatio,
             collateralValueUSD,
-            loanValueUSD
+            loanValueUSD,
+            createdAt: loan.createdAt,
+            duration: loan.duration
           }
+        })
+        .filter(loan => loan.status !== 'terminated')
+        .filter(loan => {
+          if (activeFilter === 'all loans') return true;
+          if (activeFilter === 'active') return loan.status === 'active';
+          if (activeFilter === 'pending') return loan.status === 'pending';
+          if (activeFilter === 'high apr') return loan.interest >= 15;
+          if (activeFilter === 'low risk') return loan.collateralRatio >= 400;
+          return true;
         })
         .filter(loan => loan.collateralRatio >= 150)
 
@@ -116,6 +130,66 @@ export default function LoanPage() {
   useEffect(() => {
     fetchLoans(1)
   }, [fetchLoans])
+
+  useEffect(() => {
+    if (viewMode !== 'bubble') return
+
+    if (engine) {
+      Matter.Engine.clear(engine)
+      Matter.World.clear(engine.world)
+      if (runner) {
+        Matter.Runner.stop(runner)
+      }
+      setEngine(null)
+      setRunner(null)
+    }
+    
+    const engineInstance = Matter.Engine.create({
+      gravity: { x: 0, y: 0 },
+      enableSleeping: false
+    })
+
+    if (containerRef.current) {
+      const bounds = containerRef.current.getBoundingClientRect()
+
+      const walls = [
+        Matter.Bodies.rectangle(bounds.width / 2, -10, bounds.width, 20, { 
+          isStatic: true,
+          render: { visible: false }
+        }),
+        Matter.Bodies.rectangle(bounds.width / 2, bounds.height + 10, bounds.width, 20, { 
+          isStatic: true,
+          render: { visible: false }
+        }),
+        Matter.Bodies.rectangle(-10, bounds.height / 2, 20, bounds.height, { 
+          isStatic: true,
+          render: { visible: false }
+        }),
+        Matter.Bodies.rectangle(bounds.width + 10, bounds.height / 2, 20, bounds.height, { 
+          isStatic: true,
+          render: { visible: false }
+        })
+      ]
+
+      Matter.World.add(engineInstance.world, walls)
+
+      const runnerInstance = Matter.Runner.create()
+      Matter.Runner.run(runnerInstance, engineInstance)
+
+      setEngine(engineInstance)
+      setRunner(runnerInstance)
+    }
+
+    return () => {
+      if (engine) {
+        Matter.Engine.clear(engine)
+        Matter.World.clear(engine.world)
+        if (runner) {
+          Matter.Runner.stop(runner)
+        }
+      }
+    }
+  }, [activeFilter, viewMode, loans])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -161,7 +235,7 @@ export default function LoanPage() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-4xl font-bold text-white mb-4"
             >
-              P2P Loan
+              Loans
             </motion.h1>
             <motion.p 
               initial={{ opacity: 0, x: -20 }}
@@ -210,9 +284,12 @@ export default function LoanPage() {
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
         >
           {[
-            { label: 'Total Loans', value: pagination.total },
-            { label: 'Active Loans', value: loans.filter(l => l.status === 'active').length },
-            { label: 'Average Interest', value: `${loans.reduce((acc, curr) => acc + curr.interest, 0) / (loans.length || 1)}%` },
+            { label: 'Total Loans', value: rawLoans.length },
+            { label: 'Active Loans', value: rawLoans.filter(l => l.active).length },
+            { 
+              label: 'Average Interest', 
+              value: `${(rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)).toFixed(2)}%` 
+            },
           ].map((stat, index) => (
             <motion.div
               key={index}
@@ -226,49 +303,83 @@ export default function LoanPage() {
           ))}
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="flex flex-wrap gap-4 mb-8"
-        >
-          {['All Loans', 'Active', 'Pending', 'High APR', 'Low Risk'].map((filter) => (
-            <motion.button
-              key={filter}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setActiveFilter(filter.toLowerCase())}
-              className={`px-6 py-2 rounded-full text-sm font-medium transition-all
-                ${activeFilter === filter.toLowerCase()
-                  ? 'bg-green-500/20 text-green-400 border border-green-500/20'
-                  : 'bg-gray-800/50 text-gray-300 border border-gray-700/50 hover:border-gray-600/50'
-                }`}
+        <div className="flex justify-between items-center mb-8">
+          <motion.div className="flex flex-wrap gap-4">
+            {['All Loans', 'Active', 'Pending', 'High APR', 'Low Risk'].map((filter) => (
+              <motion.button
+                key={filter}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => setActiveFilter(filter.toLowerCase())}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all
+                  ${activeFilter === filter.toLowerCase()
+                    ? 'bg-green-500/20 text-green-400 border border-green-500/20'
+                    : 'bg-gray-800/50 text-gray-300 border border-gray-700/50 hover:border-gray-600/50'
+                  }`}
+              >
+                {filter}
+              </motion.button>
+            ))}
+          </motion.div>
+
+          <div className="flex gap-2 bg-gray-800/50 p-1 rounded-lg">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'grid' 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
             >
-              {filter}
-            </motion.button>
-          ))}
-        </motion.div>
+              <HiViewGrid className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setViewMode('bubble')}
+              className={`p-2 rounded-md transition-all ${
+                viewMode === 'bubble' 
+                  ? 'bg-green-500/20 text-green-400' 
+                  : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <RiBubbleChartLine className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
 
         {loading ? (
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
         ) : (
-          <motion.div 
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-          >
-            {loans.map((loan, index) => (
-              <motion.div
-                key={loan.id}
-                variants={itemVariants}
-              >
-                <LoanCard {...loan} />
-              </motion.div>
-            ))}
-          </motion.div>
+          viewMode === 'grid' ? (
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            >
+              {loans.map((loan, index) => (
+                <motion.div key={loan.id} variants={itemVariants}>
+                  <LoanCard {...loan} />
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <div 
+              key="bubble-container"
+              ref={containerRef}
+              className="relative h-[600px] w-full rounded-xl bg-gray-800/20 backdrop-blur-sm border border-gray-700/50 overflow-hidden"
+            >
+              {engine && loans.map((loan) => (
+                <LoanBubble 
+                  key={loan.id} 
+                  {...loan} 
+                  containerRef={containerRef}
+                  engine={engine}
+                />
+              ))}
+            </div>
+          )
         )}
 
         <motion.div 

@@ -107,7 +107,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const { account, signer } = useWallet()
   const [loanAmount, setLoanAmount] = useState('')
   const [collateralAmount, setCollateralAmount] = useState('')
-  const [enableLiquidation, setEnableLiquidation] = useState(false)
+  const [enableLiquidation, setEnableLiquidation] = useState(true)
   const [term, setTerm] = useState('')
   const [interestRate, setInterestRate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -227,7 +227,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
       
       const adjustedLoanAmount = adjustAmountWithDecimals(parseFloat(loanAmount), loanTokenInfo?.decimals)
       const adjustedCollateralAmount = adjustAmountWithDecimals(parseFloat(collateralAmount), collateralTokenInfo?.decimals)
-
+      
       const createLoanResponse = await CreateLoanService(
         signer,
         config.loanFactoryContractId,
@@ -236,10 +236,10 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
         collateralTokenInfo?.id,
         adjustedCollateralAmount,
         parseFloat(interestRate),
-        parseInt(term) * 30 * 24 * 60 * 60 * 1000,
+        parseInt(term) * 60 * 1000,
         enableLiquidation,
-        loanTokenInfo?.isOracle,
-        collateralTokenInfo?.isOracle
+        collateralTokenInfo?.isOracle,
+        loanTokenInfo?.isOracle
       )
       window.addTransactionToast('New Loan Request', createLoanResponse.txId)
       onClose()
@@ -405,7 +405,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Term (months)
+                      Term (minutes)
                     </label>
                     <input
                       type="number"
@@ -415,7 +415,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                       focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
                       placeholder-gray-500 transition-all duration-200
                       [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="12"
+                      placeholder="60"
                       required
                     />
                   </div>

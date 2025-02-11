@@ -62,21 +62,26 @@ export default function LiquidationPage() {
       const data = await response.json()
       console.log('Raw loans data:', data)
       
+      if (Object.keys(tokenPrices).length === 0) {
+        console.log('Token prices not yet available')
+        setLoans([])
+        return
+      }
+
       const transformedLoans = data.loans
         .map(loan => {
           const collateralAmount = Number(loan.collateralAmount)
           const tokenAmount = Number(loan.tokenAmount)
           
-          const collateralValueUSD = (collateralAmount * tokenPrices[loan.collateralToken] / 1e18) || 0
-          const loanValueUSD = (tokenAmount * tokenPrices[loan.tokenRequested] / 1e18) || 0
+          const collateralValueUSD = tokenPrices[loan.collateralToken] ? 
+            (collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralToken] : 0
+          const loanValueUSD = tokenPrices[loan.tokenRequested] ? 
+            (tokenAmount / Math.pow(10, 18)) * tokenPrices[loan.tokenRequested] : 0
+          
           const collateralRatio = loanValueUSD > 0 ? (collateralValueUSD / loanValueUSD) * 100 : 0
 
           console.log('Processing loan:', {
             id: loan.id,
-            collateralAmount,
-            tokenAmount,
-            collateralToken: loan.collateralToken,
-            tokenRequested: loan.tokenRequested,
             collateralValueUSD,
             loanValueUSD,
             collateralRatio,
@@ -104,7 +109,7 @@ export default function LiquidationPage() {
         })
         .filter(loan => {
           console.log(`Filtering loan ${loan.id}: ratio=${loan.collateralRatio}, status=${loan.status}, canLiquidate=${loan.canLiquidate}`)
-          return loan.collateralRatio <= 150 && loan.canLiquidate === true
+          return loan.collateralRatio <= 150 && loan.canLiquidate === true && loan.collateralRatio > 0
         })
         .sort((a, b) => a.collateralRatio - b.collateralRatio)
 
