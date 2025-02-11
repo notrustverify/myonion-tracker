@@ -179,12 +179,13 @@ Contract Loan (
             // confirm it's active
             assert!(active == true, 3)
 
-            // liquidation to true -> auction begins
-            liquidation = true
-            timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
-
-            //! need to edit this on the factory side too
-            highestBid = getInterest() // Start bid at the current owed amount
+            if (liquidation == false) {
+                liquidation = true
+                timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
+    
+                //! need to edit this on the factory side too
+                highestBid = getInterest() // Start bid at the current owed amount
+            }
         }
     }
 
@@ -227,11 +228,13 @@ Contract Loan (
         assert!(ratio < 15000, 5)
 
         // liquidation to true -> auction begins
-        liquidation = true
-        timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
+        if (liquidation == false) {
+            liquidation = true
+            timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
 
-        //! need to edit this on the factory side too
-        highestBid = getInterest() // Start bid at the current owed amount
+            //! need to edit this on the factory side too
+            highestBid = getInterest() // Start bid at the current owed amount
+        }
     }
 
     // should return timeEnd + token + newHighestBid + newHighestBidder
@@ -245,6 +248,7 @@ Contract Loan (
 
         // confirm it's active
         assert!(active == true, 3)
+        assert!(liquidation == true, 4)
 
         // newBid must be greater than current bid
         assert!(bidAmount > highestBid, 7)
@@ -286,6 +290,7 @@ Contract Loan (
 
         // confirm it's active
         assert!(active == true, 3)
+        assert!(liquidation == true, 4)
 
         // Ensure the auction has ended
         assert!(blockTimeStamp!() > timeToEnd, Loan.AuctionActive)
