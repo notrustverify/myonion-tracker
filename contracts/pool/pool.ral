@@ -67,6 +67,10 @@ Contract Pool (
         return poolToken, collateralToken
     }
 
+    pub fn getPairSToken() -> (ByteVec) {
+        return selfContractId!()
+    }
+
     @using(updateFields = true)
     fn updateExchangeRate() -> () {
         if (sPoolSupply > 0) {

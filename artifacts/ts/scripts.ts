@@ -13,16 +13,11 @@ import {
 } from "@alephium/web3";
 import { getContractByCodeHash } from "./contracts";
 import { default as AcceptLoanScriptJson } from "../loans/AcceptLoan.ral.json";
-import { default as AcceptMarketScriptJson } from "../loans/AcceptMarket.ral.json";
 import { default as AddCollateralScriptJson } from "../loans/AddCollateral.ral.json";
-import { default as AddFundsScriptJson } from "../loans/AddFunds.ral.json";
 import { default as BidLoanScriptJson } from "../loans/BidLoan.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
-import { default as CreateLoaneeMarketScriptJson } from "../loans/CreateLoaneeMarket.ral.json";
-import { default as DestroyMarketScriptJson } from "../loans/DestroyMarket.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
-import { default as EditMarketValuesScriptJson } from "../loans/EditMarketValues.ral.json";
 import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json";
 import { default as ForceCancelMarketScriptJson } from "../loans/ForceCancelMarket.ral.json";
 import { default as ForfeitLoanScriptJson } from "../loans/ForfeitLoan.ral.json";
@@ -42,7 +37,6 @@ import { default as UpdateMarketCodeScriptJson } from "../loans/UpdateMarketCode
 import { default as UpdateMarketFieldsScriptJson } from "../loans/UpdateMarketFields.ral.json";
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
-import { default as WithdrawFundsScriptJson } from "../loans/WithdrawFunds.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
 import {
   CollateralInfo,
@@ -63,22 +57,6 @@ export const AcceptLoan = new ExecutableScript<{
   getContractByCodeHash
 );
 
-export const AcceptMarket = new ExecutableScript<{
-  loanFactory: HexString;
-  tokenRequested: HexString;
-  tokenAmount: bigint;
-  tokenOracle: boolean;
-  collateralToken: HexString;
-  collateralAmount: bigint;
-  collateralOracle: boolean;
-  interest: bigint;
-  duration: bigint;
-  loaneeMarket: HexString;
-}>(
-  Script.fromJson(AcceptMarketScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
 export const AddCollateral = new ExecutableScript<{
   loanFactory: HexString;
   contractId: HexString;
@@ -89,14 +67,6 @@ export const AddCollateral = new ExecutableScript<{
   Script.fromJson(AddCollateralScriptJson, "", AllStructs),
   getContractByCodeHash
 );
-
-export const AddFunds = new ExecutableScript<{
-  loanFactory: HexString;
-  contractId: HexString;
-  token: HexString;
-  amount: bigint;
-  gas: boolean;
-}>(Script.fromJson(AddFundsScriptJson, "", AllStructs), getContractByCodeHash);
 
 export const BidLoan = new ExecutableScript<{
   loanFactory: HexString;
@@ -129,48 +99,11 @@ export const CreateLoan = new ExecutableScript<{
   getContractByCodeHash
 );
 
-export const CreateLoaneeMarket = new ExecutableScript<{
-  loanFactory: HexString;
-  token: HexString;
-  tokenAmount: bigint;
-  minTokenAmount: bigint;
-  minInterest: bigint;
-  maxTime: bigint;
-  liquidation: boolean;
-  collateral: boolean;
-  ratio: bigint;
-}>(
-  Script.fromJson(CreateLoaneeMarketScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const DestroyMarket = new ExecutableScript<{
-  loanFactory: HexString;
-  contractId: HexString;
-}>(
-  Script.fromJson(DestroyMarketScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
 export const EditLoanRate = new ExecutableScript<{
   loanFactory: HexString;
   newRate: bigint;
 }>(
   Script.fromJson(EditLoanRateScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const EditMarketValues = new ExecutableScript<{
-  loanFactory: HexString;
-  contractId: HexString;
-  newBorrowAmount: bigint;
-  newInterest: bigint;
-  newTime: bigint;
-  liq: boolean;
-  collateral: boolean;
-  ratio: bigint;
-}>(
-  Script.fromJson(EditMarketValuesScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -332,16 +265,6 @@ export const UpdatePair = new ExecutableScript<{
   price: bigint;
 }>(
   Script.fromJson(UpdatePairScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const WithdrawFunds = new ExecutableScript<{
-  loanFactory: HexString;
-  contractId: HexString;
-  token: HexString;
-  amount: bigint;
-}>(
-  Script.fromJson(WithdrawFundsScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

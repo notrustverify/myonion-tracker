@@ -99,6 +99,10 @@ export namespace PoolTypes {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<[HexString, HexString]>;
     };
+    getPairSToken: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<HexString>;
+    };
     updateExchangeRate: {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<null>;
@@ -182,6 +186,10 @@ export namespace PoolTypes {
       result: SignExecuteScriptTxResult;
     };
     getPoolTokens: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
+    getPairSToken: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
@@ -322,6 +330,14 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     ): Promise<TestContractResult<[HexString, HexString], PoolTypes.Maps>> => {
       return testMethod(this, "getPoolTokens", params, getContractByCodeHash);
     },
+    getPairSToken: async (
+      params: Omit<
+        TestContractParams<PoolTypes.Fields, never, PoolTypes.Maps>,
+        "testArgs"
+      >
+    ): Promise<TestContractResult<HexString, PoolTypes.Maps>> => {
+      return testMethod(this, "getPairSToken", params, getContractByCodeHash);
+    },
     updateExchangeRate: async (
       params: Omit<
         TestContractParams<PoolTypes.Fields, never, PoolTypes.Maps>,
@@ -451,8 +467,8 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
 export const Pool = new Factory(
   Contract.fromJson(
     PoolContractJson,
-    "=44-2+e2=2-4+c=1-1=2+3=1-1+45c5=1173-1+a=180-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+c=330+7a7e0214696e73657274206174206d617020706174683a2000=89-1+4=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=49-1+6=186+7a7e021472656d6f7665206174206d617020706174683a2000=40",
-    "a037701b292bb8ffd210ea19eeb4517010f5072e4c3e45c073d09951185f159c",
+    "=48-2+ef=2+d=1-1=1+5=1-2+1=2-2+d2=1199-1+a=180-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+c=330+7a7e0214696e73657274206174206d617020706174683a2000=89-1+4=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=49-1+6=186+7a7e021472656d6f7665206174206d617020706174683a2000=40",
+    "7e7fc67aef7756cada9448b386e7b06c956338d8921c9b8b618aaf30512f95da",
     AllStructs
   )
 );
@@ -619,6 +635,17 @@ export class PoolInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    getPairSToken: async (
+      params?: PoolTypes.CallMethodParams<"getPairSToken">
+    ): Promise<PoolTypes.CallMethodResult<"getPairSToken">> => {
+      return callMethod(
+        Pool,
+        this,
+        "getPairSToken",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
     updateExchangeRate: async (
       params?: PoolTypes.CallMethodParams<"updateExchangeRate">
     ): Promise<PoolTypes.CallMethodResult<"updateExchangeRate">> => {
@@ -726,6 +753,11 @@ export class PoolInstance extends ContractInstance {
       params: PoolTypes.SignExecuteMethodParams<"getPoolTokens">
     ): Promise<PoolTypes.SignExecuteMethodResult<"getPoolTokens">> => {
       return signExecuteMethod(Pool, this, "getPoolTokens", params);
+    },
+    getPairSToken: async (
+      params: PoolTypes.SignExecuteMethodParams<"getPairSToken">
+    ): Promise<PoolTypes.SignExecuteMethodResult<"getPairSToken">> => {
+      return signExecuteMethod(Pool, this, "getPairSToken", params);
     },
     updateExchangeRate: async (
       params: PoolTypes.SignExecuteMethodParams<"updateExchangeRate">
