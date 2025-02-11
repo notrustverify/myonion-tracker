@@ -41,7 +41,7 @@ const AddCollateralModal = ({ isOpen, onClose, loan }) => {
     }
     fetchBalance()
 
-  }, [loan?.borrower, loan?.collateralToken])
+  }, [loan?.borrower, loan?.collateralToken, loan?.tokenRequested])
 
 
   const handleSetMaxAmount = () => {

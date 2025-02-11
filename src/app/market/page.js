@@ -159,7 +159,7 @@ export default function MarketPage() {
         setEngine(null)
       }
     }
-  }, [viewMode])
+  }, [viewMode, engine])
 
   const containerVariants = {
     hidden: { opacity: 0 },

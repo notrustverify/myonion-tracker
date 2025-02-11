@@ -80,7 +80,7 @@ const Terminal = () => {
       await fetchStats(prices);
     };
     initializeData();
-  }, [backendUrl]);
+  }, [backendUrl, tokensList]);
 
   const lines = [
     { command: "$ npm run stats", delay: 0 },

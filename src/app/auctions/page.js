@@ -132,7 +132,7 @@ export default function LiquidationPage() {
     fetchLoans(1)
     const interval = setInterval(() => fetchLoans(pagination.currentPage), 30000)
     return () => clearInterval(interval)
-  }, [fetchLoans])
+  }, [fetchLoans, pagination.currentPage])
 
   useEffect(() => {
     console.log('TokenPrices updated:', tokenPrices)

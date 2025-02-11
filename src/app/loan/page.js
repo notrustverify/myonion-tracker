@@ -192,7 +192,7 @@ export default function LoanPage() {
         }
       }
     }
-  }, [activeFilter, viewMode, loans])
+  }, [activeFilter, viewMode, loans, engine, runner])
 
   const containerVariants = {
     hidden: { opacity: 0 },
