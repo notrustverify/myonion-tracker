@@ -148,8 +148,8 @@ export const AcceptLoanService = async (
     contractId,
     tokenId,
     amount,
-    tokenOracle,
-    collateralOracle
+    collateralOracle,
+    tokenOracle
   ) => {
     return await AcceptLoan.execute(signerProvider, {
       initialFields: {
