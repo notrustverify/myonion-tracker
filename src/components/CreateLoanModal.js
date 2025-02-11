@@ -139,7 +139,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
     }
 
     fetchBalances()
-  }, [account?.address, loanToken, collateralToken])
+  }, [account?.address, loanToken, collateralToken, tokensList])
 
   useEffect(() => {
     const fetchTokenPrices = async () => {
@@ -171,7 +171,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
     if (loanToken && collateralToken) {
       fetchTokenPrices()
     }
-  }, [loanToken, collateralToken])
+  }, [loanToken, collateralToken, backendUrl, tokensList])
   
   if (!isOpen) return null
 

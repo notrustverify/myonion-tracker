@@ -41,8 +41,6 @@ const shortenAddress = (address) => {
 }
 
 const LoanModal = ({ isOpen, onClose, loan }) => {
-  if (!loan || !isOpen) return null
-
   const { signer } = useWallet()
   const [lenderAnsName, setLenderAnsName] = useState('')
   const [lenderAnsUri, setLenderAnsUri] = useState('')
@@ -53,6 +51,65 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
   const backendUrl = getBackendUrl()
+
+  useEffect(() => {
+    if (!isOpen || !loan) return;
+
+    const getProfiles = async () => {
+      try {
+        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
+        
+        if (loan.lender) {
+          const lenderProfile = await ans.getProfile(loan.lender)
+          if (lenderProfile?.name) {
+            setLenderAnsName(lenderProfile.name)
+          }
+          if (lenderProfile?.imgUri) {
+            setLenderAnsUri(lenderProfile.imgUri)
+          }
+        }
+
+        if (loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender) {
+          const borrowerProfile = await ans.getProfile(loan.borrower)
+          if (borrowerProfile?.name) {
+            setBorrowerAnsName(borrowerProfile.name)
+          }
+          if (borrowerProfile?.imgUri) {
+            setBorrowerAnsUri(borrowerProfile.imgUri)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching ANS profiles:', error)
+      }
+    }
+
+    getProfiles()
+  }, [isOpen, loan, config.defaultNodeUrl, config.defaultExplorerUrl])
+
+  useEffect(() => {
+    if (!isOpen || !loan) return;
+
+    const fetchTokenPrices = async () => {
+      try {
+        const tokens = [loan.tokenRequested, loan.collateralToken]
+        const prices = {}
+        
+        for (const token of tokens) {
+          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
+          const data = await response.json()
+          prices[token] = data.priceUSD
+        }
+        
+        setTokenPrices(prices)
+      } catch (error) {
+        console.error('Error fetching token prices:', error)
+      }
+    }
+
+    fetchTokenPrices()
+  }, [isOpen, loan, loan?.tokenRequested, loan?.collateralToken, backendUrl])
+
+  if (!loan || !isOpen) return null
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
@@ -77,72 +134,17 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
   const riskLevel = getRiskLevel(collateralRatio)
 
-  useEffect(() => {
-    const getProfiles = async () => {
-      try {
-        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
-        
-        if (loan.lender) {
-          const lenderProfile = await ans.getProfile(loan.lender)
-        
-
-
-          if (lenderProfile?.name) {
-            setLenderAnsName(lenderProfile.name)
-          }
-
-
-          if (lenderProfile?.imgUri) {
-            setLenderAnsUri(lenderProfile.imgUri)
-          }
+  const handleMouseDown = (e) => {
+    if (e.target === e.currentTarget) {
+      const handleMouseUp = (e) => {
+        if (e.target === e.currentTarget) {
+          onClose()
         }
-
-        if (loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender) {
-          const borrowerProfile = await ans.getProfile(loan.borrower)
-
-
-          if (borrowerProfile?.name) {
-            setBorrowerAnsName(borrowerProfile.name)
-          }
-
-
-          if (borrowerProfile?.imgUri) {
-            setBorrowerAnsUri(borrowerProfile.imgUri)
-          }
-
-        }
-      } catch (error) {
-        console.error('Error fetching ANS profiles:', error)
+        document.removeEventListener('mouseup', handleMouseUp)
       }
+      document.addEventListener('mouseup', handleMouseUp)
     }
-
-    if (isOpen) {
-      getProfiles()
-    }
-  }, [isOpen, loan])
-
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [loan.tokenRequested, loan.collateralToken]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-      }
-    }
-
-    if (isOpen) {
-      fetchTokenPrices()
-    }
-  }, [isOpen, loan.tokenRequested, loan.collateralToken, backendUrl])
+  }
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {

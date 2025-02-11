@@ -36,7 +36,7 @@ export function Navbar() {
         };
       getProfile();      
       }
-  }, [wallet?.account?.address]);
+  }, [wallet?.account?.address, config.defaultNodeUrl, config.defaultExplorerUrl]);
 
   const toggleWalletDropdown = () => setIsWalletDropdownOpen(!isWalletDropdownOpen);
 
