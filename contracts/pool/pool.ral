@@ -19,7 +19,7 @@ Contract Pool (
     collateralDecimals: U256,
     collateralPair: ByteVec,
     // pool ratio info
-    exchangeRate: U256,
+    mut exchangeRate: U256,
     mut sPoolSupply: U256,
     mut totalDeposits: U256,
     mut totalBorrowed: U256,
@@ -67,16 +67,44 @@ Contract Pool (
         return poolToken, collateralToken
     }
 
-    fn updateInterestRate() -> () {
-        let utilization = (totalBorrowed * 10000) / totalDeposits // Utilization in basis points
-        if (utilization < 5000) { // < 50%
-            interestRate = 200 // 2% interest
-        } else if (utilization < 8000) { // < 80%
-            interestRate = 500 // 5% interest
-        } else {
-            interestRate = 1000 // 10% interest
+    @using(updateFields = true)
+    fn updateExchangeRate() -> () {
+        if (sPoolSupply > 0) {
+            exchangeRate = (totalDeposits + totalBorrowed) / sPoolSupply
         }
     }
+    
+    @using(updateFields = true) 
+    fn updateInterestRate() -> () {
+        let mut utilization = 0
+        if (totalDeposits == 0) {
+            utilization = 0
+        }
+        else {
+            utilization = (totalBorrowed * 10000) / totalDeposits
+        }
+    
+        if (utilization < 5000) { // < 50%
+            interestRate = 200 // 2%
+        } else if (utilization < 8000) { // 50% - 80%
+            interestRate = 500 // 5%
+        } else if (utilization < 9000) { // 80% - 90%
+            interestRate = 800 // 8%
+        } else {
+            interestRate = 1500 // 15% (High-risk)
+        }
+    }
+
+    //fn updateInterestRate() -> () {
+    //    let utilization = (totalBorrowed * 10000) / totalDeposits // Utilization in basis points
+    //    if (utilization < 5000) { // < 50%
+    //        interestRate = 200 // 2% interest
+    //    } else if (utilization < 8000) { // < 80%
+    //        interestRate = 500 // 5% interest
+    //    } else {
+    //        interestRate = 1000 // 10% interest
+    //    }
+    //}
 
     fn determineCollateralRatio(
         tokenAmount: U256,
@@ -102,6 +130,7 @@ Contract Pool (
         return ratio
     }
 
+    @using(checkExternalCaller = false) 
     pub fn determineCollateralAmount(
         tokenAmount: U256,
         desiredRatio: U256
@@ -138,7 +167,8 @@ Contract Pool (
 
         transferToken!(selfAddress!(), caller, selfContractId!(), mintedShares)
 
-        updateInterestRate() // Update interest rate on deposit
+        updateInterestRate()
+        updateExchangeRate()
         emit Deposited(caller, amount)
     }
 
@@ -150,19 +180,20 @@ Contract Pool (
         let caller = callerAddress!()
         let withdrawAmount = (sPoolAmount * exchangeRate)
         assert!(totalDeposits >= withdrawAmount, PoolCodes.InsuffcientLiquidity)
-
+    
         sPoolSupply = sPoolSupply - sPoolAmount
         totalDeposits = totalDeposits - withdrawAmount
-
+    
         transferToken!(caller, selfAddress!(), selfContractId!(), sPoolAmount)
         transferToken!(selfAddress!(), caller, poolToken, withdrawAmount)
-
-        updateInterestRate() // Update interest rate on withdrawal
+    
+        updateInterestRate()
+        updateExchangeRate()
         emit Withdrawn(caller, withdrawAmount)
     }
 
     // Provide collateral
-    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = false)
     pub fn depositCollateral(amount: U256) -> () {
         assert!(amount > 0, PoolCodes.CannotDepositZero)
 
@@ -206,6 +237,7 @@ Contract Pool (
         transferToken!(selfAddress!(), caller, poolToken, amount)
 
         updateInterestRate()
+        updateExchangeRate()
         emit Borrowed(caller, amount, requiredCollateral)
     }
 
@@ -264,5 +296,24 @@ Contract Pool (
         updateInterestRate()
 
         emit Liquidated(borrower, caller)
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    pub fn repay(path: ByteVec) -> () {
+        assert!(loans.contains!(path), PoolCodes.NoActiveLoan)
+
+        let loanInfo = loans[path]
+        let borrower = loanInfo.borrower
+        let repaymentAmount = loanInfo.loanAmount
+
+        transferToken!(callerAddress!(), selfAddress!(), poolToken, repaymentAmount)
+
+        // Remove the loan entry
+        loans.remove!(callerAddress!(), path)
+
+        totalBorrowed = totalBorrowed - repaymentAmount
+        updateInterestRate()
+        updateExchangeRate()
+        emit Repaid(borrower, repaymentAmount)
     }
 }
