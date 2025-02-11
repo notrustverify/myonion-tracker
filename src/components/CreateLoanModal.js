@@ -331,15 +331,6 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         placeholder="0.00"
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                        <button
-                          onClick={handleSetMaxLoanAmount}
-                          className="px-2 py-1 text-xs font-medium text-green-400 hover:text-green-300 
-                            bg-green-500/10 hover:bg-green-500/20 
-                            border border-green-500/20 hover:border-green-500/30 
-                            rounded-lg transition-colors duration-200"
-                        >
-                          MAX
-                        </button>
                         {!isLoadingPrices && loanAmount && (
                           <span className="text-sm text-gray-400">
                             ≈ ${formatNumber(calculateUSDValue(loanAmount, loanToken))}
@@ -352,9 +343,6 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                       onChange={(e) => setLoanToken(e.target.value)}
                       options={tokens}
                     />
-                  </div>
-                  <div className="mt-2 text-sm text-gray-400">
-                    Available balance: {formatNumber(loanTokenBalance)} {loanToken}
                   </div>
                 </div>
 

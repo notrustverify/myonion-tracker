@@ -53,7 +53,8 @@ const LoanCard = ({
   status = 'active',
   liquidation,
   canLiquidate,
-  id
+  id,
+  onOpenModal
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
@@ -148,7 +149,20 @@ const LoanCard = ({
           scale: 1.02,
           transition: { duration: 0.2 }
         }}
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => onOpenModal({
+          tokenAmount: value,
+          tokenRequested: currency,
+          collateralAmount: collateralAmount,
+          collateralToken: collateralCurrency,
+          duration: term,
+          interest,
+          lender: lender === DEFAULT_ADDRESS ? null : lender,
+          borrower: borrower === DEFAULT_ADDRESS ? null : borrower,
+          status,
+          liquidation,
+          canLiquidate,
+          id
+        })}
         onHoverStart={() => setIsHovered(true)}
         onHoverEnd={() => setIsHovered(false)}
         className="bg-gradient-to-br from-gray-800/90 to-gray-900/90 rounded-xl p-5 text-white border border-gray-700/50 hover:border-gray-600/50 transition-all hover:shadow-xl hover:shadow-gray-900/20 cursor-pointer relative group"

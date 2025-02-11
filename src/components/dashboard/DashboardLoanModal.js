@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getTokensList } from '../../lib/configs'
+import { CalculateLoanAssets, getTokensList } from '../../lib/configs'
 import { ANS } from '@alph-name-service/ans-sdk'
 import { AiOutlineUser } from "react-icons/ai"
 import { useWallet } from '@alephium/web3-react'
@@ -161,6 +161,34 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
       onClose()
     } catch (err) {
       console.error("Error cancelling loan:", err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleRepayLoan = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    const amount = await CalculateLoanAssets(signer, loan.id, loan.duration)
+    console.log("amount is " + amount)
+    try {
+      const result = await PayLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id,
+        loan.tokenRequested,
+        amount
+      )
+      window.addTransactionToast('Repaying Loan', result.txId)
+      onClose()
+    } catch (err) {
+      console.error("Error repaying loan:", err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -531,7 +559,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
 
                       {isLender && loan.status === 'active' && (
                         <button 
-                          onClick={() => setIsRepayModalOpen(true)}
+                          onClick={handleRepayLoan}
                           className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
                             hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
                             border border-green-500/20 hover:border-green-500/30 

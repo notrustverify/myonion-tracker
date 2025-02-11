@@ -108,7 +108,6 @@ export const ForfeitLoanService = async (
 }
 export const CancelLoanService = async (
     signerProvider,
-
     loanFactory,
     contractId
   ) => {

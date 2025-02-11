@@ -41,6 +41,8 @@ const shortenAddress = (address) => {
 }
 
 const LoanModal = ({ isOpen, onClose, loan }) => {
+  if (!loan || !isOpen) return null
+
   const { signer } = useWallet()
   const [lenderAnsName, setLenderAnsName] = useState('')
   const [lenderAnsUri, setLenderAnsUri] = useState('')
@@ -141,8 +143,6 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
       fetchTokenPrices()
     }
   }, [isOpen, loan.tokenRequested, loan.collateralToken, backendUrl])
-
-  if (!isOpen) return null
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {

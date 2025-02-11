@@ -11,6 +11,7 @@ import { HiViewGrid } from 'react-icons/hi'
 import Matter from 'matter-js'
 import LoanBubble from '../../components/LoanBubble'
 import { RiBubbleChartLine } from "react-icons/ri";
+import LoanModal from '../../components/LoanModal'
 
 
 export default function LoanPage() {
@@ -30,6 +31,8 @@ export default function LoanPage() {
   const containerRef = useRef(null)
   const [engine, setEngine] = useState(null)
   const [runner, setRunner] = useState(null)
+  const [selectedLoan, setSelectedLoan] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const fetchTokenPrices = useCallback(async () => {
     try {
@@ -212,6 +215,11 @@ export default function LoanPage() {
     }
   }
 
+  const handleOpenModal = (loan) => {
+    setSelectedLoan(loan)
+    setIsModalOpen(true)
+  }
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black">
       <Navbar />
@@ -360,7 +368,7 @@ export default function LoanPage() {
             >
               {loans.map((loan, index) => (
                 <motion.div key={loan.id} variants={itemVariants}>
-                  <LoanCard {...loan} />
+                  <LoanCard {...loan} onOpenModal={handleOpenModal} />
                 </motion.div>
               ))}
             </motion.div>
@@ -415,6 +423,15 @@ export default function LoanPage() {
         <CreateLoanModal 
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+        />
+
+        <LoanModal 
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedLoan(null)
+          }}
+          loan={selectedLoan}
         />
       </motion.main>
 
