@@ -35,7 +35,14 @@ import {
 } from "@alephium/web3";
 import { default as PoolContractJson } from "../pool/Pool.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
+import {
+  CollateralInfo,
+  DIAOracleValue,
+  LoanInfo,
+  OracleData,
+  PairInfo,
+  AllStructs,
+} from "./types";
 import { RalphMap } from "@alephium/web3";
 
 // Custom types for the contract
@@ -92,12 +99,20 @@ export namespace PoolTypes {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<[HexString, HexString]>;
     };
+    updateInterestRate: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<null>;
+    };
     determineCollateralRatio: {
       params: CallContractParams<{
         tokenAmount: bigint;
         collateralAmount: bigint;
         threshhold: bigint;
       }>;
+      result: CallContractResult<bigint>;
+    };
+    determineCollateralAmount: {
+      params: CallContractParams<{ tokenAmount: bigint; desiredRatio: bigint }>;
       result: CallContractResult<bigint>;
     };
     deposit: {
@@ -116,17 +131,12 @@ export namespace PoolTypes {
       params: CallContractParams<{
         caller: Address;
         amount: bigint;
-        collat: bigint;
         path: HexString;
       }>;
       result: CallContractResult<null>;
     };
-    repay: {
-      params: CallContractParams<{ amount: bigint }>;
-      result: CallContractResult<null>;
-    };
     liquidate: {
-      params: CallContractParams<{ borrower: Address }>;
+      params: CallContractParams<{ caller: Address; path: HexString }>;
       result: CallContractResult<null>;
     };
   }
@@ -167,11 +177,22 @@ export namespace PoolTypes {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
+    updateInterestRate: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
     determineCollateralRatio: {
       params: SignExecuteContractMethodParams<{
         tokenAmount: bigint;
         collateralAmount: bigint;
         threshhold: bigint;
+      }>;
+      result: SignExecuteScriptTxResult;
+    };
+    determineCollateralAmount: {
+      params: SignExecuteContractMethodParams<{
+        tokenAmount: bigint;
+        desiredRatio: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -191,17 +212,15 @@ export namespace PoolTypes {
       params: SignExecuteContractMethodParams<{
         caller: Address;
         amount: bigint;
-        collat: bigint;
         path: HexString;
       }>;
       result: SignExecuteScriptTxResult;
     };
-    repay: {
-      params: SignExecuteContractMethodParams<{ amount: bigint }>;
-      result: SignExecuteScriptTxResult;
-    };
     liquidate: {
-      params: SignExecuteContractMethodParams<{ borrower: Address }>;
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        path: HexString;
+      }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -211,8 +230,8 @@ export namespace PoolTypes {
     SignExecuteMethodTable[T]["result"];
 
   export type Maps = {
-    loans?: Map<Address, bigint>;
-    collateral?: Map<Address, bigint>;
+    loans?: Map<HexString, LoanInfo>;
+    collateral?: Map<Address, CollateralInfo>;
   };
 }
 
@@ -287,6 +306,19 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     ): Promise<TestContractResult<[HexString, HexString], PoolTypes.Maps>> => {
       return testMethod(this, "getPoolTokens", params, getContractByCodeHash);
     },
+    updateInterestRate: async (
+      params: Omit<
+        TestContractParams<PoolTypes.Fields, never, PoolTypes.Maps>,
+        "testArgs"
+      >
+    ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
+      return testMethod(
+        this,
+        "updateInterestRate",
+        params,
+        getContractByCodeHash
+      );
+    },
     determineCollateralRatio: async (
       params: TestContractParams<
         PoolTypes.Fields,
@@ -297,6 +329,20 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
       return testMethod(
         this,
         "determineCollateralRatio",
+        params,
+        getContractByCodeHash
+      );
+    },
+    determineCollateralAmount: async (
+      params: TestContractParams<
+        PoolTypes.Fields,
+        { tokenAmount: bigint; desiredRatio: bigint },
+        PoolTypes.Maps
+      >
+    ): Promise<TestContractResult<bigint, PoolTypes.Maps>> => {
+      return testMethod(
+        this,
+        "determineCollateralAmount",
         params,
         getContractByCodeHash
       );
@@ -336,25 +382,16 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     borrow: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { caller: Address; amount: bigint; collat: bigint; path: HexString },
+        { caller: Address; amount: bigint; path: HexString },
         PoolTypes.Maps
       >
     ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
       return testMethod(this, "borrow", params, getContractByCodeHash);
     },
-    repay: async (
-      params: TestContractParams<
-        PoolTypes.Fields,
-        { amount: bigint },
-        PoolTypes.Maps
-      >
-    ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
-      return testMethod(this, "repay", params, getContractByCodeHash);
-    },
     liquidate: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { borrower: Address },
+        { caller: Address; path: HexString },
         PoolTypes.Maps
       >
     ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
@@ -376,8 +413,8 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
 export const Pool = new Factory(
   Contract.fromJson(
     PoolContractJson,
-    "=32-2+d=1-3=2-2+7b4300=2-2+eb=661-1+4=171-1+c=40+7a7e0214696e73657274206174206d617020706174683a2000=25-1+9=200+7a7e0214696e73657274206174206d617020706174683a2000=349-1+6=278+7a7e021472656d6f7665206174206d617020706174683a2000=46+7a7e021472656d6f7665206174206d617020706174683a2000=32",
-    "ecb3b871c793926990b06a380c6badad716e361ea760854df520af52d9e04ad5",
+    "=40-2+aa=2-2+93=2-2+fa=1061-1+a=180-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+b=330+7a7e0214696e73657274206174206d617020706174683a2000=85-1+4=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=36",
+    "18153c25774d068b7c7e87266a493b74e5f626917c3c46b2f33023c7746cdb6d",
     AllStructs
   )
 );
@@ -390,12 +427,12 @@ export class PoolInstance extends ContractInstance {
   }
 
   maps = {
-    loans: new RalphMap<Address, bigint>(
+    loans: new RalphMap<HexString, LoanInfo>(
       Pool.contract,
       this.contractId,
       "loans"
     ),
-    collateral: new RalphMap<Address, bigint>(
+    collateral: new RalphMap<Address, CollateralInfo>(
       Pool.contract,
       this.contractId,
       "collateral"
@@ -544,6 +581,17 @@ export class PoolInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    updateInterestRate: async (
+      params?: PoolTypes.CallMethodParams<"updateInterestRate">
+    ): Promise<PoolTypes.CallMethodResult<"updateInterestRate">> => {
+      return callMethod(
+        Pool,
+        this,
+        "updateInterestRate",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
     determineCollateralRatio: async (
       params: PoolTypes.CallMethodParams<"determineCollateralRatio">
     ): Promise<PoolTypes.CallMethodResult<"determineCollateralRatio">> => {
@@ -551,6 +599,17 @@ export class PoolInstance extends ContractInstance {
         Pool,
         this,
         "determineCollateralRatio",
+        params,
+        getContractByCodeHash
+      );
+    },
+    determineCollateralAmount: async (
+      params: PoolTypes.CallMethodParams<"determineCollateralAmount">
+    ): Promise<PoolTypes.CallMethodResult<"determineCollateralAmount">> => {
+      return callMethod(
+        Pool,
+        this,
+        "determineCollateralAmount",
         params,
         getContractByCodeHash
       );
@@ -580,11 +639,6 @@ export class PoolInstance extends ContractInstance {
       params: PoolTypes.CallMethodParams<"borrow">
     ): Promise<PoolTypes.CallMethodResult<"borrow">> => {
       return callMethod(Pool, this, "borrow", params, getContractByCodeHash);
-    },
-    repay: async (
-      params: PoolTypes.CallMethodParams<"repay">
-    ): Promise<PoolTypes.CallMethodResult<"repay">> => {
-      return callMethod(Pool, this, "repay", params, getContractByCodeHash);
     },
     liquidate: async (
       params: PoolTypes.CallMethodParams<"liquidate">
@@ -619,12 +673,24 @@ export class PoolInstance extends ContractInstance {
     ): Promise<PoolTypes.SignExecuteMethodResult<"getPoolTokens">> => {
       return signExecuteMethod(Pool, this, "getPoolTokens", params);
     },
+    updateInterestRate: async (
+      params: PoolTypes.SignExecuteMethodParams<"updateInterestRate">
+    ): Promise<PoolTypes.SignExecuteMethodResult<"updateInterestRate">> => {
+      return signExecuteMethod(Pool, this, "updateInterestRate", params);
+    },
     determineCollateralRatio: async (
       params: PoolTypes.SignExecuteMethodParams<"determineCollateralRatio">
     ): Promise<
       PoolTypes.SignExecuteMethodResult<"determineCollateralRatio">
     > => {
       return signExecuteMethod(Pool, this, "determineCollateralRatio", params);
+    },
+    determineCollateralAmount: async (
+      params: PoolTypes.SignExecuteMethodParams<"determineCollateralAmount">
+    ): Promise<
+      PoolTypes.SignExecuteMethodResult<"determineCollateralAmount">
+    > => {
+      return signExecuteMethod(Pool, this, "determineCollateralAmount", params);
     },
     deposit: async (
       params: PoolTypes.SignExecuteMethodParams<"deposit">
@@ -645,11 +711,6 @@ export class PoolInstance extends ContractInstance {
       params: PoolTypes.SignExecuteMethodParams<"borrow">
     ): Promise<PoolTypes.SignExecuteMethodResult<"borrow">> => {
       return signExecuteMethod(Pool, this, "borrow", params);
-    },
-    repay: async (
-      params: PoolTypes.SignExecuteMethodParams<"repay">
-    ): Promise<PoolTypes.SignExecuteMethodResult<"repay">> => {
-      return signExecuteMethod(Pool, this, "repay", params);
     },
     liquidate: async (
       params: PoolTypes.SignExecuteMethodParams<"liquidate">

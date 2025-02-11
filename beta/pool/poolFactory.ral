@@ -68,7 +68,7 @@ Contract PoolFactory () {
         // get token
         let (token, _) = pool.getPoolTokens()
 
-        pool.borrow(caller, amount, encodeToByteVec!(caller, time))
+        pool.borrow(caller, amount, amount, encodeToByteVec!(caller, time))
 
         emit Borrow(
             caller,

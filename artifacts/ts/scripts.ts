@@ -44,7 +44,14 @@ import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCod
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
 import { default as WithdrawFundsScriptJson } from "../loans/WithdrawFunds.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
-import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
+import {
+  CollateralInfo,
+  DIAOracleValue,
+  LoanInfo,
+  OracleData,
+  PairInfo,
+  AllStructs,
+} from "./types";
 
 export const AcceptLoan = new ExecutableScript<{
   loanFactory: HexString;
