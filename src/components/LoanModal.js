@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { getBackendUrl, getTokensList } from '../lib/configs'
-import { ANS } from '@alph-name-service/ans-sdk'
+import { getTokensList } from '../lib/configs'
 import { AiOutlineUser } from "react-icons/ai"
 import { getAlephiumLoanConfig } from '../lib/configs';
 import { useWallet } from '@alephium/web3-react'
 import { AcceptLoanService, LiquidateLoanService } from '../services/loan.services'
+import Timer from './Timer'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -40,88 +40,30 @@ const shortenAddress = (address) => {
   return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
-const LoanModal = ({ isOpen, onClose, loan }) => {
+const LoanModal = ({ 
+  isOpen, 
+  onClose, 
+  loan,
+  tokenPrices,
+  isPricesLoading,
+  ansProfile
+}) => {
   const { signer } = useWallet()
-  const [lenderAnsName, setLenderAnsName] = useState('')
-  const [lenderAnsUri, setLenderAnsUri] = useState('')
-  const [borrowerAnsName, setBorrowerAnsName] = useState('')
-  const [borrowerAnsUri, setBorrowerAnsUri] = useState('')
-  const [tokenPrices, setTokenPrices] = useState({})
-  const config = getAlephiumLoanConfig();
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
-  const backendUrl = getBackendUrl()
 
-  useEffect(() => {
-    if (!isOpen || !loan) return;
+  const displayTokenAmount = formatNumber(loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals))
+  const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals))
 
-    const getProfiles = async () => {
-      try {
-        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
-        
-        if (loan.lender) {
-          const lenderProfile = await ans.getProfile(loan.lender)
-          if (lenderProfile?.name) {
-            setLenderAnsName(lenderProfile.name)
-          }
-          if (lenderProfile?.imgUri) {
-            setLenderAnsUri(lenderProfile.imgUri)
-          }
-        }
+  const usdTokenAmount = !isPricesLoading && tokenPrices[loan.currency] ? 
+    formatNumber((loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals)) * tokenPrices[loan.currency]) : '...'
+    
+  const usdCollateralAmount = !isPricesLoading && tokenPrices[loan.collateralCurrency] ? 
+    formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals)) * tokenPrices[loan.collateralCurrency]) : '...'
 
-        if (loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender) {
-          const borrowerProfile = await ans.getProfile(loan.borrower)
-          if (borrowerProfile?.name) {
-            setBorrowerAnsName(borrowerProfile.name)
-          }
-          if (borrowerProfile?.imgUri) {
-            setBorrowerAnsUri(borrowerProfile.imgUri)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching ANS profiles:', error)
-      }
-    }
-
-    getProfiles()
-  }, [isOpen, loan, config.defaultNodeUrl, config.defaultExplorerUrl])
-
-  useEffect(() => {
-    if (!isOpen || !loan) return;
-
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [loan.tokenRequested, loan.collateralToken]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-      }
-    }
-
-    fetchTokenPrices()
-  }, [isOpen, loan, loan?.tokenRequested, loan?.collateralToken, backendUrl])
-
-  if (!loan || !isOpen) return null
-
-  const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
-  const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
-
-  const usdTokenAmount = tokenPrices[loan.tokenRequested] ? 
-    formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
-  const usdCollateralAmount = tokenPrices[loan.collateralToken] ? 
-    formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
-
-  const collateralRatio = tokenPrices[loan.tokenRequested] && tokenPrices[loan.collateralToken] ? 
-    (((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) / 
-    ((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) * 100).toFixed(0) : '...'
+  const collateralRatio = !isPricesLoading && tokenPrices[loan.currency] && tokenPrices[loan.collateralCurrency] ? 
+    (((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals)) * tokenPrices[loan.collateralCurrency]) / 
+    ((loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals)) * tokenPrices[loan.currency]) * 100).toFixed(0) : '...'
 
   const getRiskLevel = (ratio) => {
     const numericRatio = parseFloat(ratio)
@@ -133,18 +75,6 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
   }
 
   const riskLevel = getRiskLevel(collateralRatio)
-
-  const handleMouseDown = (e) => {
-    if (e.target === e.currentTarget) {
-      const handleMouseUp = (e) => {
-        if (e.target === e.currentTarget) {
-          onClose()
-        }
-        document.removeEventListener('mouseup', handleMouseUp)
-      }
-      document.addEventListener('mouseup', handleMouseUp)
-    }
-  }
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -160,15 +90,16 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
     setIsLoading(true)
     setError(null)
-    const tokenInfo = getTokenInfo(loan.tokenRequested)
-    const collateralInfo = getTokenInfo(loan.collateralToken)
+    const tokenInfo = getTokenInfo(loan.currency)
+    const collateralInfo = getTokenInfo(loan.collateralCurrency)
+    const config = getAlephiumLoanConfig();
     try {
       const result = await AcceptLoanService(
         signer,
         config.loanFactoryContractId,
         loan.id,
-        loan.tokenRequested,
-        loan.tokenAmount,
+        loan.currency,
+        loan.value,
         collateralInfo.isOracle,
         tokenInfo.isOracle
       )
@@ -191,8 +122,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
     setIsLoading(true)
     setError(null)
-    const tokenInfo = getTokenInfo(loan.tokenRequested)
-    const collateralInfo = getTokenInfo(loan.collateralToken)
+    const tokenInfo = getTokenInfo(loan.currency)
+    const collateralInfo = getTokenInfo(loan.collateralCurrency)
+    const config = getAlephiumLoanConfig();
     try {
       const result = await LiquidateLoanService(
         signer,
@@ -319,9 +251,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                   <span className="block text-sm text-gray-400 mb-3">Lender</span>
                   <div className="flex items-center gap-3">
-                    {lenderAnsUri ? (
+                    {ansProfile?.lender?.imgUri ? (
                       <img 
-                        src={lenderAnsUri} 
+                        src={ansProfile.lender.imgUri} 
                         className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                         alt="" 
                       />
@@ -332,7 +264,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                     )}
                     <div>
                       <h4 className="font-medium text-[15px] text-white">
-                        {lenderAnsName || "Unnamed"}
+                        {ansProfile?.lender?.name || shortenAddress(loan.lender)}
                       </h4>
                       <p className="text-xs text-gray-400">
                         {shortenAddress(loan.lender)}
@@ -346,9 +278,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                     <div className="flex items-center gap-3">
-                      {borrowerAnsUri ? (
+                      {ansProfile?.borrower?.imgUri ? (
                         <img 
-                          src={borrowerAnsUri} 
+                          src={ansProfile.borrower.imgUri} 
                           className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                           alt="" 
                         />
@@ -359,7 +291,7 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                       )}
                       <div>
                         <h4 className="font-medium text-[15px] text-white">
-                          {borrowerAnsName || "Unnamed"}
+                          {ansProfile?.borrower?.name || shortenAddress(loan.borrower)}
                         </h4>
                         <p className="text-xs text-gray-400">
                           {shortenAddress(loan.borrower)}
@@ -376,15 +308,15 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
                     <div className="flex items-center gap-2">
                       <img 
-                        src={getTokenInfo(loan.tokenRequested).logoURI}
-                        alt={getTokenInfo(loan.tokenRequested).symbol}
+                        src={getTokenInfo(loan.currency).logoURI}
+                        alt={getTokenInfo(loan.currency).symbol}
                         className="w-8 h-8 rounded-full"
                       />
                       <span className="text-2xl font-semibold text-white">
                         {displayTokenAmount}
                       </span>
                       <span className="text-gray-400">
-                        {getTokenInfo(loan.tokenRequested).symbol}
+                        {getTokenInfo(loan.currency).symbol}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-500">
@@ -397,15 +329,15 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
                     <div className="flex items-center gap-2">
                       <img 
-                        src={getTokenInfo(loan.collateralToken).logoURI}
-                        alt={getTokenInfo(loan.collateralToken).symbol}
+                        src={getTokenInfo(loan.collateralCurrency).logoURI}
+                        alt={getTokenInfo(loan.collateralCurrency).symbol}
                         className="w-8 h-8 rounded-full"
                       />
                       <span className="text-2xl font-semibold text-white">
                         {displayCollateralAmount}
                       </span>
                       <span className="text-gray-400">
-                        {getTokenInfo(loan.collateralToken).symbol}
+                        {getTokenInfo(loan.collateralCurrency).symbol}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-500">
@@ -417,9 +349,9 @@ const LoanModal = ({ isOpen, onClose, loan }) => {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="text-sm text-gray-400 block mb-1">Term</span>
+                  <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                   <span className="text-lg font-medium text-white">
-                    {loan.duration} months
+                    <Timer createdAt={loan.createdAt} duration={loan.term} />
                   </span>
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">

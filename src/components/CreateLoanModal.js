@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CreateLoanService } from '../services/loan.services'
-import { getAlephiumLoanConfig, getBackendUrl, getTokensList } from '../lib/configs'
+import { getAlephiumLoanConfig, getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
 import { alphBalanceOf, balanceOf } from '../lib/utils'
 
@@ -100,7 +100,12 @@ const CustomTokenSelect = ({ value, onChange, options }) => {
   )
 }
 
-const CreateLoanModal = ({ isOpen, onClose }) => {
+const CreateLoanModal = ({ 
+  isOpen, 
+  onClose,
+  tokenPrices,
+  isPricesLoading
+}) => {
   const tokensList = getTokensList()
   const [loanToken, setLoanToken] = useState(tokensList[0].symbol)
   const [collateralToken, setCollateralToken] = useState(tokensList[0].symbol)
@@ -112,12 +117,32 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
   const [interestRate, setInterestRate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const config = getAlephiumLoanConfig()
-  const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoadingPrices, setIsLoadingPrices] = useState(true)
   const [loanTokenBalance, setLoanTokenBalance] = useState(0)
   const [collateralTokenBalance, setCollateralTokenBalance] = useState(0)
   const tokens = tokensList.map(token => token.symbol)
-  const backendUrl = getBackendUrl()
+
+  const calculateUSDValue = (amount, tokenSymbol) => {
+    if (!amount || isPricesLoading) return 0
+    const tokenInfo = tokensList.find(t => t.symbol === tokenSymbol)
+    if (!tokenInfo || !tokenPrices[tokenInfo.id]) return 0
+    return parseFloat(amount) * tokenPrices[tokenInfo.id]
+  }
+
+  const calculateRiskRatio = () => {
+    if (!loanAmount || !collateralAmount || isPricesLoading) return 0
+    const loanUSDValue = calculateUSDValue(loanAmount, loanToken)
+    const collateralUSDValue = calculateUSDValue(collateralAmount, collateralToken)
+    return loanUSDValue > 0 ? (collateralUSDValue / loanUSDValue) * 100 : 0
+  }
+
+  const getRiskLevel = (ratio) => {
+    if (ratio === 0) return 'none'
+    if (ratio < 150) return 'liquidation'
+    if (ratio < 200) return 'high'
+    if (ratio < 300) return 'aggressive'
+    if (ratio < 400) return 'moderate'
+    return 'conservative'
+  }
 
   useEffect(() => {
     const fetchBalances = async () => {
@@ -141,38 +166,9 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
     fetchBalances()
   }, [account?.address, loanToken, collateralToken, tokensList])
 
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [loanToken, collateralToken]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const tokenInfo = tokensList.find(t => t.symbol === token)
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${tokenInfo.id}`, {
-            method: 'GET',
-            mode: 'cors',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          })
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-        setIsLoadingPrices(false)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-        setIsLoadingPrices(false)
-      }
-    }
+  const riskRatio = calculateRiskRatio()
+  const riskLevel = getRiskLevel(riskRatio)
 
-    if (loanToken && collateralToken) {
-      fetchTokenPrices()
-    }
-  }, [loanToken, collateralToken, backendUrl, tokensList])
-  
   if (!isOpen) return null
 
   const handleOverlayClick = (e) => {
@@ -180,30 +176,6 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
       onClose()
     }
   }
-
-  const calculateUSDValue = (amount, token) => {
-    if (!amount || !tokenPrices[token]) return 0
-    return parseFloat(amount) * tokenPrices[token]
-  }
-
-  const calculateRiskRatio = () => {
-    if (!loanAmount || !collateralAmount) return 0
-    const loanUSDValue = calculateUSDValue(loanAmount, loanToken)
-    const collateralUSDValue = calculateUSDValue(collateralAmount, collateralToken)
-    return loanUSDValue ? (collateralUSDValue / loanUSDValue) * 100 : 0
-  }
-
-  const getRiskLevel = (ratio) => {
-    if (ratio === 0) return 'none'
-    if (ratio < 150) return 'liquidation'
-    if (ratio < 200) return 'high'
-    if (ratio < 300) return 'aggressive'
-    if (ratio < 400) return 'moderate'
-    return 'conservative'
-  }
-
-  const riskRatio = calculateRiskRatio()
-  const riskLevel = getRiskLevel(riskRatio)
 
   const adjustAmountWithDecimals = (amount, decimals) => {
     return amount * Math.pow(10, decimals)
@@ -331,7 +303,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         placeholder="0.00"
                       />
                       <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                        {!isLoadingPrices && loanAmount && (
+                        {!isPricesLoading && loanAmount && (
                           <span className="text-sm text-gray-400">
                             ≈ ${formatNumber(calculateUSDValue(loanAmount, loanToken))}
                           </span>
@@ -372,7 +344,7 @@ const CreateLoanModal = ({ isOpen, onClose }) => {
                         >
                           MAX
                         </button>
-                        {!isLoadingPrices && collateralAmount && (
+                        {!isPricesLoading && collateralAmount && (
                           <span className="text-sm text-gray-400">
                             ≈ ${formatNumber(calculateUSDValue(collateralAmount, collateralToken))}
                           </span>

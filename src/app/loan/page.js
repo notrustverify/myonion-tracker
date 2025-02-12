@@ -12,7 +12,17 @@ import Matter from 'matter-js'
 import LoanBubble from '../../components/LoanBubble'
 import { RiBubbleChartLine } from "react-icons/ri";
 import LoanModal from '../../components/LoanModal'
+import { getAlephiumLoanConfig } from '../../lib/configs'
+import { ANS } from '@alph-name-service/ans-sdk'
 
+const getTokenInfo = (tokenId) => {
+  const tokens = getTokensList()
+  return tokens.find(t => t.id === tokenId) || {
+    symbol: 'Unknown',
+    logoURI: '/tokens/unknown.png',
+    decimals: 18
+  }
+}
 
 export default function LoanPage() {
   const [activeFilter, setActiveFilter] = useState('pending')
@@ -25,7 +35,10 @@ export default function LoanPage() {
     totalPages: 1,
     total: 0
   })
+  
   const [tokenPrices, setTokenPrices] = useState({})
+  const [isPricesLoading, setIsPricesLoading] = useState(true)
+  const [ansProfiles, setAnsProfiles] = useState({})
   const [rawLoans, setRawLoans] = useState([])
   const [viewMode, setViewMode] = useState('grid')
   const containerRef = useRef(null)
@@ -34,105 +47,97 @@ export default function LoanPage() {
   const [selectedLoan, setSelectedLoan] = useState(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
+  const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
+
   const fetchTokenPrices = useCallback(async () => {
     try {
-      const tokensList = getTokensList()
-      const prices = {}
+      const response = await fetch(`${backendUrl}/api/market-data`)
+      const data = await response.json()
       
-      for (const token of tokensList) {
-        const response = await fetch(`${backendUrl}/api/market-data?assetId=${token.id}`, {
-          method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        const data = await response.json()
-        prices[token.id] = data.priceUSD
-      }
-      
-      setTokenPrices(prices)
+      const pricesMap = data.reduce((acc, token) => {
+        if (token.assetId && token.priceUSD) {
+          acc[token.assetId] = parseFloat(token.priceUSD)
+        }
+        return acc
+      }, {})
+
+      setTokenPrices(pricesMap)
     } catch (error) {
       console.error('Error fetching token prices:', error)
+      setTokenPrices({})
+    } finally {
+      setIsPricesLoading(false)
     }
   }, [backendUrl])
 
-  useEffect(() => {
-    fetchTokenPrices()
-    // Refresh prices every minute
-    const interval = setInterval(fetchTokenPrices, 60000)
-    return () => clearInterval(interval)
-  }, [fetchTokenPrices])
+  const fetchAnsProfiles = useCallback(async (addresses) => {
+    try {
+      const config = getAlephiumLoanConfig()
+      const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
+      const profiles = {}
 
-  const fetchLoans = useCallback(async (page = 1) => {
+      for (const address of addresses) {
+        if (address && address !== DEFAULT_ADDRESS) {
+          const profile = await ans.getProfile(address)
+          if (profile?.name) {
+            profiles[address] = profile
+          }
+        }
+      }
+
+      setAnsProfiles(profiles)
+    } catch (error) {
+      console.error('Error fetching ANS profiles:', error)
+    }
+  }, [])
+
+  const fetchLoans = useCallback(async () => {
     setLoading(true)
     try {
-      const limit = 12
-      const skip = (page - 1) * limit
-      const url = `${backendUrl}/api/loans?limit=${limit}&skip=${skip}`
-
-      const response = await fetch(url)
+      const response = await fetch(`${backendUrl}/api/loans`)
       const data = await response.json()
       
       setRawLoans(data.loans)
 
-      const transformedLoans = data.loans
-        .map(loan => {
-          const createdAtTimestamp = new Date(loan.createdAt).getTime()
-          const endDate = createdAtTimestamp + Number(loan.duration)
-          const isTerminated = Date.now() > endDate
-
-          const collateralValueUSD = (loan.collateralAmount * tokenPrices[loan.collateralToken]) || 0
-          const loanValueUSD = (loan.tokenAmount * tokenPrices[loan.tokenRequested]) || 0
-          const collateralRatio = loanValueUSD > 0 ? (collateralValueUSD / loanValueUSD) * 100 : 0
-
-          return {
-            value: loan.tokenAmount,
-            currency: loan.tokenRequested,
-            collateralAmount: loan.collateralAmount,
-            collateralCurrency: loan.collateralToken,
-            term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
-            interest: Number(loan.interest),
-            lender: loan.loanee,
-            borrower: loan.creator,
-            status: isTerminated ? 'terminated' : (loan.active ? 'active' : 'pending'),
-            id: loan.id,
-            liquidation: loan.liquidation,
-            canLiquidate: loan.canLiquidate,
-            collateralRatio: collateralRatio,
-            collateralValueUSD,
-            loanValueUSD,
-            createdAt: loan.createdAt,
-            duration: loan.duration
-          }
-        })
-        .filter(loan => loan.status !== 'terminated')
-        .filter(loan => {
-          if (activeFilter === 'all loans') return true;
-          if (activeFilter === 'active') return loan.status === 'active';
-          if (activeFilter === 'pending') return loan.status === 'pending';
-          if (activeFilter === 'high apr') return loan.interest >= 15;
-          if (activeFilter === 'low risk') return loan.collateralRatio >= 400;
-          return true;
-        })
-        .filter(loan => loan.collateralRatio >= 150)
+      const transformedLoans = data.loans.map(loan => ({
+        id: loan.id,
+        value: loan.tokenAmount,
+        currency: loan.tokenRequested,
+        collateralAmount: loan.collateralAmount,
+        collateralCurrency: loan.collateralToken,
+        term: parseInt(loan.duration),
+        interest: loan.interest,
+        lender: loan.creator,
+        borrower: loan.loanee,
+        status: loan.active ? 'active' : 'pending',
+        liquidation: loan.liquidation,
+        canLiquidate: loan.canLiquidate,
+        createdAt: loan.createdAt,
+        collateralRatio: loan.collateralRatio
+      }))
 
       setLoans(transformedLoans)
-      setPagination({
-        currentPage: data.page,
-        totalPages: Math.ceil(transformedLoans.length / limit),
-        total: transformedLoans.length
+
+      const addresses = new Set()
+      transformedLoans.forEach(loan => {
+        if (loan.borrower) addresses.add(loan.borrower)
+        if (loan.lender) addresses.add(loan.lender)
       })
+
+      await fetchAnsProfiles(Array.from(addresses))
     } catch (error) {
       console.error('Error fetching loans:', error)
+      setLoans([])
+      setRawLoans([])
     } finally {
       setLoading(false)
     }
-  }, [activeFilter, tokenPrices, backendUrl])
+  }, [backendUrl, fetchAnsProfiles])
 
   useEffect(() => {
-    fetchLoans(1)
-  }, [fetchLoans])
+    fetchTokenPrices()
+    fetchLoans()
+  }, [fetchTokenPrices, fetchLoans])
 
   useEffect(() => {
     if (viewMode !== 'bubble') return
@@ -220,6 +225,38 @@ export default function LoanPage() {
     setIsModalOpen(true)
   }
 
+  const stats = [
+    { 
+      label: 'Total Loans', 
+      value: rawLoans.length 
+    },
+    { 
+      label: 'Active Loans', 
+      value: rawLoans.filter(l => l.type === 'accepted').length 
+    },
+    { 
+      label: 'Average Interest', 
+      value: `${(rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)).toFixed(2)}%` 
+    },
+  ]
+
+  const getFilteredLoans = useCallback(() => {
+    return loans.filter(loan => {
+      switch (activeFilter.toLowerCase()) {
+        case 'active':
+          return loan.status === 'active'
+        case 'pending':
+          return loan.status === 'pending'
+        case 'high apr':
+          return parseFloat(loan.interest) > 20
+        case 'liquidation':
+          return loan.canLiquidate && loan.collateralRatio <= 150
+        default:
+          return true
+      }
+    })
+  }, [loans, activeFilter])
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black">
       <Navbar />
@@ -291,14 +328,7 @@ export default function LoanPage() {
           animate="visible"
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
         >
-          {[
-            { label: 'Total Loans', value: rawLoans.length },
-            { label: 'Active Loans', value: rawLoans.filter(l => l.active).length },
-            { 
-              label: 'Average Interest', 
-              value: `${(rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)).toFixed(2)}%` 
-            },
-          ].map((stat, index) => (
+          {stats.map((stat, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
@@ -313,7 +343,7 @@ export default function LoanPage() {
 
         <div className="flex justify-between items-center mb-8">
           <motion.div className="flex flex-wrap gap-4">
-            {['All Loans', 'Active', 'Pending', 'High APR', 'Low Risk'].map((filter) => (
+            {['All Loans', 'Active', 'Pending', 'High APR', 'Liquidation'].map((filter) => (
               <motion.button
                 key={filter}
                 whileHover={{ scale: 1.05 }}
@@ -358,6 +388,10 @@ export default function LoanPage() {
           <div className="flex justify-center items-center py-12">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
           </div>
+        ) : getFilteredLoans().length === 0 ? (
+          <div className="text-center py-12 text-gray-400">
+            No loans available for the selected filter
+          </div>
         ) : (
           viewMode === 'grid' ? (
             <motion.div 
@@ -366,9 +400,18 @@ export default function LoanPage() {
               animate="visible"
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
             >
-              {loans.map((loan, index) => (
+              {getFilteredLoans().map((loan) => (
                 <motion.div key={loan.id} variants={itemVariants}>
-                  <LoanCard {...loan} onOpenModal={handleOpenModal} />
+                  <LoanCard
+                    {...loan}
+                    tokenPrices={tokenPrices}
+                    isPricesLoading={isPricesLoading}
+                    ansProfile={{
+                      borrower: ansProfiles[loan.borrower],
+                      lender: ansProfiles[loan.lender]
+                    }}
+                    onOpenModal={() => handleOpenModal(loan)}
+                  />
                 </motion.div>
               ))}
             </motion.div>
@@ -378,7 +421,7 @@ export default function LoanPage() {
               ref={containerRef}
               className="relative h-[600px] w-full rounded-xl bg-gray-800/20 backdrop-blur-sm border border-gray-700/50 overflow-hidden"
             >
-              {engine && loans.map((loan) => (
+              {engine && getFilteredLoans().map((loan) => (
                 <LoanBubble 
                   key={loan.id} 
                   {...loan} 
@@ -423,16 +466,26 @@ export default function LoanPage() {
         <CreateLoanModal 
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
+          tokenPrices={tokenPrices}
+          isPricesLoading={isPricesLoading}
         />
 
-        <LoanModal 
-          isOpen={isModalOpen}
-          onClose={() => {
-            setIsModalOpen(false)
-            setSelectedLoan(null)
-          }}
-          loan={selectedLoan}
-        />
+        {selectedLoan && (
+          <LoanModal
+            isOpen={isModalOpen}
+            onClose={() => {
+              setIsModalOpen(false)
+              setSelectedLoan(null)
+            }}
+            loan={selectedLoan}
+            tokenPrices={tokenPrices}
+            isPricesLoading={isPricesLoading}
+            ansProfile={{
+              borrower: ansProfiles[selectedLoan.borrower],
+              lender: ansProfiles[selectedLoan.lender]
+            }}
+          />
+        )}
       </motion.main>
 
       <Footer />
