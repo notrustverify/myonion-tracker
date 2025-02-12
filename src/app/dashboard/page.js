@@ -9,8 +9,9 @@ import { FaChartLine, FaHistory } from 'react-icons/fa';
 import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
 import axios from 'axios';
-import { getTokensList, getBackendUrl, CalculateLoanAssets, getNodeProvider } from '../../lib/configs';
+import { getTokensList, getBackendUrl, CalculateLoanAssets, getNodeProvider, getAlephiumLoanConfig } from '../../lib/configs';
 import DashboardLoanCard from '../../components/dashboard/DashboardLoanCard';
+import { ANS } from '@alph-name-service/ans-sdk';
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all');
@@ -18,11 +19,15 @@ export default function Dashboard() {
   const [loans, setLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [tokenPrices, setTokenPrices] = useState({});
   const [loanDebts, setLoanDebts] = useState({});
+  const [tokenPrices, setTokenPrices] = useState({});
+  const [isPricesLoading, setIsPricesLoading] = useState(true);
+  const [ansProfiles, setAnsProfiles] = useState({});
+  
   const wallet = useWallet();
   const backendUrl = getBackendUrl();
   const nodeProvider = useMemo(() => getNodeProvider(), []);
+  const config = getAlephiumLoanConfig();
 
   const tokensList = getTokensList();
 
@@ -30,6 +35,50 @@ export default function Dashboard() {
     const token = tokensList.find(t => t.id === tokenId);
     return token?.decimals || 18;
   };
+
+  const fetchTokenPrices = useCallback(async () => {
+    try {
+      const response = await fetch(`${backendUrl}/api/market-data`);
+      const data = await response.json();
+      
+      const pricesMap = data.reduce((acc, token) => {
+        if (token.assetId && token.priceUSD) {
+          acc[token.assetId] = token.priceUSD;
+        }
+        return acc;
+      }, {});
+
+      setTokenPrices(pricesMap);
+    } catch (error) {
+      console.error('Error fetching token prices:', error);
+      setTokenPrices({});
+    } finally {
+      setIsPricesLoading(false);
+    }
+  }, [backendUrl]);
+
+  const fetchAnsProfiles = useCallback(async (addresses) => {
+    try {
+      const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl);
+      const profiles = {};
+      
+      for (const address of addresses) {
+        if (address && !profiles[address]) {
+          const profile = await ans.getProfile(address);
+          if (profile) {
+            profiles[address] = {
+              name: profile.name,
+              imgUri: profile.imgUri
+            };
+          }
+        }
+      }
+      
+      setAnsProfiles(prev => ({ ...prev, ...profiles }));
+    } catch (error) {
+      console.error('Error fetching ANS profiles:', error);
+    }
+  }, [config.defaultNodeUrl, config.defaultExplorerUrl]);
 
   const fetchUserLoans = useCallback(async () => {
     if (!wallet?.account?.address) return;
@@ -68,7 +117,7 @@ export default function Dashboard() {
         currency: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
         collateralCurrency: loan.collateralToken,
-        term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
+        term: parseFloat(loan.duration),
         duration: loan.duration,
         interest: Number(loan.interest),
         lender: loan.loanee,
@@ -87,43 +136,34 @@ export default function Dashboard() {
         ...borrowedData.map(loan => transformLoan(loan))
       ];
 
+      const addresses = new Set();
+      allLoans.forEach(loan => {
+        if (loan.lender) addresses.add(loan.lender);
+        if (loan.borrower) addresses.add(loan.borrower);
+      });
+
+      fetchAnsProfiles(Array.from(addresses));
+
       setLoans(allLoans);
     } catch (error) {
       console.error('Error fetching user loans:', error);
     } finally {
       setLoading(false);
     }
-  }, [wallet?.account?.address, nodeProvider, backendUrl]);
+  }, [wallet?.account?.address, nodeProvider, backendUrl, fetchAnsProfiles]);
+
+  useEffect(() => {
+    fetchTokenPrices();
+    const pricesInterval = setInterval(fetchTokenPrices, 60000);
+    
+    return () => clearInterval(pricesInterval);
+  }, [fetchTokenPrices]);
 
   useEffect(() => {
     fetchUserLoans();
-    
-    const interval = setInterval(fetchUserLoans, 30000);
-    return () => clearInterval(interval);
+    const loansInterval = setInterval(fetchUserLoans, 30000);
+    return () => clearInterval(loansInterval);
   }, [fetchUserLoans]);
-
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const uniqueTokens = new Set(loans.map(loan => loan.currency));
-        const prices = {};
-        
-        for (const token of uniqueTokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`);
-          const data = await response.json();
-          prices[token] = data.priceUSD;
-        }
-        
-        setTokenPrices(prices);
-      } catch (error) {
-        console.error('Error fetching token prices:', error);
-      }
-    };
-
-    if (loans.length > 0) {
-      fetchTokenPrices();
-    }
-  }, [loans, backendUrl]);
 
   const stats = [
     {
@@ -327,7 +367,16 @@ export default function Dashboard() {
             ) : filteredLoans.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredLoans.map((loan) => (
-                  <DashboardLoanCard key={loan.id} {...loan} />
+                  <DashboardLoanCard 
+                    key={loan.id} 
+                    {...loan} 
+                    tokenPrices={tokenPrices}
+                    isPricesLoading={isPricesLoading}
+                    ansProfile={{
+                      lender: ansProfiles[loan.lender],
+                      borrower: ansProfiles[loan.borrower]
+                    }}
+                  />
                 ))}
               </div>
             ) : (
@@ -357,6 +406,8 @@ export default function Dashboard() {
       <CreateLoanModal 
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        tokenPrices={tokenPrices}
+        isPricesLoading={isPricesLoading}
       />
     </div>
   );

@@ -1,14 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
-import { getBackendUrl, getTokensList } from '../../lib/configs'
+import { getTokensList } from '../../lib/configs'
 import DashboardLoanModal from './DashboardLoanModal'
-import { getAlephiumLoanConfig } from '../../lib/configs'
-import { ANS } from '@alph-name-service/ans-sdk'
-
-const backendUrl = getBackendUrl()
+import Timer from '../Timer'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -56,71 +53,23 @@ const DashboardLoanCard = ({
   liquidation,
   canLiquidate,
   createdAt,
-  id
+  id,
+  tokenPrices,
+  isPricesLoading,
+  ansProfile
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoading, setIsLoading] = useState(true)
-  const [creatorAnsName, setCreatorAnsName] = useState('')
-  const [loaneeAnsName, setLoaneeAnsName] = useState('')
-  const config = getAlephiumLoanConfig()
 
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [currency, collateralCurrency]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-        setIsLoading(false)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-        setIsLoading(false)
-      }
-    }
-
-    fetchTokenPrices()
-  }, [currency, collateralCurrency])
-
-  useEffect(() => {
-    const getProfiles = async () => {
-      try {
-        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
-        
-        if (borrower) {
-          const creatorProfile = await ans.getProfile(borrower)
-          if (creatorProfile?.name) {
-            setCreatorAnsName(creatorProfile.name)
-          }
-        }
-
-        if (lender && lender !== DEFAULT_ADDRESS && lender !== borrower) {
-          const loaneeProfile = await ans.getProfile(lender)
-          if (loaneeProfile?.name) {
-            setLoaneeAnsName(loaneeProfile.name)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching ANS profiles:', error)
-      }
-    }
-
-    getProfiles()
-  }, [borrower, lender, config.defaultNodeUrl, config.defaultExplorerUrl])
+  const lenderName = ansProfile?.lender?.name;
+  const borrowerName = ansProfile?.borrower?.name;
 
   const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
   
-  const usdValue = tokenPrices[currency] ? 
+  const usdValue = !isPricesLoading && tokenPrices[currency] ? 
     formatNumber((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) : '...'
-  const usdCollateral = tokenPrices[collateralCurrency] ? 
+  const usdCollateral = !isPricesLoading && tokenPrices[collateralCurrency] ? 
     formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
 
   const collateralRatio = ((collateralAmount / value) * 100).toFixed(0)
@@ -233,8 +182,10 @@ const DashboardLoanCard = ({
               whileHover={{ backgroundColor: "rgba(31, 41, 55, 0.7)" }}
               transition={{ duration: 0.2 }}
             >
-              <span className="text-xs text-gray-400 block mb-1">Term</span>
-              <span className="font-medium">{term} months</span>
+              <span className="text-xs text-gray-400 block mb-1">Time Left</span>
+              <span className="font-medium">
+                <Timer createdAt={createdAt} duration={term} />
+              </span>
             </motion.div>
             <motion.div 
               className="p-3 bg-gray-800/50 rounded-lg"
@@ -255,13 +206,13 @@ const DashboardLoanCard = ({
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-gray-400">Lender</span>
                 <span className="text-sm font-medium">
-                  {loaneeAnsName || truncateAddress(lender)}
+                  {lenderName || truncateAddress(lender)}
                 </span>
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-gray-400">Borrower</span>
                 <span className="text-sm font-medium text-gray-400">
-                  {creatorAnsName || truncateAddress(borrower)}
+                  {borrowerName || truncateAddress(borrower)}
                 </span>
               </div>
             </div>
@@ -308,9 +259,11 @@ const DashboardLoanCard = ({
               canLiquidate,
               createdAt
             }}
+            tokenPrices={tokenPrices}
+            isPricesLoading={isPricesLoading}
+            ansProfile={ansProfile}
           />
         </div>,
-
         document.body
       )}
     </>

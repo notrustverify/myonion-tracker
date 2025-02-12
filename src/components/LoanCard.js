@@ -7,6 +7,8 @@ import { getTokensList, getBackendUrl } from '../lib/configs'
 import LoanModal from './LoanModal'
 import { getAlephiumLoanConfig } from '../lib/configs'
 import { ANS } from '@alph-name-service/ans-sdk'
+import { AiOutlineUser } from "react-icons/ai"
+import Timer from './Timer'
 
 const backendUrl = getBackendUrl()
 
@@ -41,6 +43,19 @@ const shortenAddress = (address) => {
   return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
+const formatDuration = (duration) => {
+  const months = Math.floor(duration / (30 * 24 * 60 * 60 * 1000))
+  const days = Math.floor((duration % (30 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000))
+  const hours = Math.floor((duration % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
+  const minutes = Math.floor((duration % (60 * 60 * 1000)) / (60 * 1000))
+
+  if (months > 0) return `${months} month${months > 1 ? 's' : ''}`
+  if (days > 0) return `${days} day${days > 1 ? 's' : ''}`
+  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`
+  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`
+  return 'Less than a minute'
+}
+
 const LoanCard = ({ 
   value,
   currency = 'ALPH',
@@ -54,35 +69,17 @@ const LoanCard = ({
   liquidation,
   canLiquidate,
   id,
-  onOpenModal
+  onOpenModal,
+  tokenPrices,
+  isPricesLoading,
+  ansProfile,
+  createdAt
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [tokenPrices, setTokenPrices] = useState({})
   const [creatorAnsName, setCreatorAnsName] = useState('')
   const [loaneeAnsName, setLoaneeAnsName] = useState('')
   const config = getAlephiumLoanConfig()
-
-  useEffect(() => {
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [currency, collateralCurrency]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-      }
-    }
-
-    fetchTokenPrices()
-  }, [currency, collateralCurrency])
 
   useEffect(() => {
     const getProfiles = async () => {
@@ -113,12 +110,12 @@ const LoanCard = ({
   const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
   
-  const usdValue = tokenPrices[currency] ? 
+  const usdValue = !isPricesLoading && tokenPrices[currency] ? 
     formatNumber((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) : '...'
-  const usdCollateral = tokenPrices[collateralCurrency] ? 
+  const usdCollateral = !isPricesLoading && tokenPrices[collateralCurrency] ? 
     formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
 
-  const collateralRatio = tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
+  const collateralRatio = !isPricesLoading && tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
     (((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) / 
     ((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) * 100).toFixed(0) : '...'
 
@@ -225,8 +222,10 @@ const LoanCard = ({
               whileHover={{ backgroundColor: "rgba(31, 41, 55, 0.7)" }}
               transition={{ duration: 0.2 }}
             >
-              <span className="text-xs text-gray-400 block mb-1">Term</span>
-              <span className="font-medium">{term} months</span>
+              <span className="text-xs text-gray-400 block mb-1">Time Left</span>
+              <span className="font-medium">
+                <Timer createdAt={createdAt} duration={term} />
+              </span>
             </motion.div>
             <motion.div 
               className="p-3 bg-gray-800/50 rounded-lg"
@@ -247,13 +246,13 @@ const LoanCard = ({
               <div className="flex flex-col gap-1">
                 <span className="text-xs text-gray-400">Lender</span>
                 <span className="text-sm font-medium">
-                  {loaneeAnsName || shortenAddress(lender)}
+                  {ansProfile?.lender?.name || shortenAddress(lender)}
                 </span>
               </div>
               <div className="flex flex-col gap-1 text-right">
                 <span className="text-xs text-gray-400">Borrower</span>
                 <span className="text-sm font-medium text-gray-400">
-                  {creatorAnsName || shortenAddress(borrower)}
+                  {ansProfile?.borrower?.name || shortenAddress(borrower)}
                 </span>
               </div>
             </div>
@@ -296,8 +295,10 @@ const LoanCard = ({
               liquidation,
               canLiquidate,
               id
-
             }}
+            tokenPrices={tokenPrices}
+            isPricesLoading={isPricesLoading}
+            ansProfile={ansProfile}
           />
         </div>,
         document.body

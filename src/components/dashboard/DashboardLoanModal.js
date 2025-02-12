@@ -1,9 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CalculateLoanAssets, getTokensList } from '../../lib/configs'
-import { ANS } from '@alph-name-service/ans-sdk'
 import { AiOutlineUser } from "react-icons/ai"
 import { useWallet } from '@alephium/web3-react'
 import { getAlephiumLoanConfig } from '../../lib/configs'
@@ -13,10 +12,10 @@ import {
   AcceptLoanService, 
   ForfeitLoanService
 } from '../../services/loan.services'
-import { getBackendUrl } from '../../lib/configs'
 import AddCollateralModal from './AddCollateralModal'
 import RemoveCollateralModal from './RemoveCollateralModal'
 import RepayLoanModal from './RepayLoanModal'
+import Timer from '../Timer'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -58,27 +57,34 @@ const getRiskLevel = (ratio) => {
 
 const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
 
-const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
+const DashboardLoanModal = ({ 
+  isOpen, 
+  onClose, 
+  loan,
+  tokenPrices = {},
+  isPricesLoading,
+  ansProfile 
+}) => {
   const { account, signer } = useWallet()
-  const [lenderAnsName, setLenderAnsName] = useState('')
-  const [lenderAnsUri, setLenderAnsUri] = useState('')
-  const [borrowerAnsName, setBorrowerAnsName] = useState('')
-  const [borrowerAnsUri, setBorrowerAnsUri] = useState('')
-  const [tokenPrices, setTokenPrices] = useState({})
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const config = getAlephiumLoanConfig()
-  const backendUrl = getBackendUrl()
   const [isAddCollateralModalOpen, setIsAddCollateralModalOpen] = useState(false)
   const [isRemoveCollateralModalOpen, setIsRemoveCollateralModalOpen] = useState(false)
   const [isRepayModalOpen, setIsRepayModalOpen] = useState(false)
+  const [error, setError] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  
+  const lenderName = ansProfile?.lender?.name;
+  const borrowerName = ansProfile?.borrower?.name;
+  const lenderImage = ansProfile?.lender?.imgUri;
+  const borrowerImage = ansProfile?.borrower?.imgUri;
+
+  const config = getAlephiumLoanConfig()
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
 
-  const usdTokenAmount = tokenPrices[loan.tokenRequested] ? 
+  const usdTokenAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.tokenRequested] ? 
     formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
-  const usdCollateralAmount = tokenPrices[loan.collateralToken] ? 
+  const usdCollateralAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.collateralToken] ? 
     formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
 
   const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
@@ -96,51 +102,6 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
   }
 
   const currentStatus = getLoanStatus()
-
-  useEffect(() => {
-    const getProfiles = async () => {
-      try {
-        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
-        
-        if (loan.lender) {
-          const lenderProfile = await ans.getProfile(loan.lender)
-          if (lenderProfile?.name) setLenderAnsName(lenderProfile.name)
-          if (lenderProfile?.imgUri) setLenderAnsUri(lenderProfile.imgUri)
-        }
-
-        if (loan.borrower && loan.borrower !== loan.lender) {
-          const borrowerProfile = await ans.getProfile(loan.borrower)
-          if (borrowerProfile?.name) setBorrowerAnsName(borrowerProfile.name)
-          if (borrowerProfile?.imgUri) setBorrowerAnsUri(borrowerProfile.imgUri)
-        }
-
-      } catch (error) {
-        console.error("Error fetching ANS profiles:", error)
-      }
-    }
-
-    const fetchTokenPrices = async () => {
-      try {
-        const tokens = [loan.tokenRequested, loan.collateralToken]
-        const prices = {}
-        
-        for (const token of tokens) {
-          const response = await fetch(`${backendUrl}/api/market-data?assetId=${token}`)
-          const data = await response.json()
-          prices[token] = data.priceUSD
-        }
-        
-        setTokenPrices(prices)
-      } catch (error) {
-        console.error('Error fetching token prices:', error)
-      }
-    }
-
-    if (isOpen) {
-      getProfiles()
-      fetchTokenPrices()
-    }
-  }, [isOpen, loan, config.defaultNodeUrl, config.defaultExplorerUrl, backendUrl])
 
   const handleCancelLoan = async () => {
     if (!signer) {
@@ -176,7 +137,6 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
     setIsLoading(true)
     setError(null)
     const amount = await CalculateLoanAssets(signer, loan.id, loan.duration)
-    console.log("amount is " + amount)
     try {
       const result = await PayLoanService(
         signer,
@@ -298,9 +258,9 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="block text-sm text-gray-400 mb-3">Lender</span>
                     <div className="flex items-center gap-3">
-                      {lenderAnsUri ? (
+                      {lenderImage ? (
                         <img 
-                          src={lenderAnsUri} 
+                          src={lenderImage} 
                           className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                           alt="" 
                         />
@@ -311,7 +271,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                       )}
                       <div>
                         <h4 className="font-medium text-[15px] text-white">
-                          {lenderAnsName || "Unnamed"}
+                          {lenderName || "Unnamed"}
                         </h4>
                         <p className="text-xs text-gray-400">
                           {shortenAddress(loan.lender)}
@@ -325,9 +285,9 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                     <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                       <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                       <div className="flex items-center gap-3">
-                        {borrowerAnsUri ? (
+                        {borrowerImage ? (
                           <img 
-                            src={borrowerAnsUri} 
+                            src={borrowerImage} 
                             className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                             alt="" 
                           />
@@ -338,7 +298,7 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
                         )}
                         <div>
                           <h4 className="font-medium text-[15px] text-white">
-                            {borrowerAnsName || "Unnamed"}
+                            {borrowerName || "Unnamed"}
                           </h4>
                           <p className="text-xs text-gray-400">
                             {shortenAddress(loan.borrower)}
@@ -396,9 +356,9 @@ const DashboardLoanModal = ({ isOpen, onClose, loan }) => {
 
                 <div className="grid grid-cols-3 gap-4">
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Term</span>
+                    <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                     <span className="text-lg font-medium text-white">
-                      {loan.term} months
+                      <Timer createdAt={loan.createdAt} duration={loan.term} />
                     </span>
                   </div>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
