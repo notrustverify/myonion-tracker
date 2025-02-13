@@ -1,5 +1,6 @@
-import { NetworkId, NodeProvider } from "@alephium/web3"
+import { NetworkId, NodeProvider, web3, addressFromContractId } from "@alephium/web3"
 import { loadDeployments } from "../../artifacts/ts/deployments"
+import { LoanInstance } from "../../artifacts/ts"
 
 export interface AlephiumLoanConfig {
   network: NetworkId,
@@ -74,39 +75,24 @@ export function getAlephiumLoanConfig(): AlephiumLoanConfig {
   }
 }
 
-export async function CalculateLoanAssets (
-  node: NodeProvider,
-  contractAddress: string,
-  time: number
-) {
-  let details = await node.contracts.getContractsAddressState(contractAddress)
-  console.log(details)
-
-  let startTime = Number(details.mutFields[2].value);
-  let interestRate = Number(details.immFields[5].value); // Assuming interest is at index 2
-  let principal = Number(details.immFields[2].value); // Assuming principal is at index 0
-
-  console.log("start time is " + startTime + " interest rate: " + interestRate + " principal: " + principal)
-
-  // Calculate the proportional interest based on elapsed time
-  let elapsedTime = (time + 7800000) - startTime; // Time difference in milliseconds
-  console.log("elapsed time is " + elapsedTime)
-  let timeFactor = elapsedTime / 31556926000; // Convert to years (approx.)
-  console.log("time factor is " + timeFactor)
-
-  // Calculate the gain for the elapsed time
-  let gain = (principal * interestRate * timeFactor) / 10000;
-  console.log("gain is " + gain)
+export function calculateLoanRepayment(
+  loanAmount: number,
+  interestRatePer10k: number,
+  acceptedDate: Date
+): { interest: number; totalRepayment: number } {
   
-  // Add the gain to the principal
-  let total = principal + gain;
-  console.log("total is " + total)
-
-  // Add 7% to the total
-  let finalAmount = total * 1.07;
-  console.log("final amount is " + finalAmount)
+  const annualInterestRate = interestRatePer10k / 10000;
   
-  return Math.ceil(finalAmount)
+  const daysInYear = 365;
+  
+  const today = new Date();
+  const loanDurationDays = Math.floor((today.getTime() - acceptedDate.getTime()) / (1000 * 60 * 60 * 24));
+  
+  const interest = loanAmount * annualInterestRate * (loanDurationDays / daysInYear);
+  
+  const totalRepayment = loanAmount + interest;
+  
+  return { interest, totalRepayment };
 }
 
 export function getTokensList(): TokenInfo[] {

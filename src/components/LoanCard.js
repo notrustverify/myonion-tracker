@@ -1,16 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { createPortal } from 'react-dom'
-import { getTokensList, getBackendUrl } from '../lib/configs'
-import LoanModal from './LoanModal'
-import { getAlephiumLoanConfig } from '../lib/configs'
-import { ANS } from '@alph-name-service/ans-sdk'
-import { AiOutlineUser } from "react-icons/ai"
+import { getTokensList } from '../lib/configs'
 import Timer from './Timer'
-
-const backendUrl = getBackendUrl()
 
 const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
 
@@ -43,19 +36,6 @@ const shortenAddress = (address) => {
   return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
-const formatDuration = (duration) => {
-  const months = Math.floor(duration / (30 * 24 * 60 * 60 * 1000))
-  const days = Math.floor((duration % (30 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000))
-  const hours = Math.floor((duration % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
-  const minutes = Math.floor((duration % (60 * 60 * 1000)) / (60 * 1000))
-
-  if (months > 0) return `${months} month${months > 1 ? 's' : ''}`
-  if (days > 0) return `${days} day${days > 1 ? 's' : ''}`
-  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''}`
-  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''}`
-  return 'Less than a minute'
-}
-
 const LoanCard = ({ 
   value,
   currency = 'ALPH',
@@ -75,47 +55,17 @@ const LoanCard = ({
   ansProfile,
   createdAt
 }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isHovered, setIsHovered] = useState(false)
-  const [creatorAnsName, setCreatorAnsName] = useState('')
-  const [loaneeAnsName, setLoaneeAnsName] = useState('')
-  const config = getAlephiumLoanConfig()
-
-  useEffect(() => {
-    const getProfiles = async () => {
-      try {
-        const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
-        
-        if (borrower) {
-          const creatorProfile = await ans.getProfile(borrower)
-          if (creatorProfile?.name) {
-            setCreatorAnsName(creatorProfile.name)
-          }
-        }
-
-        if (lender && lender !== DEFAULT_ADDRESS && lender !== borrower) {
-          const loaneeProfile = await ans.getProfile(lender)
-          if (loaneeProfile?.name) {
-            setLoaneeAnsName(loaneeProfile.name)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching ANS profiles:', error)
-      }
-    }
-
-    getProfiles()
-  }, [borrower, lender, config.defaultNodeUrl, config.defaultExplorerUrl])
 
   const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
   
-  const usdValue = !isPricesLoading && tokenPrices[currency] ? 
+  const usdValue = !isPricesLoading && tokenPrices && tokenPrices[currency] ? 
     formatNumber((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) : '...'
-  const usdCollateral = !isPricesLoading && tokenPrices[collateralCurrency] ? 
+  const usdCollateral = !isPricesLoading && tokenPrices && tokenPrices[collateralCurrency] ? 
     formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
 
-  const collateralRatio = !isPricesLoading && tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
+  const collateralRatio = !isPricesLoading && tokenPrices && tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
     (((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) / 
     ((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) * 100).toFixed(0) : '...'
 
@@ -233,7 +183,7 @@ const LoanCard = ({
               transition={{ duration: 0.2 }}
             >
               <span className="text-xs text-gray-400 block mb-1">Interest</span>
-              <span className="font-medium text-green-400">{interest}%</span>
+              <span className="font-medium text-green-400">{(interest / 100).toFixed(2)}%</span>
             </motion.div>
           </div>
 
@@ -276,33 +226,6 @@ const LoanCard = ({
           </button>
         </div>
       </motion.div>
-
-      {isModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150]">
-          <LoanModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            loan={{
-              tokenAmount: value,
-              tokenRequested: currency,
-              collateralAmount: collateralAmount,
-              collateralToken: collateralCurrency,
-              duration: term,
-              interest,
-              lender: lender === DEFAULT_ADDRESS ? null : lender,
-              borrower: borrower === DEFAULT_ADDRESS ? null : borrower,
-              status,
-              liquidation,
-              canLiquidate,
-              id
-            }}
-            tokenPrices={tokenPrices}
-            isPricesLoading={isPricesLoading}
-            ansProfile={ansProfile}
-          />
-        </div>,
-        document.body
-      )}
     </>
   )
 }

@@ -1,7 +1,6 @@
 import { DUST_AMOUNT, MINIMAL_CONTRACT_DEPOSIT } from "@alephium/web3"
 import { CreateLoan, CancelLoan, PayLoan, AcceptLoan, AddCollateral, RemoveCollateral, LiquidationLoan, ForfeitLoan } from "../../artifacts/ts"
 
-
 export const CreateLoanService = async (
     signerProvider,
     loanFactory,
@@ -120,26 +119,15 @@ export const CancelLoanService = async (
     })
 }
 
-export const PayLoanService = async (
-    signerProvider,
-    loanFactory,
-    loanId,
-    tokenId,
-    amount
-  ) => {
-    return await PayLoan.execute(signerProvider, {
-        initialFields: {
-            loanFactory: loanFactory,
-            contract: loanId
-        },
-        attoAlphAmount: (DUST_AMOUNT * 2n),
-        tokens: [
-            {
-                tokenId: tokenId,
-                amount: BigInt(amount)
-            }
-        ]
-    })
+export const PayLoanService = async (signerProvider, loanFactory, loanId, tokenId, amount) => {
+  return await PayLoan.execute(signerProvider, {
+    initialFields: {
+      loanFactory: loanFactory,
+      contract: loanId
+    },
+    attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+    tokens: [{id: tokenId, amount: BigInt(amount)}]
+  })
 }
 
 export const AcceptLoanService = async (

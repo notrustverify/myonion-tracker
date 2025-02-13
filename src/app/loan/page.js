@@ -6,7 +6,7 @@ import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
-import { getBackendUrl, getTokensList } from '../../lib/configs'
+import { getBackendUrl } from '../../lib/configs'
 import { HiViewGrid } from 'react-icons/hi'
 import Matter from 'matter-js'
 import LoanBubble from '../../components/LoanBubble'
@@ -14,15 +14,6 @@ import { RiBubbleChartLine } from "react-icons/ri";
 import LoanModal from '../../components/LoanModal'
 import { getAlephiumLoanConfig } from '../../lib/configs'
 import { ANS } from '@alph-name-service/ans-sdk'
-
-const getTokenInfo = (tokenId) => {
-  const tokens = getTokensList()
-  return tokens.find(t => t.id === tokenId) || {
-    symbol: 'Unknown',
-    logoURI: '/tokens/unknown.png',
-    decimals: 18
-  }
-}
 
 export default function LoanPage() {
   const [activeFilter, setActiveFilter] = useState('pending')
