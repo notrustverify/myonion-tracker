@@ -181,7 +181,7 @@ const LoanModal = ({
     return (
       <button 
         onClick={handleAcceptLoan}
-        disabled={isLoading}
+        disabled={isLoading || loan.borrower === loan.lender}
         className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
           hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
           border border-green-500/20 hover:border-green-500/30 
@@ -193,6 +193,15 @@ const LoanModal = ({
       >
         {isLoading ? (
           <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+        ) : loan.borrower !== loan.lender ? (
+          <>
+            <span>You can't accept your own loan</span>
+            <svg className="w-5 h-5" 
+              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                d="M13 7l5 5m0 0l-5 5m5-5H6" />
+            </svg>
+          </>
         ) : (
           <>
             <span>Accept Loan</span>
@@ -247,7 +256,7 @@ const LoanModal = ({
 
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-6">
-                {loan.lender && loan.lender !== DEFAULT_ADDRESS && loan.lender !== loan.borrower && (
+                {loan.lender && loan.lender !== DEFAULT_ADDRESS && (
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                   <span className="block text-sm text-gray-400 mb-3">Lender</span>
                   <div className="flex items-center gap-3">
@@ -274,7 +283,7 @@ const LoanModal = ({
                 </div>
                 )}
 
-                {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && loan.borrower !== loan.lender && (
+                {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && (
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                     <div className="flex items-center gap-3">
@@ -357,7 +366,7 @@ const LoanModal = ({
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                   <span className="text-sm text-gray-400 block mb-1">Interest</span>
                   <span className="text-lg font-medium text-green-400">
-                    {loan.interest}%
+                    {(loan.interest / 100).toFixed(2)}%
                   </span>
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">

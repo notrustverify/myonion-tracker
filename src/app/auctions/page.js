@@ -5,11 +5,17 @@ import { Footer } from '../../components/footer'
 import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
-import { getBackendUrl, getTokensList } from '../../lib/configs'
+import { getBackendUrl, getTokensList, getAlephiumLoanConfig } from '../../lib/configs'
+import LoanModal from '../../components/LoanModal'
+import { ANS } from '@alph-name-service/ans-sdk'
 
 export default function LiquidationPage() {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedLoan, setSelectedLoan] = useState(null)
+  const [ansProfiles, setAnsProfiles] = useState({})
+  const [isPricesLoading, setIsPricesLoading] = useState(true)
   const [tokenPrices, setTokenPrices] = useState({})
   const [totalLiquidationValue, setTotalLiquidationValue] = useState(0)
   const [pagination, setPagination] = useState({
@@ -19,128 +25,123 @@ export default function LiquidationPage() {
   })
   const backendUrl = getBackendUrl()
 
+  const getTokenInfo = (tokenId) => {
+    const tokens = getTokensList()
+    return tokens.find(t => t.id === tokenId) || {
+      symbol: 'Unknown',
+      logoURI: '/tokens/unknown.png',
+      decimals: 18
+    }
+  }
+
   const fetchTokenPrices = useCallback(async () => {
     try {
-      const tokensList = getTokensList()
-      console.log('TokensList:', tokensList)
-      const prices = {}
+      const response = await fetch(`${backendUrl}/api/market-data`)
+      const data = await response.json()
       
-      for (const token of tokensList) {
-        const response = await fetch(`${backendUrl}/api/market-data?assetId=${token.id}`, {
-          method: 'GET',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-        const data = await response.json()
-        console.log(`Price for ${token.symbol}:`, data.priceUSD)
-        prices[token.id] = data.priceUSD
-      }
-      
-      console.log('All token prices:', prices)
-      setTokenPrices(prices)
+      const pricesMap = data.reduce((acc, token) => {
+        if (token.assetId && token.priceUSD) {
+          acc[token.assetId] = parseFloat(token.priceUSD)
+        }
+        return acc
+      }, {})
+
+      setTokenPrices(pricesMap)
     } catch (error) {
       console.error('Error fetching token prices:', error)
+      setTokenPrices({})
+    } finally {
+      setIsPricesLoading(false)
     }
   }, [backendUrl])
 
-  useEffect(() => {
-    fetchTokenPrices()
-    const interval = setInterval(fetchTokenPrices, 60000)
-    return () => clearInterval(interval)
-  }, [fetchTokenPrices])
-
-  const fetchLoans = useCallback(async (page = 1) => {
-    setLoading(true)
+  const fetchAnsProfiles = useCallback(async (addresses) => {
     try {
-      const limit = 12
-      const skip = (page - 1) * limit
+      const config = getAlephiumLoanConfig()
+      const ans = new ANS('mainnet', false, config.defaultNodeUrl, config.defaultExplorerUrl)
+      const profiles = {}
 
-      console.log('Fetching liquidation loans')
-      const response = await fetch(`${backendUrl}/api/loans?limit=${limit}&skip=${skip}`)
-      const data = await response.json()
-      console.log('Raw loans data:', data)
-      
-      if (Object.keys(tokenPrices).length === 0) {
-        console.log('Token prices not yet available')
-        setLoans([])
-        return
+      for (const address of addresses) {
+        if (address && address !== DEFAULT_ADDRESS) {
+          const profile = await ans.getProfile(address)
+          if (profile?.name) {
+            profiles[address] = profile
+          }
+        }
       }
 
-      const transformedLoans = data.loans
-        .map(loan => {
-          const collateralAmount = Number(loan.collateralAmount)
-          const tokenAmount = Number(loan.tokenAmount)
-          
-          const collateralValueUSD = tokenPrices[loan.collateralToken] ? 
-            (collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralToken] : 0
-          const loanValueUSD = tokenPrices[loan.tokenRequested] ? 
-            (tokenAmount / Math.pow(10, 18)) * tokenPrices[loan.tokenRequested] : 0
-          
-          const collateralRatio = loanValueUSD > 0 ? (collateralValueUSD / loanValueUSD) * 100 : 0
+      setAnsProfiles(profiles)
+    } catch (error) {
+      console.error('Error fetching ANS profiles:', error)
+    }
+  }, [])
 
-          console.log('Processing loan:', {
-            id: loan.id,
-            collateralValueUSD,
-            loanValueUSD,
-            collateralRatio,
-            status: loan.active ? 'active' : 'pending',
-            canLiquidate: loan.canLiquidate
-          })
+  const fetchLoans = useCallback(async () => {
+    setLoading(true)
+    try {
+      const response = await fetch(`${backendUrl}/api/loans`)
+      const data = await response.json()
+      
+      const transformedLoans = data.loans.map(loan => ({
+        id: loan.id,
+        value: loan.tokenAmount,
+        currency: loan.tokenRequested,
+        collateralAmount: loan.collateralAmount,
+        collateralCurrency: loan.collateralToken,
+        term: parseInt(loan.duration),
+        interest: loan.interest,
+        lender: loan.creator,
+        borrower: loan.loanee,
+        status: loan.active ? 'active' : 'pending',
+        liquidation: loan.liquidation,
+        canLiquidate: loan.canLiquidate,
+        createdAt: loan.createdAt
+      }))
 
-          return {
-            value: tokenAmount,
-            currency: loan.tokenRequested,
-            collateralAmount: collateralAmount,
-            collateralCurrency: loan.collateralToken,
-            term: Number(loan.duration) / (30 * 24 * 60 * 60 * 1000),
-            interest: Number(loan.interest),
-            lender: loan.creator,
-            borrower: loan.loanee,
-            status: loan.active ? 'active' : 'pending',
-            id: loan.id,
-            liquidation: loan.liquidation,
-            canLiquidate: loan.canLiquidate,
-            collateralRatio: collateralRatio,
-            collateralValueUSD,
-            loanValueUSD
-          }
-        })
-        .filter(loan => {
-          console.log(`Filtering loan ${loan.id}: ratio=${loan.collateralRatio}, status=${loan.status}, canLiquidate=${loan.canLiquidate}`)
-          return loan.collateralRatio <= 150 && loan.canLiquidate === true && loan.collateralRatio > 0
-        })
-        .sort((a, b) => a.collateralRatio - b.collateralRatio)
-
-      console.log('Final liquidation loans:', transformedLoans)
-      setLoans(transformedLoans)
-      setTotalLiquidationValue(transformedLoans.reduce((acc, loan) => acc + loan.collateralValueUSD, 0))
-      setPagination({
-        currentPage: page,
-        totalPages: Math.ceil(data.total / limit),
-        total: data.total
+      const riskyLoans = transformedLoans.filter(loan => {
+        if (!tokenPrices[loan.currency] || !tokenPrices[loan.collateralCurrency]) return false
+        
+        const collateralRatio = (
+          ((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals)) * tokenPrices[loan.collateralCurrency]) / 
+          ((loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals)) * tokenPrices[loan.currency]) * 100
+        )
+        
+        return collateralRatio <= 150
       })
+
+      setLoans(riskyLoans)
+
+      const addresses = new Set()
+      riskyLoans.forEach(loan => {
+        if (loan.borrower) addresses.add(loan.borrower)
+        if (loan.lender) addresses.add(loan.lender)
+      })
+
+      await fetchAnsProfiles(Array.from(addresses))
     } catch (error) {
       console.error('Error fetching loans:', error)
+      setLoans([])
     } finally {
       setLoading(false)
     }
-  }, [tokenPrices, backendUrl])
+  }, [backendUrl, fetchAnsProfiles, tokenPrices])
 
   useEffect(() => {
-    fetchLoans(1)
-    const interval = setInterval(() => fetchLoans(pagination.currentPage), 30000)
-    return () => clearInterval(interval)
-  }, [fetchLoans, pagination.currentPage])
+    fetchTokenPrices()
+    const pricesInterval = setInterval(fetchTokenPrices, 60000)
+    return () => clearInterval(pricesInterval)
+  }, [fetchTokenPrices])
 
   useEffect(() => {
-    console.log('TokenPrices updated:', tokenPrices)
-  }, [tokenPrices])
+    fetchLoans()
+    const loansInterval = setInterval(fetchLoans, 30000)
+    return () => clearInterval(loansInterval)
+  }, [fetchLoans])
 
-  useEffect(() => {
-    console.log('Loans updated:', loans)
-  }, [loans])
+  const handleOpenModal = (loan) => {
+    setSelectedLoan(loan)
+    setIsModalOpen(true)
+  }
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -163,6 +164,21 @@ export default function LiquidationPage() {
     }
   }
 
+  const stats = [
+    { 
+      label: 'Loans at Risk', 
+      value: loans.length 
+    },
+    { 
+      label: 'Total Value at Risk', 
+      value: `$${new Intl.NumberFormat('en-US').format(Math.round(totalLiquidationValue))}` 
+    },
+    { 
+      label: 'Average Collateral Ratio', 
+      value: `${loans.length ? Math.round(loans.reduce((acc, loan) => acc + loan.collateralRatio, 0) / loans.length) : 0}%` 
+    },
+  ]
+
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black">
       <Navbar />
@@ -170,20 +186,31 @@ export default function LiquidationPage() {
       <motion.main 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        className="flex-grow container mx-auto px-4 py-8"
+        transition={{ duration: 0.5 }}
+        className="container mx-auto px-4 py-12 flex-grow"
       >
         <motion.div 
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12 text-center"
+          transition={{ duration: 0.5 }}
+          className="mb-12"
         >
-          <h1 className="text-4xl font-bold text-white mb-4">
+          <motion.h1 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-4xl font-bold text-white mb-4"
+          >
             Liquidation Dashboard
-          </h1>
-          <p className="text-gray-400 max-w-2xl mx-auto">
+          </motion.h1>
+          <motion.p 
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="text-gray-400 text-lg"
+          >
             Monitor loans at risk of liquidation. These loans have a collateral ratio of 150% or less.
-            Refresh every 30 seconds to stay updated with the latest market conditions.
-          </p>
+          </motion.p>
         </motion.div>
 
         <motion.div 
@@ -192,30 +219,14 @@ export default function LiquidationPage() {
           animate="visible"
           className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
         >
-          {[
-            { 
-              label: 'Loans at Risk', 
-              value: loans.length,
-              color: 'red'
-            },
-            { 
-              label: 'Total Value at Risk', 
-              value: `$${new Intl.NumberFormat('en-US').format(Math.round(totalLiquidationValue))}`,
-              color: 'yellow'
-            },
-            { 
-              label: 'Average Collateral Ratio', 
-              value: `${loans.length ? Math.round(loans.reduce((acc, loan) => acc + loan.collateralRatio, 0) / loans.length) : 0}%`,
-              color: 'orange'
-            },
-          ].map((stat, index) => (
+          {stats.map((stat, index) => (
             <motion.div
               key={index}
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}
-              className={`bg-${stat.color}-500/10 rounded-xl p-6 text-center backdrop-blur-sm border border-${stat.color}-500/20`}
+              className="bg-gray-800/50 rounded-xl p-6 text-center backdrop-blur-sm border border-gray-700/50"
             >
-              <div className={`text-2xl font-bold text-${stat.color}-400 mb-2`}>{stat.value}</div>
+              <div className="text-2xl font-bold text-white mb-2">{stat.value}</div>
               <div className="text-gray-400">{stat.label}</div>
             </motion.div>
           ))}
@@ -248,13 +259,25 @@ export default function LiquidationPage() {
                   variants={itemVariants}
                   className="relative"
                 >
-                  <LoanCard {...loan} />
+                  <LoanCard {...loan} tokenPrices={tokenPrices} isPricesLoading={isPricesLoading} ansProfile={{ borrower: ansProfiles[loan.borrower], lender: ansProfiles[loan.lender] }} onOpenModal={() => handleOpenModal(loan)} />
                 </motion.div>
               ))
             )}
           </motion.div>
         )}
       </motion.main>
+
+      <LoanModal
+        isOpen={isModalOpen}
+        onClose={() => {setIsModalOpen(false), setSelectedLoan(null)}}
+        loan={selectedLoan || {}}
+        tokenPrices={tokenPrices}
+        isPricesLoading={isPricesLoading}
+        ansProfile={selectedLoan ? {
+          borrower: ansProfiles[selectedLoan.borrower],
+          lender: ansProfiles[selectedLoan.lender]
+        } : {}}
+      />
 
       <Footer />
     </div>

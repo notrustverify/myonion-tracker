@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalculateLoanAssets, getTokensList } from '../../lib/configs'
+import { getTokensList, calculateLoanRepayment } from '../../lib/configs'
 import { AiOutlineUser } from "react-icons/ai"
 import { useWallet } from '@alephium/web3-react'
 import { getAlephiumLoanConfig } from '../../lib/configs'
@@ -81,11 +81,20 @@ const DashboardLoanModal = ({
 
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
+  
+  const { totalRepayment } = calculateLoanRepayment(
+    Number(loan.tokenAmount),
+    Number(loan.interest),
+    new Date(loan.createdAt)
+  );
+  const displayDebt = formatNumber(totalRepayment / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
 
   const usdTokenAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.tokenRequested] ? 
     formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
   const usdCollateralAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.collateralToken] ? 
     formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
+  const usdDebtAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.tokenRequested] ? 
+    formatNumber((totalRepayment / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
 
   const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
   const riskLevel = getRiskLevel(collateralRatio)
@@ -136,15 +145,15 @@ const DashboardLoanModal = ({
 
     setIsLoading(true)
     setError(null)
-    const amount = await CalculateLoanAssets(signer, loan.id, loan.duration)
+    
+    const { totalRepayment } = calculateLoanRepayment(
+      Number(loan.tokenAmount),
+      Number(loan.interest),
+      new Date(loan.createdAt)
+    );
+
     try {
-      const result = await PayLoanService(
-        signer,
-        config.loanFactoryContractId,
-        loan.id,
-        loan.tokenRequested,
-        amount
-      )
+      const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, totalRepayment)
       window.addTransactionToast('Repaying Loan', result.txId)
       onClose()
     } catch (err) {
@@ -354,7 +363,7 @@ const DashboardLoanModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                     <span className="text-lg font-medium text-white">
@@ -364,7 +373,7 @@ const DashboardLoanModal = ({
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Interest</span>
                     <span className="text-lg font-medium text-green-400">
-                      {loan.interest}%
+                      {(loan.interest / 100).toFixed(2)}%
                     </span>
                   </div>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
@@ -372,6 +381,13 @@ const DashboardLoanModal = ({
                     <span className={`text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
                       {collateralRatio}%
                     </span>
+                  </div>
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
+                    <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
+                    <span className="text-lg font-medium text-orange-400">
+                      {displayDebt} {getTokenInfo(loan.tokenRequested).symbol}
+                    </span>
+                    <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
                   </div>
                 </div>
 
@@ -477,7 +493,7 @@ const DashboardLoanModal = ({
                     </button>
                   ) : (
                     <>
-                      {isBorrower && (
+                      {isBorrower && loan.status !== 'active' && (
                         <>
                           <button 
                             onClick={() => setIsAddCollateralModalOpen(true)}
@@ -537,7 +553,7 @@ const DashboardLoanModal = ({
                         </button>
                       )}
                       
-                      {isBorrower && loan.status === 'pending' && (
+                      {isLender && loan.status === 'pending' && (
                         <button 
                           onClick={handleCancelLoan}
                           disabled={isLoading}
@@ -565,7 +581,7 @@ const DashboardLoanModal = ({
                         </button>
                       )}
                       
-                      {!isBorrower && loan.status === 'pending' && (
+                      {isBorrower && loan.status === 'pending' && (
                         <button 
                           onClick={handleAcceptLoan}
                           disabled={isLoading}

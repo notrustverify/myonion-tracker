@@ -9,7 +9,7 @@ import { FaChartLine, FaHistory } from 'react-icons/fa';
 import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
 import axios from 'axios';
-import { getTokensList, getBackendUrl, CalculateLoanAssets, getNodeProvider, getAlephiumLoanConfig } from '../../lib/configs';
+import { getTokensList, getBackendUrl, calculateLoanRepayment, getNodeProvider, getAlephiumLoanConfig } from '../../lib/configs';
 import DashboardLoanCard from '../../components/dashboard/DashboardLoanCard';
 import { ANS } from '@alph-name-service/ans-sdk';
 
@@ -94,22 +94,22 @@ export default function Dashboard() {
       const borrowedData = borrowedResponse.data;
       
       const debts = {};
-      if(borrowedData.length > 0) {
-      for (const loan of borrowedData) {
-        if (loan.active) {
-          try {
-            const currentDebt = await CalculateLoanAssets(
-              nodeProvider,
-              loan.id,
-              loan.duration
-            );
-            debts[loan.id] = currentDebt;
-          } catch (error) {
-            console.error('Error calculating loan debt:', error);
+      if(createdResponse.data.length > 0) {
+        for (const loan of createdResponse.data) {
+          if (loan.active) {
+            try {
+              const { totalRepayment } = calculateLoanRepayment(
+                Number(loan.tokenAmount),
+                Number(loan.interest),
+                new Date(loan.createdAt)
+              );
+              debts[loan.id] = totalRepayment;
+            } catch (error) {
+              console.error('Error calculating loan debt:', error);
+            }
           }
         }
-      }
-      setLoanDebts(debts);
+        setLoanDebts(debts);
       }
 
       const transformLoan = loan => ({
@@ -120,8 +120,8 @@ export default function Dashboard() {
         term: parseFloat(loan.duration),
         duration: loan.duration,
         interest: Number(loan.interest),
-        lender: loan.loanee,
-        borrower: loan.creator,
+        lender: loan.creator,
+        borrower: loan.loanee,
         status: loan.active ? 'active' : 'pending',
         id: loan.id,
         type: loan.creator === wallet.account.address ? 'created' : 'borrowed',
@@ -161,8 +161,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchUserLoans();
-    const loansInterval = setInterval(fetchUserLoans, 30000);
-    return () => clearInterval(loansInterval);
   }, [fetchUserLoans]);
 
   const stats = [

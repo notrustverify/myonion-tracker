@@ -199,6 +199,7 @@ const CreateLoanModal = ({
       
       const adjustedLoanAmount = adjustAmountWithDecimals(parseFloat(loanAmount), loanTokenInfo?.decimals)
       const adjustedCollateralAmount = adjustAmountWithDecimals(parseFloat(collateralAmount), collateralTokenInfo?.decimals)
+      const adjustedInterestRate = Math.round(parseFloat(interestRate) * 100)
       
       const createLoanResponse = await CreateLoanService(
         signer,
@@ -207,7 +208,7 @@ const CreateLoanModal = ({
         adjustedLoanAmount,
         collateralTokenInfo?.id,
         adjustedCollateralAmount,
-        parseFloat(interestRate),
+        adjustedInterestRate,
         parseInt(term) * 60 * 1000,
         enableLiquidation,
         collateralTokenInfo?.isOracle,
