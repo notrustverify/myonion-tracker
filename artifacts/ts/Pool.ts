@@ -65,19 +65,6 @@ export namespace PoolTypes {
 
   export type State = ContractState<Fields>;
 
-  export type DepositedEvent = ContractEvent<{ who: Address; amount: bigint }>;
-  export type WithdrawnEvent = ContractEvent<{ who: Address; amount: bigint }>;
-  export type BorrowedEvent = ContractEvent<{
-    who: Address;
-    amount: bigint;
-    collateralAmount: bigint;
-  }>;
-  export type RepaidEvent = ContractEvent<{ who: Address; amount: bigint }>;
-  export type LiquidatedEvent = ContractEvent<{
-    who: Address;
-    liquidator: Address;
-  }>;
-
   export interface CallMethodTable {
     getSymbol: {
       params: Omit<CallContractParams<{}>, "args">;
@@ -124,15 +111,15 @@ export namespace PoolTypes {
       result: CallContractResult<bigint>;
     };
     deposit: {
-      params: CallContractParams<{ amount: bigint }>;
+      params: CallContractParams<{ caller: Address; amount: bigint }>;
       result: CallContractResult<null>;
     };
     withdraw: {
-      params: CallContractParams<{ sPoolAmount: bigint }>;
+      params: CallContractParams<{ caller: Address; sPoolAmount: bigint }>;
       result: CallContractResult<null>;
     };
     depositCollateral: {
-      params: CallContractParams<{ amount: bigint }>;
+      params: CallContractParams<{ caller: Address; amount: bigint }>;
       result: CallContractResult<null>;
     };
     borrow: {
@@ -145,11 +132,15 @@ export namespace PoolTypes {
     };
     liquidate: {
       params: CallContractParams<{ caller: Address; path: HexString }>;
-      result: CallContractResult<null>;
+      result: CallContractResult<[bigint, bigint, bigint, HexString]>;
     };
     repay: {
-      params: CallContractParams<{ path: HexString }>;
-      result: CallContractResult<null>;
+      params: CallContractParams<{
+        caller: Address;
+        path: HexString;
+        amount: bigint;
+      }>;
+      result: CallContractResult<bigint>;
     };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
@@ -217,15 +208,24 @@ export namespace PoolTypes {
       result: SignExecuteScriptTxResult;
     };
     deposit: {
-      params: SignExecuteContractMethodParams<{ amount: bigint }>;
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        amount: bigint;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     withdraw: {
-      params: SignExecuteContractMethodParams<{ sPoolAmount: bigint }>;
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        sPoolAmount: bigint;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     depositCollateral: {
-      params: SignExecuteContractMethodParams<{ amount: bigint }>;
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        amount: bigint;
+      }>;
       result: SignExecuteScriptTxResult;
     };
     borrow: {
@@ -244,7 +244,11 @@ export namespace PoolTypes {
       result: SignExecuteScriptTxResult;
     };
     repay: {
-      params: SignExecuteContractMethodParams<{ path: HexString }>;
+      params: SignExecuteContractMethodParams<{
+        caller: Address;
+        path: HexString;
+        amount: bigint;
+      }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -268,13 +272,6 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     );
   }
 
-  eventIndex = {
-    Deposited: 0,
-    Withdrawn: 1,
-    Borrowed: 2,
-    Repaid: 3,
-    Liquidated: 4,
-  };
   consts = {
     PoolCodes: {
       CannotDepositZero: BigInt("0"),
@@ -282,6 +279,7 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
       InsuffcientLiquidity: BigInt("2"),
       InsuffcientCollateral: BigInt("3"),
       NoActiveLoan: BigInt("4"),
+      NoOverPayment: BigInt("5"),
     },
   };
 
@@ -395,7 +393,7 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     deposit: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { amount: bigint },
+        { caller: Address; amount: bigint },
         PoolTypes.Maps
       >
     ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
@@ -404,7 +402,7 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     withdraw: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { sPoolAmount: bigint },
+        { caller: Address; sPoolAmount: bigint },
         PoolTypes.Maps
       >
     ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
@@ -413,7 +411,7 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
     depositCollateral: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { amount: bigint },
+        { caller: Address; amount: bigint },
         PoolTypes.Maps
       >
     ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
@@ -439,16 +437,18 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
         { caller: Address; path: HexString },
         PoolTypes.Maps
       >
-    ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
+    ): Promise<
+      TestContractResult<[bigint, bigint, bigint, HexString], PoolTypes.Maps>
+    > => {
       return testMethod(this, "liquidate", params, getContractByCodeHash);
     },
     repay: async (
       params: TestContractParams<
         PoolTypes.Fields,
-        { path: HexString },
+        { caller: Address; path: HexString; amount: bigint },
         PoolTypes.Maps
       >
-    ): Promise<TestContractResult<null, PoolTypes.Maps>> => {
+    ): Promise<TestContractResult<bigint, PoolTypes.Maps>> => {
       return testMethod(this, "repay", params, getContractByCodeHash);
     },
   };
@@ -467,8 +467,8 @@ class Factory extends ContractFactory<PoolInstance, PoolTypes.Fields> {
 export const Pool = new Factory(
   Contract.fromJson(
     PoolContractJson,
-    "=48-2+ef=2+d=1-1=1+5=1-2+1=2-2+d2=1199-1+a=180-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+c=330+7a7e0214696e73657274206174206d617020706174683a2000=89-1+4=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=49-1+6=186+7a7e021472656d6f7665206174206d617020706174683a2000=40",
-    "7e7fc67aef7756cada9448b386e7b06c956338d8921c9b8b618aaf30512f95da",
+    "=48-2+d9=2-5+b=3-2+324607=1161-1+8=174-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+8=334+7a7e0214696e73657274206174206d617020706174683a2000=73-1+b=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=75-1+7=195-1+b=38+7a7e021472656d6f7665206174206d617020706174683a2000=128",
+    "1b987fb7fda1aae7273e2a1b84f1cff9c864b36644ec595d8c25a7f9b96f03d4",
     AllStructs
   )
 );
@@ -495,88 +495,6 @@ export class PoolInstance extends ContractInstance {
 
   async fetchState(): Promise<PoolTypes.State> {
     return fetchContractState(Pool, this);
-  }
-
-  async getContractEventsCurrentCount(): Promise<number> {
-    return getContractEventsCurrentCount(this.address);
-  }
-
-  subscribeDepositedEvent(
-    options: EventSubscribeOptions<PoolTypes.DepositedEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      Pool.contract,
-      this,
-      options,
-      "Deposited",
-      fromCount
-    );
-  }
-
-  subscribeWithdrawnEvent(
-    options: EventSubscribeOptions<PoolTypes.WithdrawnEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      Pool.contract,
-      this,
-      options,
-      "Withdrawn",
-      fromCount
-    );
-  }
-
-  subscribeBorrowedEvent(
-    options: EventSubscribeOptions<PoolTypes.BorrowedEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      Pool.contract,
-      this,
-      options,
-      "Borrowed",
-      fromCount
-    );
-  }
-
-  subscribeRepaidEvent(
-    options: EventSubscribeOptions<PoolTypes.RepaidEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      Pool.contract,
-      this,
-      options,
-      "Repaid",
-      fromCount
-    );
-  }
-
-  subscribeLiquidatedEvent(
-    options: EventSubscribeOptions<PoolTypes.LiquidatedEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      Pool.contract,
-      this,
-      options,
-      "Liquidated",
-      fromCount
-    );
-  }
-
-  subscribeAllEvents(
-    options: EventSubscribeOptions<
-      | PoolTypes.DepositedEvent
-      | PoolTypes.WithdrawnEvent
-      | PoolTypes.BorrowedEvent
-      | PoolTypes.RepaidEvent
-      | PoolTypes.LiquidatedEvent
-    >,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvents(Pool.contract, this, options, fromCount);
   }
 
   view = {

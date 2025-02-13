@@ -6,7 +6,7 @@ struct CollateralInfo {
 }
 
 struct LoanInfo {
-    loanAmount: U256,
+    mut loanAmount: U256,
     borrower: Address
 }
 
@@ -32,19 +32,13 @@ Contract Pool (
     mapping [ByteVec, LoanInfo] loans
     mapping [Address, CollateralInfo] collateral
 
-    // events
-    event Deposited(who: Address, amount: U256)
-    event Withdrawn(who: Address, amount: U256)
-    event Borrowed(who: Address, amount: U256, collateralAmount: U256)
-    event Repaid(who: Address, amount: U256)
-    event Liquidated(who: Address, liquidator: Address)
-
     enum PoolCodes {
         CannotDepositZero = 0
         CannotBorrowZero = 1
         InsuffcientLiquidity = 2
         InsuffcientCollateral = 3
         NoActiveLoan = 4
+        NoOverPayment = 5
     }
 
     pub fn getSymbol() -> (ByteVec) {
@@ -159,10 +153,9 @@ Contract Pool (
 
     // deposit
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn deposit(amount: U256) -> () {
+    pub fn deposit(caller: Address, amount: U256) -> () {
         assert!(amount > 0, PoolCodes.CannotDepositZero)
 
-        let caller = callerAddress!()
         transferToken!(caller, selfAddress!(), poolToken, amount)
 
         let mintedShares = amount / exchangeRate
@@ -173,15 +166,13 @@ Contract Pool (
 
         updateInterestRate()
         updateExchangeRate()
-        emit Deposited(caller, amount)
     }
 
     // withdraw
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn withdraw(sPoolAmount: U256) -> () {
+    pub fn withdraw(caller: Address, sPoolAmount: U256) -> () {
         assert!(sPoolAmount > 0, PoolCodes.CannotDepositZero)
 
-        let caller = callerAddress!()
         let withdrawAmount = (sPoolAmount * exchangeRate)
         assert!(totalDeposits >= withdrawAmount, PoolCodes.InsuffcientLiquidity)
     
@@ -193,15 +184,13 @@ Contract Pool (
     
         updateInterestRate()
         updateExchangeRate()
-        emit Withdrawn(caller, withdrawAmount)
     }
 
     // Provide collateral
-    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = false)
-    pub fn depositCollateral(amount: U256) -> () {
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = false, updateFields = false)
+    pub fn depositCollateral(caller: Address, amount: U256) -> () {
         assert!(amount > 0, PoolCodes.CannotDepositZero)
 
-        let caller = callerAddress!()
         transferToken!(caller, selfAddress!(), collateralToken, amount)
 
         if (collateral.contains!(caller)) {
@@ -223,7 +212,7 @@ Contract Pool (
         assert!(totalDeposits - totalBorrowed >= amount, PoolCodes.InsuffcientLiquidity)
 
         let requiredCollateral = determineCollateralAmount(amount, collateralFactor)
-        depositCollateral{caller -> collateralToken: requiredCollateral, ALPH: mapEntryDeposit!()}(requiredCollateral)
+        depositCollateral{caller -> collateralToken: requiredCollateral, ALPH: mapEntryDeposit!()}(caller, requiredCollateral)
 
         let mut info = collateral[caller]
         info.usedCollateral = info.usedCollateral + requiredCollateral
@@ -242,32 +231,31 @@ Contract Pool (
 
         updateInterestRate()
         updateExchangeRate()
-        emit Borrowed(caller, amount, requiredCollateral)
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = true, updateFields = true)
-    pub fn liquidate(caller: Address, path: ByteVec) -> () {
+    pub fn liquidate(caller: Address, path: ByteVec) -> (U256, U256, U256, ByteVec) {
         // Ensure the specified debt exists
         assert!(loans.contains!(path), PoolCodes.NoActiveLoan)
-
+    
         let loanInfo = loans[path]
         let borrower = loanInfo.borrower
         let loanAmount = loanInfo.loanAmount
-
+    
         // Ensure borrower has sufficient collateral mapping
         assert!(collateral.contains!(borrower), PoolCodes.InsuffcientCollateral)
         let mut collateralInfo = collateral[borrower]
-
+    
         // Calculate current collateral ratio
         let collateralRatio = determineCollateralRatio(loanAmount, collateralInfo.collateral, collateralFactor)
         assert!(collateralRatio < collateralFactor, PoolCodes.InsuffcientCollateral)
-
+    
         // Determine the required collateral for liquidation (150% of the loan amount)
         let requiredCollateral = determineCollateralAmount(loanAmount, 15000)
-
+    
         // Determine the liquidation penalty (10% of collateral)
         let liquidationPenalty = (collateralInfo.collateral * 10) / 100
-
+    
         // If the borrower has less than required, take only what's available
         let mut liquidationAmount = 0
         if (collateralInfo.collateral < requiredCollateral) {
@@ -276,48 +264,67 @@ Contract Pool (
         else {
             liquidationAmount = requiredCollateral
         }
-
+    
         // Transfer liquidation penalty to liquidator
         transferToken!(selfAddress!(), caller, collateralToken, liquidationPenalty)
-
+    
         // Reduce borrower's collateral balance
         collateralInfo.collateral = collateralInfo.collateral - liquidationAmount
-
+    
         // If no more collateral left, remove borrower from mapping
         if (collateralInfo.collateral == 0) {
             collateral.remove!(caller, borrower)
         } else {
             collateral[borrower] = collateralInfo
         }
-
+    
         // Remove only this specific debt entry
         loans.remove!(caller, path)
-
+    
         // Reduce total borrowed amount
         totalBorrowed = totalBorrowed - loanAmount
-
+    
         // Update interest rate based on remaining pool utilization
         updateInterestRate()
+    
+        // Calculate auction starting amount (e.g., 90% of the loan amount)
+        let auctionStartingAmount = (loanAmount * 90) / 100
 
-        emit Liquidated(borrower, caller)
+        //! create auction - > replace timeToEnd and auction path
+    
+        return liquidationAmount, auctionStartingAmount, 0, selfContractId!()
     }
 
-    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = true, updateFields = true)
-    pub fn repay(path: ByteVec) -> () {
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = false, updateFields = true)
+    pub fn repay(caller: Address, path: ByteVec, amount: U256) -> (U256) {
         assert!(loans.contains!(path), PoolCodes.NoActiveLoan)
+        assert!(amount > 0, PoolCodes.CannotDepositZero) // Ensure non-zero repayment
 
         let loanInfo = loans[path]
         let borrower = loanInfo.borrower
-        let repaymentAmount = loanInfo.loanAmount
+        let remainingDebt = loanInfo.loanAmount - amount
 
-        transferToken!(callerAddress!(), selfAddress!(), poolToken, repaymentAmount)
+        assert!(amount <= loanInfo.loanAmount, PoolCodes.NoOverPayment) 
 
-        // Remove the loan entry
-        loans.remove!(callerAddress!(), path)
+        // Transfer repayment amount
+        transferToken!(caller, selfAddress!(), poolToken, amount)
 
-        totalBorrowed = totalBorrowed - repaymentAmount
+        if (remainingDebt == 0) {
+            // Fully repaid: Remove loan entry
+            loans.remove!(caller, path)
+        } else {
+            // Partially repaid: Update loan info
+            loans[path].loanAmount = loans[path].loanAmount - amount
+        }
+
+        // Reduce total borrowed amount
+        totalBorrowed = totalBorrowed - amount
+
+        //! consider users collateral in this case as well
+
         updateInterestRate()
         updateExchangeRate()
-        emit Repaid(borrower, repaymentAmount)
+
+        return remainingDebt
     }
 }

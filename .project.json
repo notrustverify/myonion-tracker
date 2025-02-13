@@ -1,5 +1,5 @@
 {
-  "fullNodeVersion": "v3.11.2",
+  "fullNodeVersion": "v3.11.1",
   "compilerOptionsUsed": {
     "ignoreUnusedConstantsWarnings": true,
     "ignoreUnusedVariablesWarnings": true,
@@ -43,7 +43,7 @@
     },
     "CollateralInfo": {
       "sourceFile": "pool/pool.ral",
-      "sourceCodeHash": "8487b97243fecc9f89897046e2093e84fa9bf3bdd9d026b1257442b1e36d8b58",
+      "sourceCodeHash": "859575172345304e14f60d979fefefa70df473add0169d6fadf87b1f947243e7",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -121,7 +121,7 @@
     },
     "LoanInfo": {
       "sourceFile": "pool/pool.ral",
-      "sourceCodeHash": "8487b97243fecc9f89897046e2093e84fa9bf3bdd9d026b1257442b1e36d8b58",
+      "sourceCodeHash": "859575172345304e14f60d979fefefa70df473add0169d6fadf87b1f947243e7",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -151,9 +151,15 @@
     },
     "Pool": {
       "sourceFile": "pool/pool.ral",
-      "sourceCodeHash": "8487b97243fecc9f89897046e2093e84fa9bf3bdd9d026b1257442b1e36d8b58",
-      "bytecodeDebugPatch": "=48-2+ef=2+d=1-1=1+5=1-2+1=2-2+d2=1199-1+a=180-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+c=330+7a7e0214696e73657274206174206d617020706174683a2000=89-1+4=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=49-1+6=186+7a7e021472656d6f7665206174206d617020706174683a2000=40",
-      "codeHashDebug": "7e7fc67aef7756cada9448b386e7b06c956338d8921c9b8b618aaf30512f95da"
+      "sourceCodeHash": "859575172345304e14f60d979fefefa70df473add0169d6fadf87b1f947243e7",
+      "bytecodeDebugPatch": "=48-2+d9=2-5+b=3-2+324607=1161-1+8=174-2+11=54+7a7e0214696e73657274206174206d617020706174683a2000=29-1+8=334+7a7e0214696e73657274206174206d617020706174683a2000=73-1+b=405-1+c=40+7a7e021472656d6f7665206174206d617020706174683a2000=122+7a7e021472656d6f7665206174206d617020706174683a2000=75-1+7=195-1+b=38+7a7e021472656d6f7665206174206d617020706174683a2000=128",
+      "codeHashDebug": "1b987fb7fda1aae7273e2a1b84f1cff9c864b36644ec595d8c25a7f9b96f03d4"
+    },
+    "PoolFactory": {
+      "sourceFile": "pool/poolFactory.ral",
+      "sourceCodeHash": "57889f57dcda27f37afffc1e07ada6bdecff8b9e1542baea0f854d74c7cab07b",
+      "bytecodeDebugPatch": "",
+      "codeHashDebug": "af638672f9539a8b6f9479271b979387f447b8f025ecd4fd181a02d792382401"
     },
     "RedeemLoan": {
       "sourceFile": "loans/loan_factory.ral",

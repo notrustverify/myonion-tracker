@@ -73,7 +73,7 @@
       "Address"
     ],
     "isMutable": [
-      false,
+      true,
       false
     ]
   }
