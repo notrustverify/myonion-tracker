@@ -26,23 +26,63 @@ Contract LoanFactory (
     mapping [ByteVec, PairInfo] tokenPairs
 
     // events
-    event NewLoan(contract: ByteVec, tokenRequested: ByteVec, tokenAmount: U256, collateralToken: ByteVec, collateralAmount: U256, interest: U256, duration: U256, who: Address)
-    event AcceptedLoan(contract: ByteVec, who: Address)
-    event LoanRemoved(contract: ByteVec, who: Address)
-    event LoanWithdraw(contract: ByteVec, forfeit: Bool, who: Address)
+    event NewLoan (
+        contract: ByteVec, 
+        tokenRequested: ByteVec, 
+        tokenAmount: U256, 
+        collateralToken: ByteVec, 
+        collateralAmount: U256, 
+        interest: U256, 
+        duration: U256, 
+        who: Address
+    )
 
-    event AddCollateralLoan(contract: ByteVec, who: Address, token: ByteVec, amount: U256)
-    event RemoveCollateralLoan(contract: ByteVec, who: Address, token: ByteVec, amount: U256)
+    event AcceptedLoan (
+        contract: ByteVec, 
+        who: Address
+    )
 
-    event LoanLiquidation(contract: ByteVec, token: ByteVec, startingBid: U256)
+    event LoanRemoved (
+        contract: ByteVec, 
+        who: Address
+    )
 
-    event AuctionRedeem(contract: ByteVec, who: Address)
-    event AuctionBid(contract: ByteVec, who: Address, amount: U256)
+    event LoanWithdraw (
+        contract: ByteVec, 
+        forfeit: Bool, 
+        who: Address
+    )
 
-    // loanee market
-    event MarketCreated(contract: ByteVec, token: ByteVec, amount: U256, minInterest: U256, maxTime: U256, liquidation: Bool, who: Address)
-    event MarketUpdated(contract: ByteVec, token: ByteVec, amount: U256, minTokenBorrow: U256, minInterest: U256, maxTime: U256, liquidation: Bool)
-    event MarketDestroyed(contract: ByteVec, who: Address)
+    event AddCollateralLoan (
+        contract: ByteVec, 
+        who: Address, 
+        token: ByteVec, 
+        amount: U256
+    )
+
+    event RemoveCollateralLoan (
+        contract: ByteVec, 
+        who: Address, 
+        token: ByteVec, 
+        amount: U256
+    )
+
+    event LoanLiquidation (
+        contract: ByteVec, 
+        token: ByteVec, 
+        startingBid: U256
+    )
+
+    event AuctionRedeem (
+        contract: ByteVec, 
+        who: Address
+    )
+
+    event AuctionBid(
+        contract: ByteVec, 
+        who: Address, 
+        amount: U256
+    )
 
     enum LoanCodes {
         NotAdmin = 0
@@ -203,88 +243,11 @@ Contract LoanFactory (
         emit NewLoan(contractID, tokenRequested, tokenAmount, collateralToken, collateralAmount, interest, duration, caller)
     }
 
-    @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = true)
-    pub fn acceptMarket(
-        tokenRequested: ByteVec, 
-        tokenAmount: U256, 
-        tokenOracle: Bool,
-        collateralToken: ByteVec, 
-        collateralAmount: U256, 
-        collateralOracle: Bool,
-        interest: U256, 
-        duration: U256,
-        loaneeMarket: ByteVec
-    ) -> () {
-        let caller = callerAddress!()
-        let market = LoanMarket(loaneeMarket)
+    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    pub fn acceptMarket() -> () {
+        assert!(callerAddress!() != admin, 0)
 
-        checkTokenAmount(tokenAmount, rate)
-
-        let (loanee, borrow, int, min, liquid) = market.getLoaneeDetails()
-        let (token, amount) = market.getLoaneeTokenDetails()
-        let (collateral, minRatio) = market.getCollateralDetails()
-
-        // confirm conditions are met for market
-        assert!(tokenRequested == token, 2)
-        assert!(amount > tokenAmount, 3)
-
-        assert!(interest >= int, 4)
-        assert!(duration <= min, 5)
-        
-        // confirm no underflow
-        assert!(tokenAmount >= borrow, 6)
-
-        // need a solution for un-supported oracle tokens
-        let (ratio, condition) = determineCollateralRatio(
-            tokenRequested, 
-            tokenAmount,
-            tokenOracle,
-            collateralToken, 
-            collateralAmount, 
-            collateralOracle,
-            minRatio
-        )
-
-        // assert collateral is met
-        if (liquid) {
-            assert!(condition == true, 7)
-        }
-
-        // delegate the loan token and amount
-        market.delegate(caller, tokenAmount)
-
-        let (encodeImmutableFields, encodeMutableFields) = Loan.encodeFields!(
-            caller,
-            loanee,
-            tokenRequested,
-            tokenAmount,
-            // collateral
-            collateralToken,
-            collateralAmount,
-            interest,
-            rate,
-            duration,
-            blockTimeStamp!(),
-            true,
-            selfAddress!(),
-            liquid,
-            condition,
-            ratio,
-            nullContractAddress!(),
-            tokenAmount,
-            0
-        )
-
-        let contractID = copyCreateContract!{caller -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
-            loanTemplate,                                                                                  
-            encodeImmutableFields,
-            encodeMutableFields
-        )
-
-        activeLoans = activeLoans + 1
-
-        // emit event
-        emit NewLoan(contractID, tokenRequested, tokenAmount, collateralToken, collateralAmount, interest, duration, caller)
+        assert!(encodeToByteVec!(admin) != marketTemplate, 1)
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = true)
@@ -442,106 +405,30 @@ Contract LoanFactory (
         emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
 
-    // loanee market functions - editMinInt, editMaxTime, canLiquidate, add, withdraw, destroy 
-    // --------------------------------------------------------------------------------------
-    @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = false)
-    pub fn loaneeMarket(
-        token: ByteVec,
-        tokenAmount: U256,
-        // specs
-        minTokenAmount: U256,
-        minInterest: U256,
-        maxTime: U256,
-        liquidation: Bool,
-        collateral: Bool,
-        ratio: U256
-    ) -> () {
-        // get caller
-        let caller = callerAddress!()
-
-        // encode fields
-        let (encodeImmutableFields, encodeMutableFields) = LoanMarket.encodeFields!(
-            caller,
-            token,
-            tokenAmount,
-            minTokenAmount,
-            minInterest,
-            maxTime,
-            liquidation,
-            collateral,
-            ratio,
-            selfAddress!()
-        )
-
-        // create loanee template -> token: tokenAmount
-        let contractID = copyCreateContract!{caller -> ALPH: (minimalContractDeposit!() * 3), token: tokenAmount}(
-            marketTemplate,                                                                                  
-            encodeImmutableFields,
-            encodeMutableFields
-        )
-
-        // emit event
-        emit MarketCreated(contractID, token, tokenAmount, minInterest, maxTime, liquidation, caller)
+    @using(checkExternalCaller = false, preapprovedAssets = false, updateFields = false)
+    pub fn loaneeMarket() -> () {
+        assert!(callerAddress!() != admin, 0)
     }
 
     // update loanee market -> simplify
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false)
-    pub fn editMarketValues(contractId: ByteVec, newBorrowAmount: U256, newInterest: U256, newTime: U256, liq: Bool, collateral: Bool, ratio: U256) -> () {
-        let market = LoanMarket(contractId)
-
-        let caller = callerAddress!()
-
-        market.editMarketValues(caller, newBorrowAmount, newInterest, newTime, liq, collateral, ratio)
-
-        let (token, newAmount) = market.getLoaneeTokenDetails()
-        let (_, minBorrow, min, int, l) = market.getLoaneeDetails()
-
-        emit MarketUpdated(contractId, token, newAmount, minBorrow, min, int, l)
+    pub fn editMarketValues() -> () {
+        assert!(callerAddress!() != admin, 0)
     }
 
-    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true, assetsInContract = enforced)
-    pub fn addFunds(contractId: ByteVec, token: ByteVec, amount: U256, gas: Bool) -> () {
-        let market = LoanMarket(contractId)
-
-        let caller = callerAddress!()
-
-        let mut totalALPH = dustAmount!()
-
-        if (gas) {
-            totalALPH = totalALPH + minimalContractDeposit!()
-        }
-
-        market.add{caller -> token: amount, ALPH: totalALPH}(caller, amount, gas)
-
-        let (_, newAmount) = market.getLoaneeTokenDetails()
-        let (_, borrow, min, int, liquid) = market.getLoaneeDetails()
-
-        emit MarketUpdated(contractId, token, newAmount, borrow, min, int, liquid)
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = false)
+    pub fn addFunds() -> () {
+        assert!(callerAddress!() != admin, 0)
     }
 
-    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
-    pub fn withdrawFunds(contractId: ByteVec, token: ByteVec, amount: U256) -> () {
-        let market = LoanMarket(contractId)
-
-        let caller = callerAddress!()
-
-        market.withdraw(caller, amount)
-
-        let (_, newAmount) = market.getLoaneeTokenDetails()
-        let (_, borrow, min, int, liquid) = market.getLoaneeDetails()
-
-        emit MarketUpdated(contractId, token, newAmount, borrow, min, int, liquid)
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = false)
+    pub fn withdrawFunds() -> () {
+        assert!(callerAddress!() != admin, 0)
     }
 
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false)
-    pub fn destroyMarket(contractId: ByteVec) -> () {
-        let market = LoanMarket(contractId)
-
-        let caller = callerAddress!()
-
-        market.destroy(caller)
-
-        emit MarketDestroyed(contractId, caller)
+    pub fn destroyMarket() -> () {
+        assert!(callerAddress!() != admin, 0)
     }
 
     // admin functions
@@ -659,31 +546,6 @@ TxScript CreateLoan (
     )
 }
 
-TxScript AcceptMarket (
-    loanFactory: LoanFactory,
-    tokenRequested: ByteVec, 
-    tokenAmount: U256,
-    tokenOracle: Bool, 
-    collateralToken: ByteVec, 
-    collateralAmount: U256, 
-    collateralOracle: Bool,
-    interest: U256, 
-    duration: U256,
-    loaneeMarket: ByteVec
-) {
-    loanFactory.acceptMarket{callerAddress!() -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
-        tokenRequested,
-        tokenAmount,
-        tokenOracle,
-        collateralToken,
-        collateralAmount,
-        collateralOracle,
-        interest, 
-        duration,
-        loaneeMarket
-    )
-}
-
 TxScript AcceptLoan (
     loanFactory: LoanFactory,
     contract: ByteVec,
@@ -767,76 +629,6 @@ TxScript RedeemLoan (
     contract: ByteVec
 ) {
     loanFactory.redeem(contract)
-}
-
-// create market
-
-TxScript CreateLoaneeMarket (
-    loanFactory: LoanFactory,
-    token: ByteVec,
-    tokenAmount: U256,
-    minTokenAmount: U256,
-    minInterest: U256,
-    maxTime: U256,
-    liquidation: Bool,
-    collateral: Bool,
-    ratio: U256
-) {
-    loanFactory.loaneeMarket{callerAddress!() -> ALPH: (minimalContractDeposit!() * 3), token: tokenAmount}(
-        token,
-        tokenAmount,
-        minTokenAmount,
-        minInterest,
-        maxTime,
-        liquidation,
-        collateral,
-        ratio
-    )
-}
-
-TxScript EditMarketValues (
-    loanFactory: LoanFactory,
-    contractId: ByteVec,
-    newBorrowAmount: U256, 
-    newInterest: U256, 
-    newTime: U256, 
-    liq: Bool,
-    collateral: Bool,
-    ratio: U256
-) {
-    loanFactory.editMarketValues(contractId, newBorrowAmount, newInterest, newTime, liq, collateral, ratio)
-}
-
-TxScript AddFunds (
-    loanFactory: LoanFactory,
-    contractId: ByteVec,
-    token: ByteVec,
-    amount: U256,
-    gas: Bool
-) { 
-
-    let mut minimalALPH = dustAmount!()
-    if (gas) {
-        minimalALPH = minimalALPH + minimalContractDeposit!()
-    }
-
-    loanFactory.addFunds{callerAddress!() -> token: amount, ALPH: minimalALPH}(contractId, token, amount, gas)
-}
-
-TxScript WithdrawFunds (
-    loanFactory: LoanFactory,
-    contractId: ByteVec,
-    token: ByteVec,
-    amount: U256
-) {
-    loanFactory.withdrawFunds(contractId, token, amount)
-}
-
-TxScript DestroyMarket (
-    loanFactory: LoanFactory,
-    contractId: ByteVec
-) {
-    loanFactory.destroyMarket(contractId)
 }
 
 // admin
