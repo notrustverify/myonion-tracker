@@ -116,7 +116,7 @@ export namespace LoanTypes {
     };
     acceptForfeit: {
       params: Omit<CallContractParams<{}>, "args">;
-      result: CallContractResult<null>;
+      result: CallContractResult<boolean>;
     };
     addCollateral: {
       params: CallContractParams<{
@@ -404,7 +404,7 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
         "testArgs"
       >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
+    ): Promise<TestContractResultWithoutMaps<boolean>> => {
       return testMethod(this, "acceptForfeit", params, getContractByCodeHash);
     },
     addCollateral: async (
@@ -490,7 +490,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "4b4c6bbc8a5f0080fdb89f05f7adeba2af677be3fc6c0c1e7dcf2522b6baa5a1",
+    "fd8b4d323192cec0569e5593c27c200c9deacfaa20ae0616f60d06e259282c43",
     AllStructs
   )
 );

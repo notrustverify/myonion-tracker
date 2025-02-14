@@ -315,12 +315,18 @@ Contract LoanFactory (
 
         let caller = callerAddress!()
 
-        //let (token, amount) = loan.getTokenCollateral()
+        let (collateral, collateralAmount) = loan.getTokenCollateral()
+        let (token, amount) = loan.getTokenRequested()
 
-        loan.acceptForfeit()
+        let move = loan.acceptForfeit()
 
         // emit event
-        emit LoanWithdraw(contractId, true, caller)
+        if (move == false) {
+            emit LoanWithdraw(contractId, true, caller)
+        }
+        else {
+            emit LoanLiquidation(contractId, token, amount)
+        }
     }
 
     // check liquidation

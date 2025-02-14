@@ -156,7 +156,7 @@ Contract Loan (
     }
 
     @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
-    pub fn acceptForfeit() -> () {
+    pub fn acceptForfeit() -> (Bool) {
         checkCaller!(callerAddress!() == parentContract, 0)
 
         assert!(active, 3)
@@ -170,6 +170,8 @@ Contract Loan (
 
             // Claim collateral and remove contract
             destroySelf!(loanee)
+
+            return false
         } else {
             // Start liquidation process
             if (!liquidation) {
@@ -177,6 +179,7 @@ Contract Loan (
                 timeToEnd = blockTimeStamp!() + 3600000  // 1 hour auction
                 highestBid = getInterest() // Start bid at the owed amount
             }
+            return true
         }
     }
 
