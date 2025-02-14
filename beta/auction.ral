@@ -1,0 +1,14 @@
+Contract Auction (
+    parentContract: Address
+    tokenRequested: ByteVec,
+    // bidding variables
+    mut highestBidder: Address,
+    mut startingBid: U256,
+    mut timeToEnd: U256
+) {
+    // events
+
+    // public functions
+
+    // functions
+}

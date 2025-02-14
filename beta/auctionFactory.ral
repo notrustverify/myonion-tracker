@@ -1,0 +1,152 @@
+Contract AuctionFactory (
+    admin: Address,
+    poolFactoryContract: Address,
+    auctionTemplate: U256,
+    totalAuctions: U256,
+    mut rate: U256
+) {
+    // events
+    event CreateAuction(who: Address, asset: ByteVec, startBid: U256, interval: U256, assetWanted: ByteVec, timeLimit: U256)
+    event ClaimAuction(winner: Address, asset: ByteVec, endBid: U256)
+    event BidAuction(bidder: Address, asset: ByteVec, bid: U256, interval: U256, timeLeft: U256)
+
+    // error codes
+    enum AuctionCodes {
+		NotAdmin = 0
+		InvalidAssets = 1
+		InvalidCaller = 2
+        AuctionActive = 3
+        AuctionEnded = 4
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn createAuction(collateral: ByteVec, collateralAmount: U256, bidToken: ByteVec, startBid: U256, interval: U256, duration: U256) -> () {
+
+        let (encodeImmutableFields, encodeMutableFields) = Auction.encodeFields!(nft, selfAddress!())
+        
+        // work on this bit
+	    let auctionId = copyCreateContract!{callerAddress!() -> ALPH: minimalContractDeposit!() + (dustAmount!() * 2), nft: 1}(
+		    totalAuctions,
+		    auctionStorage,
+		    encodeImmutableFields,
+		    encodeMutableFields
+	    )
+
+        totalAuctions = totalAuctions + 1
+
+	    emit CreateAuction(
+		    callerAddress!(),
+		    nft,
+		    startBid,
+		    interval,
+		    ALPH,
+		    endTime
+	    )
+    }
+
+    // bid up on mapping
+    @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = true, assetsInContract = enforced)
+    pub fn bid(token: ByteVec) -> () {
+
+        // variables
+        let totalBid = auctions[token].bid + auctions[token].interval
+        let asset = auctions[token].nft
+        let microfee = 10000000000000000                                        // 0.01 ALPH
+        let interval = auctions[token].interval
+
+        devFee = devFee + microfee
+
+        // check time on auction
+        assert!(blockTimeStamp!() < auctions[token].endTime, AuctionCodes.AuctionEnded)
+
+        // assert topBidder cannot bid up
+        assert!(callerAddress!() != auctions[token].topBidder, AuctionCodes.InvalidCaller)
+
+        // return previous top bid if not origin
+        if (auctions[token].active != false) {
+            transferToken!(selfAddress!(), auctions[token].topBidder, ALPH, auctions[token].bid)
+        }
+
+        auctions[token].active = true
+        auctions[token].topBidder = callerAddress!()
+        auctions[token].bid = totalBid
+
+        // Then transfer tokens
+        transferToken!(callerAddress!(), selfAddress!(), ALPH, totalBid)
+
+        // anti-sniping
+        if ((auctions[token].endTime - blockTimeStamp!()) < 300000) {
+            auctions[token].endTime = auctions[token].endTime + 300000 // 5 minutes in milliseconds
+        }
+
+        let endTime = auctions[token].endTime
+
+        emit BidAuction(callerAddress!(), asset, totalBid, interval, endTime)
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    pub fn redeem(token: ByteVec, hasRoyalty: Bool, new: Bool) -> () {
+        // Retrieve auction details
+        let auction = auctions[token]
+        
+        // Ensure the auction has ended
+        assert!(blockTimeStamp!() > auction.endTime, AuctionCodes.AuctionActive)
+
+        // This statement not being present would cause the auction to reward the amount set as the bid even if not bid on
+        assert!(auction.active == true, AuctionCodes.AuctionEnded)
+
+        // Variables for processing
+        let auctionWinner = auction.topBidder
+        let auctionOwner = auction.origin
+        let collectionId = getCollectionId(auction.nft) // Validate and retrieve collection ID
+        let endBid = auction.bid
+        let rate = auction.rate
+
+        // Calculate royalties if applicable
+        let royaltyAmount = getRoyaltyAmount(auction.nft, collectionId, endBid, hasRoyalty)
+
+        // Pay royalties if applicable
+        if (royaltyAmount > 0) {
+            let collectionWithRoyalty = NFTPublicSaleCollectionSequentialWithRoyalty(collectionId)
+            collectionWithRoyalty.payRoyalty{selfAddress!() -> ALPH: royaltyAmount}(selfAddress!(), royaltyAmount)
+        }
+
+        // Calculate and handle marketplace fees
+        if (rate > 0) {
+            let commission = (endBid * rate) / 10000
+            comissions = comissions + commission
+        }
+
+        // Calculate remaining amount after fees
+        let netAmount = getPriceAfterFee(endBid, rate, royaltyAmount)
+        assert!(netAmount > 0, AuctionCodes.NFTPriceTooLow)
+
+        // Pay auction owner the remaining ALPH
+        transferToken!(selfAddress!(), auctionOwner, ALPH, netAmount)
+
+        // Transfer NFT to the winner + dustAmount (this fixes the winner only caller bug)
+        if (new) {
+            let contract = AuctionStorage(subContractId!(token))
+            contract.sendBack(auctionWinner, false)
+        }
+        else {
+            transferToken!(selfAddress!(), auctionWinner, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), auctionWinner, auction.nft, 1)
+        }
+
+        // Clean up the auction from the mapping
+        auctions.remove!(auctionOwner, token)
+
+        activeAuctions = activeAuctions - 1
+
+        // Emit an event for successful redemption
+        emit ClaimAuction(auctionWinner, token, endBid)
+    }
+
+    @using(checkExternalCaller = true, updateFields = true)
+    pub fn editRate(newRate: U256) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        rate = newRate
+    }
+}
