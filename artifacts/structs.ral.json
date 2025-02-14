@@ -46,5 +46,35 @@
       true,
       false
     ]
+  },
+  {
+    "name": "CollateralInfo",
+    "fieldNames": [
+      "collateral",
+      "usedCollateral"
+    ],
+    "fieldTypes": [
+      "U256",
+      "U256"
+    ],
+    "isMutable": [
+      true,
+      true
+    ]
+  },
+  {
+    "name": "LoanInfo",
+    "fieldNames": [
+      "loanAmount",
+      "borrower"
+    ],
+    "fieldTypes": [
+      "U256",
+      "Address"
+    ],
+    "isMutable": [
+      true,
+      false
+    ]
   }
 ]

@@ -1,0 +1,235 @@
+{
+  "version": "v3.11.1",
+  "name": "PoolFactory",
+  "bytecode": "04064037406d40a440ed412d416f01010205001cd3eb052c5a1600cb1702b417030c0e16020104181704160316041601a3160316010e0c1602010a0516031600160416016101010205001cd30d6935cc1600cb1702b417030c0e16020104181704b416041601a3160316010e0c1602010b0616031600160416016101030205001cd3031c4e5d1600cb1702b417030c0e16020104170418160316041601a3160316010e0c1602010c0716031600160416016101010207004026d3f5ee6a5d1600cb1702b417035617040c0e1602010417061705b416061601a316031601160316041302640f0c1602010d081603160016031604130264160516017301030307004020d3fbe63de11600cb1703b417040c0e16030104181705160416051602a31604160116020f0d1603010f170609160416001601160616051602740102020a004020d31c79c0841600cb1702b417030c0e1602010417051704160316010e101602010e17091708170717060a1603160016051607160416061608160976",
+  "codeHash": "af638672f9539a8b6f9479271b979387f447b8f025ecd4fd181a02d792382401",
+  "fieldsSig": {
+    "names": [
+      "admin",
+      "poolTemplate",
+      "alpacaPoolTemplate",
+      "comissionRate"
+    ],
+    "types": [
+      "Address",
+      "ByteVec",
+      "ByteVec",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "eventsSig": [
+    {
+      "name": "Deposit",
+      "fieldNames": [
+        "who",
+        "pair",
+        "token",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "Withdraw",
+      "fieldNames": [
+        "who",
+        "pair",
+        "token",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "CollateralAdded",
+      "fieldNames": [
+        "who",
+        "pair",
+        "collateral",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "Borrow",
+      "fieldNames": [
+        "who",
+        "pair",
+        "path",
+        "token",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "Repay",
+      "fieldNames": [
+        "who",
+        "pair",
+        "path",
+        "remaining",
+        "token",
+        "amount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256",
+        "ByteVec",
+        "U256"
+      ]
+    },
+    {
+      "name": "Liquidate",
+      "fieldNames": [
+        "who",
+        "pair",
+        "collateral",
+        "collateralAmount",
+        "token",
+        "tokenAmount",
+        "timeToEnd",
+        "auction"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256",
+        "ByteVec",
+        "U256",
+        "U256",
+        "ByteVec"
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "deposit",
+      "paramNames": [
+        "pair",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "withdraw",
+      "paramNames": [
+        "pair",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "depositCollateral",
+      "paramNames": [
+        "pair",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "borrow",
+      "paramNames": [
+        "pair",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "repay",
+      "paramNames": [
+        "pair",
+        "path",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "liquidate",
+      "paramNames": [
+        "pair",
+        "path"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": []
+}

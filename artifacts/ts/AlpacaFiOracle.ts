@@ -35,7 +35,14 @@ import {
 } from "@alephium/web3";
 import { default as AlpacaFiOracleContractJson } from "../oracle/AlpacaFiOracle.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
+import {
+  CollateralInfo,
+  DIAOracleValue,
+  LoanInfo,
+  OracleData,
+  PairInfo,
+  AllStructs,
+} from "./types";
 import { RalphMap } from "@alephium/web3";
 
 // Custom types for the contract
