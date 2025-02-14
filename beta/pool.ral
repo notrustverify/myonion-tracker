@@ -12,10 +12,7 @@ struct LoanInfo {
 }
 
 struct BadDebtCollateral {
-    collateralAmount: U256,  // Amount of collateral up for auction
-    highestBid: U256,        // Highest bid so far
-    topBidder: Address,      // Address of the highest bidder
-    auctionEndTime: U256     // Timestamp when the auction ends
+    
 }
 
 Contract Pool (

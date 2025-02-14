@@ -296,16 +296,22 @@ Contract Loan (
         let factoryFeeBidder = getCommission(collateralAmount)
 
         // transfer requested token back
-        transferToken!(selfAddress!(), loanee, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), loanee, tokenRequested, highestBid - factoryFeeLoanee)
+        if (highestBidder != nullContractAddress!()) {
+            transferToken!(selfAddress!(), loanee, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), loanee, tokenRequested, highestBid - factoryFeeLoanee)
+            transferToken!(selfAddress!(), parentContract, tokenRequested, factoryFeeLoanee)
+        }
 
         // transfer collateral to auction winner
+        if (highestBidder == nullContractAddress!()) {
+            highestBidder = loanee
+        }
+
         transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
         transferToken!(selfAddress!(), highestBidder, collateralToken, collateralAmount - factoryFeeBidder)
 
         // factory fees
         transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), parentContract, tokenRequested, factoryFeeLoanee)
         transferToken!(selfAddress!(), parentContract, collateralToken, factoryFeeBidder)
 
         destroySelf!(creator)
