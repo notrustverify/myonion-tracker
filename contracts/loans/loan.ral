@@ -1,6 +1,6 @@
 Contract Loan (
-    creator: Address,
-    mut loanee: Address,
+    creator: Address,           // borrower
+    mut loanee: Address,        // lender
     tokenRequested: ByteVec,
     tokenAmount: U256,
     // collateral
