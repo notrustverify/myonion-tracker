@@ -6,7 +6,7 @@ import { getTokensList } from '../lib/configs'
 import { AiOutlineUser } from "react-icons/ai"
 import { getAlephiumLoanConfig } from '../lib/configs';
 import { useWallet } from '@alephium/web3-react'
-import { AcceptLoanService, LiquidateLoanService } from '../services/loan.services'
+import { AcceptLoanService, LiquidateLoanService, CancelLoanService, ForfeitLoanService } from '../services/loan.services'
 import Timer from './Timer'
 
 const getCollateralRatioColor = (ratio) => {
@@ -82,6 +82,58 @@ const LoanModal = ({
     }
   }
 
+  const handleForfeit = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    const config = getAlephiumLoanConfig();
+    try {
+      const result = await ForfeitLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id
+      )
+      window.addTransactionToast('Forfeiting Loan', result.txId)
+
+      onClose()
+    } catch (err) {
+      console.error("Error forfeiting loan:", err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCancelLoan = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    const config = getAlephiumLoanConfig();
+    try {
+      const result = await CancelLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id
+      )
+      window.addTransactionToast('Cancelling Loan', result.txId)
+
+      onClose()
+    } catch (err) {
+      console.error("Error cancelling loan:", err)
+      setError(err.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleAcceptLoan = async () => {
     if (!signer) {
       setError('Please connect your wallet')
@@ -146,8 +198,20 @@ const LoanModal = ({
 
   const renderActionButton = () => {
     const isLiquidatable = (parseFloat(collateralRatio) <= 150)
+    const startTime = new Date(loan.createdAt).getTime()
+    const endTime = startTime + parseInt(loan.term)
+    const now = new Date().getTime()
+    const isExpired = now >= endTime
+    const isActive = loan.status === 'active'
+    const isPending = loan.status === 'pending'
+    const isBorrower = loan.borrower === signer?.address
+    console.log("isLiquidatable", isLiquidatable)
+    console.log("loan.status", loan.status)
+    console.log("isExpired", isExpired)
+    console.log("isActive", isActive)
+    console.log("isBorrower", isBorrower)
     
-    if (isLiquidatable) {
+    if (isLiquidatable && isActive) {
       return (
         <button 
           onClick={handleLiquidate}
@@ -177,43 +241,103 @@ const LoanModal = ({
       )
     }
 
-    if (loan.status === 'pending') {
-    return (
-      <button 
-        onClick={handleAcceptLoan}
-        disabled={isLoading || loan.borrower === loan.lender}
-        className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-          hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-          border border-green-500/20 hover:border-green-500/30 
-          transition-all duration-300 ease-out
-          text-green-400 hover:text-green-300 font-medium 
-          shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-          flex items-center justify-center gap-2
-          disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isLoading ? (
-          <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-        ) : loan.borrower !== loan.lender ? (
-          <>
-            <span>You can't accept your own loan</span>
-            <svg className="w-5 h-5" 
-              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </>
-        ) : (
-          <>
-            <span>Accept Loan</span>
-            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </>
-        )}
-      </button>
-    )
+    if (isExpired && isActive) {
+      return (
+        <button 
+          onClick={handleForfeit}
+          disabled={isLoading}
+          className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-orange-500/20 via-orange-500/30 to-orange-400/20 
+            hover:from-orange-500/30 hover:via-orange-500/40 hover:to-orange-400/30
+            border border-orange-500/20 hover:border-orange-500/30 
+            transition-all duration-300 ease-out
+            text-orange-400 hover:text-orange-300 font-medium 
+            shadow-lg shadow-orange-900/20 hover:shadow-orange-900/30
+            flex items-center justify-center gap-2
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>Forfeit Loan</span>
+              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
+          )}
+        </button>
+      )
+    }
+
+    if (isPending) {
+      return (
+        <button 
+          onClick={handleAcceptLoan}
+          disabled={isLoading || loan.borrower === loan.lender}
+          className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+            hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+            border border-green-500/20 hover:border-green-500/30 
+            transition-all duration-300 ease-out
+            text-green-400 hover:text-green-300 font-medium 
+            shadow-lg shadow-green-900/20 hover:shadow-green-900/30
+            flex items-center justify-center gap-2
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+          ) : loan.borrower === loan.lender ? (
+            <>
+              <span>You can't accept your own loan</span>
+              <svg className="w-5 h-5" 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
+          ) : (
+            <>
+              <span>Accept Loan</span>
+              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </>
+          )}
+        </button>
+      )
+    }
+
+    if (isPending && isBorrower) {
+      return (
+        <button 
+          onClick={handleCancelLoan}
+          disabled={isLoading}
+          className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-gray-500/20 via-gray-500/30 to-gray-400/20 
+            hover:from-gray-500/30 hover:via-gray-500/40 hover:to-gray-400/30
+            border border-gray-500/20 hover:border-gray-500/30 
+            transition-all duration-300 ease-out
+            text-gray-400 hover:text-gray-300 font-medium 
+            shadow-lg shadow-gray-900/20 hover:shadow-gray-900/30
+            flex items-center justify-center gap-2
+            disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {isLoading ? (
+            <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <span>Cancel Loan</span>
+              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                  d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </>
+          )}
+        </button>
+      )
     }
   }
 

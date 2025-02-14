@@ -98,8 +98,8 @@ export default function LoanPage() {
         collateralCurrency: loan.collateralToken,
         term: parseInt(loan.duration),
         interest: loan.interest,
-        lender: loan.creator,
-        borrower: loan.loanee,
+        lender: loan.loanee,
+        borrower: loan.creator,
         status: loan.active ? 'active' : 'pending',
         liquidation: loan.liquidation,
         canLiquidate: loan.canLiquidate,
@@ -141,12 +141,15 @@ export default function LoanPage() {
       }
       setEngine(null)
       setRunner(null)
+      return
     }
     
     const engineInstance = Matter.Engine.create({
       gravity: { x: 0, y: 0 },
       enableSleeping: false
     })
+
+    const runnerInstance = Matter.Runner.create()
 
     if (containerRef.current) {
       const bounds = containerRef.current.getBoundingClientRect()
@@ -171,8 +174,6 @@ export default function LoanPage() {
       ]
 
       Matter.World.add(engineInstance.world, walls)
-
-      const runnerInstance = Matter.Runner.create()
       Matter.Runner.run(runnerInstance, engineInstance)
 
       setEngine(engineInstance)
@@ -180,15 +181,13 @@ export default function LoanPage() {
     }
 
     return () => {
-      if (engine) {
-        Matter.Engine.clear(engine)
-        Matter.World.clear(engine.world)
-        if (runner) {
-          Matter.Runner.stop(runner)
-        }
+      if (engineInstance) {
+        Matter.Engine.clear(engineInstance)
+        Matter.World.clear(engineInstance.world)
+        Matter.Runner.stop(runnerInstance)
       }
     }
-  }, [activeFilter, viewMode, loans, engine, runner])
+  }, [viewMode])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -227,7 +226,7 @@ export default function LoanPage() {
     },
     { 
       label: 'Average Interest', 
-      value: `${(rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)).toFixed(2)}%` 
+      value: `${((rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)) / 100).toFixed(2)}%` 
     },
   ]
 
@@ -239,7 +238,7 @@ export default function LoanPage() {
         case 'pending':
           return loan.status === 'pending'
         case 'high apr':
-          return parseFloat(loan.interest) > 20
+          return parseFloat(loan.interest) > 1500
         case 'liquidation':
           return loan.canLiquidate && loan.collateralRatio <= 150
         default:
@@ -418,6 +417,12 @@ export default function LoanPage() {
                   {...loan} 
                   containerRef={containerRef}
                   engine={engine}
+                  tokenPrices={tokenPrices}
+                  isPricesLoading={isPricesLoading}
+                  ansProfile={{
+                    borrower: ansProfiles[loan.borrower],
+                    lender: ansProfiles[loan.lender]
+                  }}
                 />
               ))}
             </div>
