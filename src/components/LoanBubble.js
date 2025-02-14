@@ -6,6 +6,7 @@ import { createPortal } from 'react-dom'
 import { getTokensList } from '../lib/configs'
 import LoanModal from './LoanModal'
 import Matter from 'matter-js'
+import { FaArrowLeft } from 'react-icons/fa'
 
 const getTokenInfo = (tokenId) => {
   const tokens = getTokensList()
@@ -160,7 +161,7 @@ const LoanBubble = ({
             alt={getTokenInfo(currency).symbol}
             className="w-5 h-5 rounded-full"
           />
-          <span className="text-white text-xs">→</span>
+          <FaArrowLeft className="text-white text-xs" />
           <img 
             src={getTokenInfo(collateralCurrency).logoURI}
             alt={getTokenInfo(collateralCurrency).symbol}

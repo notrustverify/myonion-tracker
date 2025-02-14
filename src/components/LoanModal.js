@@ -197,6 +197,7 @@ const LoanModal = ({
   }
 
   const renderActionButton = () => {
+    const wallet = useWallet()
     const isLiquidatable = (parseFloat(collateralRatio) <= 150)
     const startTime = new Date(loan.createdAt).getTime()
     const endTime = startTime + parseInt(loan.term)
@@ -204,13 +205,8 @@ const LoanModal = ({
     const isExpired = now >= endTime
     const isActive = loan.status === 'active'
     const isPending = loan.status === 'pending'
-    const isBorrower = loan.borrower === signer?.address
-    console.log("isLiquidatable", isLiquidatable)
-    console.log("loan.status", loan.status)
-    console.log("isExpired", isExpired)
-    console.log("isActive", isActive)
-    console.log("isBorrower", isBorrower)
-    
+    const isBorrower = loan.borrower === wallet?.account?.address
+
     if (isLiquidatable && isActive) {
       return (
         <button 
@@ -275,7 +271,7 @@ const LoanModal = ({
       return (
         <button 
           onClick={handleAcceptLoan}
-          disabled={isLoading || loan.borrower === loan.lender}
+          disabled={isLoading || isBorrower}
           className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
             hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
             border border-green-500/20 hover:border-green-500/30 
@@ -287,7 +283,7 @@ const LoanModal = ({
         >
           {isLoading ? (
             <div className="w-5 h-5 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
-          ) : loan.borrower === loan.lender ? (
+          ) : isBorrower ? (
             <>
               <span>You can't accept your own loan</span>
               <svg className="w-5 h-5" 
