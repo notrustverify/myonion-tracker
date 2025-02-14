@@ -363,7 +363,7 @@ const DashboardLoanModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                <div className={`grid ${isBorrower && loan.status === 'active' ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                     <span className="text-lg font-medium text-white">
@@ -382,13 +382,15 @@ const DashboardLoanModal = ({
                       {collateralRatio}%
                     </span>
                   </div>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
-                    <span className="text-lg font-medium text-orange-400">
+                  {isBorrower && loan.status === 'active' && (
+                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
+                      <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
+                      <span className="text-lg font-medium text-orange-400">
                       {displayDebt} {getTokenInfo(loan.tokenRequested).symbol}
                     </span>
-                    <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
-                  </div>
+                      <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
@@ -493,7 +495,7 @@ const DashboardLoanModal = ({
                     </button>
                   ) : (
                     <>
-                      {isBorrower && loan.status !== 'active' && (
+                      {isBorrower && loan.status === 'pending' && (
                         <>
                           <button 
                             onClick={() => setIsAddCollateralModalOpen(true)}
@@ -530,31 +532,8 @@ const DashboardLoanModal = ({
                                 d="M20 12H4" />
                             </svg>
                           </button>
-                        </>
-                      )}
 
-                      {isLender && loan.status === 'active' && (
-                        <button 
-                          onClick={handleRepayLoan}
-                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-                            hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-                            border border-green-500/20 hover:border-green-500/30 
-                            transition-all duration-300 ease-out
-                            text-green-400 hover:text-green-300 font-medium 
-                            shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-                            flex items-center justify-center gap-2"
-                        >
-                          <span>Repay Loan</span>
-                          <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                              d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </button>
-                      )}
-                      
-                      {isLender && loan.status === 'pending' && (
-                        <button 
+                          <button 
                           onClick={handleCancelLoan}
                           disabled={isLoading}
                           className="group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
@@ -578,6 +557,27 @@ const DashboardLoanModal = ({
                               </svg>
                             </>
                           )}
+                        </button>
+                        </>
+                      )}
+
+                      {isBorrower && loan.status === 'active' && (
+                        <button 
+                          onClick={handleRepayLoan}
+                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+                            hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+                            border border-green-500/20 hover:border-green-500/30 
+                            transition-all duration-300 ease-out
+                            text-green-400 hover:text-green-300 font-medium 
+                            shadow-lg shadow-green-900/20 hover:shadow-green-900/30
+                            flex items-center justify-center gap-2"
+                        >
+                          <span>Repay Loan</span>
+                          <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                              d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          </svg>
                         </button>
                       )}
                     </>

@@ -32,7 +32,7 @@ const getTokenInfo = (tokenId) => {
 }
 
 const shortenAddress = (address) => {
-  if (!address || address === DEFAULT_ADDRESS) return "No borrower yet"
+  if (!address || address === DEFAULT_ADDRESS) return "-"
   return `${address.substring(0, 6)}...${address.substring(address.length - 6)}`
 }
 
