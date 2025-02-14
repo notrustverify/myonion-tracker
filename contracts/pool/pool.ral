@@ -214,21 +214,9 @@ Contract Pool (
         updateExchangeRate()
     }
 
-    @using(preapprovedAssets = true, checkExternalCaller = false, updateFields = true, assetsInContract = true)
-    pub fn depositCollateral(caller: Address, amount: U256) -> () {
-        assert!(amount > 0, PoolCodes.CannotDepositZero)
-
-        transferToken!(caller, selfAddress!(), collateralToken, amount)
-
-        if (collateral.contains!(caller)) {
-            collateral[caller].collateral = collateral[caller].collateral + amount
-        } else {
-            collateral.insert!(caller, caller, CollateralInfo{collateral: amount, usedCollateral: 0})
-        }
-    }
-
-    @using(preapprovedAssets = true, checkExternalCaller = false, updateFields = true, assetsInContract = true)
-    pub fn borrow(caller: Address, amount: U256, path: ByteVec) -> () {
+    // borrow -> functions going down need edits
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn borrow(caller: Address, amount: U256, collat: U256, path: ByteVec) -> () {
         assert!(amount > 0, PoolCodes.CannotBorrowZero)
         assert!(totalDeposits - totalBorrowed >= amount, PoolCodes.InsufficientLiquidity)
 
