@@ -136,17 +136,20 @@ Contract Loan (
         // payback the loan, the loan must be active
         assert!(active == true, 2)
 
+        // loan has expired
+        assert!(startTime + duration > blockTimeStamp!(), 4)
+
         // transfer back assets plus the interest
         let totalPayment = getInterest()
 
         let totalCommission = getCommission(totalPayment)
 
         // user pays back two seperate accounts (marketplace fees, and the person who loaned them the assets)
-        transferToken!(caller, loanee, ALPH, dustAmount!())
-        transferToken!(caller, loanee, tokenRequested, totalPayment - totalCommission)
+        transferToken!(creator, loanee, ALPH, dustAmount!())
+        transferToken!(creator, loanee, tokenRequested, totalPayment - totalCommission)
 
-        transferToken!(caller, parentContract, ALPH, dustAmount!())
-        transferToken!(caller, parentContract, tokenRequested, totalCommission)
+        transferToken!(creator, parentContract, ALPH, dustAmount!())
+        transferToken!(creator, parentContract, tokenRequested, totalCommission)
 
         // destroy the contract
         destroySelf!(creator)
@@ -156,35 +159,23 @@ Contract Loan (
     pub fn acceptForfeit() -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
-        assert!(active == true, 3)
+        assert!(active, 3)
         assert!(startTime + duration < blockTimeStamp!(), 4)
 
-        // if the loan duration has passed any loan should be forfeit bound
-        // assert!(canLiquidate == false, 6) -> this code makes no sense
-
-        if (canLiquidate == false) {
+        if (!canLiquidate) {
             let totalCommission = getCommission(collateralAmount)
 
             transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
             transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
 
-            // claim collateral
+            // Claim collateral and remove contract
             destroySelf!(loanee)
-        }
-
-        else {
-            // confirm the contract is a liquid contracts
-            assert!(canLiquidate == true, 6)
-
-            // confirm it's active
-            assert!(active == true, 3)
-
-            if (liquidation == false) {
+        } else {
+            // Start liquidation process
+            if (!liquidation) {
                 liquidation = true
-                timeToEnd = blockTimeStamp!() + 3600000  // 1 hour to be an auction
-    
-                //! need to edit this on the factory side too
-                highestBid = getInterest() // Start bid at the current owed amount
+                timeToEnd = blockTimeStamp!() + 3600000  // 1 hour auction
+                highestBid = getInterest() // Start bid at the owed amount
             }
         }
     }
@@ -204,7 +195,7 @@ Contract Loan (
         assert!(liquidation == false, 7)
 
         // transfer additional collateral to offset liquidation
-        transferToken!(caller, selfAddress!(), collateralToken, collateralAdded)
+        transferToken!(creator, selfAddress!(), collateralToken, collateralAdded)
         collateralAmount = collateralAmount + collateralAdded
         
         // assign new ratio

@@ -1,5 +1,5 @@
 {
-  "fullNodeVersion": "v3.11.1",
+  "fullNodeVersion": "v3.11.2",
   "compilerOptionsUsed": {
     "ignoreUnusedConstantsWarnings": true,
     "ignoreUnusedVariablesWarnings": true,
@@ -67,7 +67,7 @@
     },
     "ForceCancel": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "131461ff58b81a8ee0c1473568be14be5e02cef7631f22be26f65cbbdf99f864",
+      "sourceCodeHash": "0c05b1976e57da67d9a3d0e24621442c34f1ec3b3909638621c871462f779ade",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -109,9 +109,9 @@
     },
     "Loan": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "131461ff58b81a8ee0c1473568be14be5e02cef7631f22be26f65cbbdf99f864",
+      "sourceCodeHash": "0c05b1976e57da67d9a3d0e24621442c34f1ec3b3909638621c871462f779ade",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "9502d2c0422fb650cc58a499c576bc5fa4954bbcc469364332695a3cdb3657d1"
+      "codeHashDebug": "4b4c6bbc8a5f0080fdb89f05f7adeba2af677be3fc6c0c1e7dcf2522b6baa5a1"
     },
     "LoanFactory": {
       "sourceFile": "loans/loan_factory.ral",
@@ -193,7 +193,7 @@
     },
     "UpdateLoanCode": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "131461ff58b81a8ee0c1473568be14be5e02cef7631f22be26f65cbbdf99f864",
+      "sourceCodeHash": "0c05b1976e57da67d9a3d0e24621442c34f1ec3b3909638621c871462f779ade",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -211,7 +211,7 @@
     },
     "UpdateLoanFields": {
       "sourceFile": "loans/loan.ral",
-      "sourceCodeHash": "131461ff58b81a8ee0c1473568be14be5e02cef7631f22be26f65cbbdf99f864",
+      "sourceCodeHash": "0c05b1976e57da67d9a3d0e24621442c34f1ec3b3909638621c871462f779ade",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
