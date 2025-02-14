@@ -16,16 +16,27 @@ const getTokenInfo = (tokenId) => {
   }
 }
 
-const getStatusColor = (collateralRatio) => {
-  if (collateralRatio >= 400) return 'rgba(74, 222, 128, 0.2)'
-  if (collateralRatio >= 250) return 'rgba(250, 204, 21, 0.2)'
+const getStatusColor = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
+  const ratio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  if (ratio >= 400) return 'rgba(74, 222, 128, 0.2)'
+  if (ratio >= 250) return 'rgba(250, 204, 21, 0.2)'
   return 'rgba(248, 113, 113, 0.2)'
 }
 
-const getStatusSize = (collateralRatio) => {
-  if (collateralRatio >= 400) return 120
-  if (collateralRatio >= 250) return 100
+const getStatusSize = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
+  const ratio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  if (ratio >= 400) return 120
+  if (ratio >= 250) return 100
   return 80
+}
+
+const calculateCollateralRatio = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
+  if (!tokenPrices || !tokenPrices[currency] || !tokenPrices[collateralCurrency]) return 0
+
+  const collateralValue = (collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]
+  const loanValue = (value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]
+  
+  return (collateralValue / loanValue * 100).toFixed(0)
 }
 
 const LoanBubble = ({ 
@@ -40,17 +51,22 @@ const LoanBubble = ({
   status,
   liquidation,
   canLiquidate,
-  collateralRatio,
   id,
   containerRef,
   engine,
+  tokenPrices,
+  isPricesLoading,
+  ansProfile
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const bubbleRef = useRef(null)
-  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const positionRef = useRef({ x: 0, y: 0 })
   const bodyRef = useRef(null)
-  const size = getStatusSize(collateralRatio)
-  const statusColor = getStatusColor(collateralRatio)
+  const frameRef = useRef()
+  
+  const calculatedRatio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  const size = getStatusSize(calculatedRatio, tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  const statusColor = getStatusColor(calculatedRatio, tokenPrices, value, currency, collateralAmount, collateralCurrency)
 
   useEffect(() => {
     if (!containerRef?.current || !engine || !bubbleRef.current) return
@@ -61,7 +77,10 @@ const LoanBubble = ({
     const startX = bounds.width / 2 + (Math.random() - 0.5) * (bounds.width / 2)
     const startY = bounds.height / 2 + (Math.random() - 0.5) * (bounds.height / 2)
     
-    setPosition({ x: startX - size / 2, y: startY - size / 2 })
+    positionRef.current = { x: startX - size / 2, y: startY - size / 2 }
+    if (bubbleRef.current) {
+      bubbleRef.current.style.transform = `translate(${positionRef.current.x}px, ${positionRef.current.y}px)`
+    }
 
     const bubble = Matter.Bodies.circle(startX, startY, size / 2, {
       restitution: 0.7,
@@ -87,26 +106,26 @@ const LoanBubble = ({
     Matter.World.add(engine.world, bubble)
     bodyRef.current = bubble
 
-    let lastUpdate = 0
     const updatePosition = () => {
-      if (!bodyRef.current) return
+      if (!bodyRef.current || !bubbleRef.current) return
 
-      const now = Date.now()
-      if (now - lastUpdate < 16) return
+      const newX = bodyRef.current.position.x - size / 2
+      const newY = bodyRef.current.position.y - size / 2
 
-      const newPos = {
-        x: bodyRef.current.position.x - size / 2,
-        y: bodyRef.current.position.y - size / 2
+      if (Math.abs(newX - positionRef.current.x) > 0.1 || Math.abs(newY - positionRef.current.y) > 0.1) {
+        positionRef.current = { x: newX, y: newY }
+        bubbleRef.current.style.transform = `translate(${newX}px, ${newY}px)`
       }
 
-      setPosition(newPos)
-      lastUpdate = now
+      frameRef.current = requestAnimationFrame(updatePosition)
     }
 
-    Matter.Events.on(engine, 'afterUpdate', updatePosition)
+    frameRef.current = requestAnimationFrame(updatePosition)
 
     return () => {
-      Matter.Events.off(engine, 'afterUpdate', updatePosition)
+      if (frameRef.current) {
+        cancelAnimationFrame(frameRef.current)
+      }
       if (bodyRef.current) {
         Matter.World.remove(engine.world, bodyRef.current)
         bodyRef.current = null
@@ -116,12 +135,10 @@ const LoanBubble = ({
 
   return (
     <>
-      <motion.div 
+      <div 
         ref={bubbleRef}
         style={{
           position: 'absolute',
-          left: position.x,
-          top: position.y,
           width: size,
           height: size,
           background: statusColor,
@@ -129,11 +146,13 @@ const LoanBubble = ({
           WebkitBackdropFilter: 'blur(8px)',
           zIndex: 10,
           pointerEvents: 'auto',
+          borderRadius: '50%',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          transition: 'transform 0.2s ease-out, box-shadow 0.2s ease-out',
         }}
-        whileHover={{ scale: 1.1 }}
         onClick={() => setIsModalOpen(true)}
-        className="rounded-full flex flex-col items-center justify-center cursor-pointer border border-white/10
-          shadow-lg hover:shadow-xl transition-shadow duration-200"
+        className="flex flex-col items-center justify-center cursor-pointer hover:scale-110 
+          shadow-lg hover:shadow-xl"
       >
         <div className="flex items-center gap-1 mb-1">
           <img 
@@ -148,31 +167,34 @@ const LoanBubble = ({
             className="w-5 h-5 rounded-full"
           />
         </div>
-        <div className="text-white text-xs font-medium">{Math.round(collateralRatio)}%</div>
+        <div className="text-white text-xs font-medium">
+          {isPricesLoading ? '...' : `${calculatedRatio}%`}
+        </div>
         <div className="text-gray-400 text-[10px]">Ratio</div>
-      </motion.div>
+      </div>
 
       {isModalOpen && createPortal(
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[150]">
-          <LoanModal 
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            loan={{
-              tokenAmount: value,
-              tokenRequested: currency,
-              collateralAmount: collateralAmount,
-              collateralToken: collateralCurrency,
-              duration: term,
-              interest: interest,
-              lender: lender,
-              borrower: borrower,
-              status: status,
-              liquidation: liquidation,
-              canLiquidate: canLiquidate,
-              id: id
-            }}
-          />
-        </div>,
+        <LoanModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          loan={{
+            value,
+            currency,
+            collateralAmount,
+            collateralCurrency,
+            term,
+            interest,
+            lender,
+            borrower,
+            status,
+            liquidation,
+            canLiquidate,
+            id
+          }}
+          tokenPrices={tokenPrices}
+          isPricesLoading={isPricesLoading}
+          ansProfile={ansProfile}
+        />,
         document.body
       )}
     </>
