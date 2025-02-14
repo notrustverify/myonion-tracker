@@ -363,7 +363,7 @@ const DashboardLoanModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-4 gap-4">
+                <div className={`grid ${isBorrower && loan.status === 'active' ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                     <span className="text-lg font-medium text-white">
@@ -382,13 +382,15 @@ const DashboardLoanModal = ({
                       {collateralRatio}%
                     </span>
                   </div>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
-                    <span className="text-lg font-medium text-orange-400">
+                  {isBorrower && loan.status === 'active' && (
+                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
+                      <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
+                      <span className="text-lg font-medium text-orange-400">
                       {displayDebt} {getTokenInfo(loan.tokenRequested).symbol}
                     </span>
-                    <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
-                  </div>
+                      <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
@@ -553,7 +555,7 @@ const DashboardLoanModal = ({
                         </button>
                       )}
                       
-                      {isLender && loan.status === 'pending' && (
+                      {isBorrower && loan.status === 'pending' && (
                         <button 
                           onClick={handleCancelLoan}
                           disabled={isLoading}
