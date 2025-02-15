@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { motion } from 'framer-motion'
 import { createPortal } from 'react-dom'
 import { getTokensList } from '../lib/configs'
 import LoanModal from './LoanModal'
@@ -17,18 +16,18 @@ const getTokenInfo = (tokenId) => {
   }
 }
 
-const getStatusColor = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
-  const ratio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
-  if (ratio >= 400) return 'rgba(74, 222, 128, 0.2)'
-  if (ratio >= 250) return 'rgba(250, 204, 21, 0.2)'
-  return 'rgba(248, 113, 113, 0.2)'
+const getStatusColor = (ratio) => {
+  if (ratio >= 300) return 'rgba(57, 255, 20, 0.2)'
+  if (ratio >= 199) return 'rgba(100, 255, 0, 0.2)'
+  if (ratio >= 149) return 'rgba(255, 255, 0, 0.2)'
+  return 'rgba(255, 0, 0, 0.2)'
 }
 
-const getStatusSize = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
-  const ratio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
-  if (ratio >= 400) return 120
-  if (ratio >= 250) return 100
-  return 80
+const getStatusSize = (ratio) => {
+  if (ratio >= 300) return 120
+  if (ratio >= 199) return 100
+  if (ratio >= 149) return 80
+  return 60
 }
 
 const calculateCollateralRatio = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
@@ -66,8 +65,8 @@ const LoanBubble = ({
   const frameRef = useRef()
   
   const calculatedRatio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
-  const size = getStatusSize(calculatedRatio, tokenPrices, value, currency, collateralAmount, collateralCurrency)
-  const statusColor = getStatusColor(calculatedRatio, tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  const size = getStatusSize(calculatedRatio)
+  const statusColor = getStatusColor(calculatedRatio)
 
   useEffect(() => {
     if (!containerRef?.current || !engine || !bubbleRef.current) return

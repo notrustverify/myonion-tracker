@@ -7,9 +7,9 @@ import { motion } from 'framer-motion'
 import { getBackendUrl, getTokensList, getAlephiumLoanConfig } from '../../lib/configs'
 import LoanModal from '../../components/LoanModal'
 import { ANS } from '@alph-name-service/ans-sdk'
-import AuctionCard from '../../components/AuctionCard'
+import LiquidationCard from '../../components/LiquidationCard'
 
-export default function AuctionsPage() {
+export default function LiquidationPage() {
   const [loans, setLoans] = useState([])
   const [loading, setLoading] = useState(true)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -17,15 +17,10 @@ export default function AuctionsPage() {
   const [ansProfiles, setAnsProfiles] = useState({})
   const [isPricesLoading, setIsPricesLoading] = useState(true)
   const [tokenPrices, setTokenPrices] = useState({})
-  const [totalAuctionsValue, setTotalAuctionsValue] = useState(0)
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    total: 0
-  })
+  const [totalLiquidationValue, setTotalLiquidationValue] = useState(0)
   const backendUrl = getBackendUrl()
 
-  const DEFAULT_ADDRESS = "tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq"
+  const DEFAULT_ADDRESS = 'tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq'
 
   const getTokenInfo = (tokenId) => {
     const tokens = getTokensList()
@@ -81,38 +76,28 @@ export default function AuctionsPage() {
   const fetchLoans = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${backendUrl}/api/loans/auctions`)
+      const response = await fetch(`${backendUrl}/api/loans/liquidatable`)
       const data = await response.json()
       
-      const transformedLoans = data.map(loan => ({
+      const loansData = Array.isArray(data) ? data : (data.loans || [])
+      
+      const transformedLoans = loansData.map(loan => ({
         id: loan.id,
-        value: loan.highestBid || loan.tokenAmount,
+        value: loan.tokenAmount,
         currency: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
         collateralCurrency: loan.collateralToken,
         term: parseInt(loan.duration),
         interest: loan.interest,
-        lender: loan.highestBidder || loan.loanee,
+        lender: loan.loanee,
         borrower: loan.creator,
         status: loan.active ? 'active' : 'pending',
         liquidation: loan.liquidation,
         canLiquidate: loan.canLiquidate,
-        createdAt: loan.createdAt,
-        startTime: loan.startTime,
-        timeToEnd: loan.timeToEnd,
-        type: loan.type
+        createdAt: loan.createdAt
       }))
 
       setLoans(transformedLoans)
-
-      if (!isPricesLoading) {
-        const total = transformedLoans.reduce((sum, loan) => {
-          const tokenPrice = tokenPrices[loan.currency] || 0
-          const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
-          return sum + loanValue
-        }, 0)
-        setTotalAuctionsValue(total)
-      }
 
       const addresses = new Set()
       transformedLoans.forEach(loan => {
@@ -127,7 +112,7 @@ export default function AuctionsPage() {
     } finally {
       setLoading(false)
     }
-  }, [backendUrl, fetchAnsProfiles, isPricesLoading, tokenPrices])
+  }, [backendUrl, fetchAnsProfiles])
 
   useEffect(() => {
     fetchTokenPrices()
@@ -141,10 +126,19 @@ export default function AuctionsPage() {
     return () => clearInterval(loansInterval)
   }, [fetchLoans])
 
-  const handleOpenModal = (loan) => {
-    setSelectedLoan(loan)
-    setIsModalOpen(true)
-  }
+  useEffect(() => {
+    if (!isPricesLoading && loans.length > 0) {
+
+      const total = loans.reduce((sum, loan) => {
+        const tokenPrice = tokenPrices[loan.currency] || 0
+        const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
+
+        return sum + loanValue
+      }, 0)
+
+      setTotalLiquidationValue(total)
+    }
+  }, [loans, tokenPrices, isPricesLoading])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -169,14 +163,14 @@ export default function AuctionsPage() {
 
   const stats = [
     { 
-      label: 'Auctions', 
+      label: 'Loans at Risk', 
       value: loans.length 
     },
     { 
-      label: 'Total Value', 
-      value: `$${totalAuctionsValue < 1 
-        ? totalAuctionsValue.toFixed(2)
-        : new Intl.NumberFormat('en-US').format(Math.round(totalAuctionsValue))}` 
+      label: 'Total Value at Risk', 
+      value: `$${totalLiquidationValue < 1 
+        ? totalLiquidationValue.toFixed(2)
+        : new Intl.NumberFormat('en-US').format(Math.round(totalLiquidationValue))}` 
     },
     { 
       label: 'Average Collateral Ratio', 
@@ -215,7 +209,7 @@ export default function AuctionsPage() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-4xl font-bold text-white mb-4"
           >
-            Auctions
+            Liquidation
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, x: -20 }}
@@ -223,7 +217,7 @@ export default function AuctionsPage() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="text-gray-400 text-lg"
           >
-            Browse all auctions and bid on them to get collateral with a discount.
+            Monitor loans at risk of liquidation. These loans have a collateral ratio of 150% or less.
           </motion.p>
         </motion.div>
 
@@ -263,7 +257,7 @@ export default function AuctionsPage() {
                 className="col-span-full text-center py-12"
               >
                 <div className="text-gray-400 text-lg">
-                  No auctions currently available
+                  No loans currently at risk of liquidation
                 </div>
               </motion.div>
             ) : (
@@ -273,7 +267,7 @@ export default function AuctionsPage() {
                   variants={itemVariants}
                   className="relative"
                 >
-                  <AuctionCard 
+                  <LiquidationCard 
                     {...loan} 
                     tokenPrices={tokenPrices} 
                     isPricesLoading={isPricesLoading} 

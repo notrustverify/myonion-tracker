@@ -88,9 +88,10 @@ export default function LoanPage() {
       const response = await fetch(`${backendUrl}/api/loans`)
       const data = await response.json()
       
-      setRawLoans(data.loans)
+      const nonLiquidatedLoans = data.loans.filter(loan => !loan.liquidation)
+      setRawLoans(nonLiquidatedLoans)
 
-      const transformedLoans = data.loans.map(loan => ({
+      const transformedLoans = nonLiquidatedLoans.map(loan => ({
         id: loan.id,
         value: loan.tokenAmount,
         currency: loan.tokenRequested,
@@ -131,8 +132,19 @@ export default function LoanPage() {
   }, [fetchTokenPrices, fetchLoans])
 
   useEffect(() => {
-    if (viewMode !== 'bubble') return
-
+    if (viewMode !== 'bubble') {
+      if (engine) {
+        Matter.Engine.clear(engine)
+        Matter.World.clear(engine.world)
+        if (runner) {
+          Matter.Runner.stop(runner)
+        }
+        setEngine(null)
+        setRunner(null)
+      }
+      return
+    }
+    
     if (engine) {
       Matter.Engine.clear(engine)
       Matter.World.clear(engine.world)
@@ -141,7 +153,6 @@ export default function LoanPage() {
       }
       setEngine(null)
       setRunner(null)
-      return
     }
     
     const engineInstance = Matter.Engine.create({
@@ -184,7 +195,9 @@ export default function LoanPage() {
       if (engineInstance) {
         Matter.Engine.clear(engineInstance)
         Matter.World.clear(engineInstance.world)
-        Matter.Runner.stop(runnerInstance)
+        if (runnerInstance) {
+          Matter.Runner.stop(runnerInstance)
+        }
       }
     }
   }, [viewMode])
@@ -232,20 +245,48 @@ export default function LoanPage() {
 
   const getFilteredLoans = useCallback(() => {
     return loans.filter(loan => {
+      const collateralRatio = tokenPrices[loan.collateralCurrency] && tokenPrices[loan.currency] 
+        ? ((loan.collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralCurrency]) / 
+          ((loan.value / Math.pow(10, 18)) * tokenPrices[loan.currency]) * 100
+        : 0;
+
       switch (activeFilter.toLowerCase()) {
         case 'active':
-          return loan.status === 'active'
+          return loan.status === 'active';
         case 'pending':
-          return loan.status === 'pending'
+          return loan.status === 'pending';
         case 'high apr':
-          return parseFloat(loan.interest) > 1500
-        case 'liquidation':
-          return loan.canLiquidate && loan.collateralRatio <= 150
+          return parseFloat(loan.interest) > 1500;
+        case 'low risk':
+          return collateralRatio >= 300;
         default:
-          return true
+          return true;
       }
-    })
-  }, [loans, activeFilter])
+    });
+  }, [loans, activeFilter, tokenPrices]);
+
+  const filterDescriptions = {
+    'all loans': 'View all available loans on the platform',
+    'active': 'Loans that have been funded and are currently active',
+    'pending': 'Loan requests waiting to be funded by a lender',
+    'high apr': 'Loans with an Annual Percentage Rate (APR) above 15%',
+    'low risk': 'Loans with a collateral ratio above 300%, providing extra security for lenders'
+  };
+
+  const [activeTooltip, setActiveTooltip] = useState(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (activeTooltip && !event.target.closest('.tooltip-container')) {
+        setActiveTooltip(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeTooltip]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-gray-900 to-black">
@@ -333,20 +374,48 @@ export default function LoanPage() {
 
         <div className="flex justify-between items-center mb-8">
           <motion.div className="flex flex-wrap gap-4">
-            {['All Loans', 'Active', 'Pending', 'High APR', 'Liquidation'].map((filter) => (
-              <motion.button
-                key={filter}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setActiveFilter(filter.toLowerCase())}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-all
-                  ${activeFilter === filter.toLowerCase()
-                    ? 'bg-green-500/20 text-green-400 border border-green-500/20'
-                    : 'bg-gray-800/50 text-gray-300 border border-gray-700/50 hover:border-gray-600/50'
-                  }`}
-              >
-                {filter}
-              </motion.button>
+            {['All Loans', 'Active', 'Pending', 'High APR', 'Low Risk'].map((filter) => (
+              <div key={filter} className="relative tooltip-container">
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setActiveFilter(filter.toLowerCase())}
+                  className={`px-6 py-2 rounded-full text-sm font-medium transition-all
+                    ${activeFilter === filter.toLowerCase()
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/20'
+                      : 'bg-gray-800/50 text-gray-300 border border-gray-700/50 hover:border-gray-600/50'
+                    }`}
+                >
+                  <span className="flex items-center gap-2">
+                    {filter}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveTooltip(activeTooltip === filter ? null : filter);
+                      }}
+                      className="w-4 h-4 rounded-full bg-gray-700 text-gray-300 hover:bg-gray-600 flex items-center justify-center text-xs font-bold"
+                    >
+                      i
+                    </button>
+                  </span>
+                </motion.button>
+                
+                {activeTooltip === filter && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute z-10 top-full mt-2 left-0 w-64 p-3 rounded-lg bg-gray-800/90 border border-gray-700 shadow-xl backdrop-blur-sm"
+                  >
+                    <div className="relative">
+                      <div className="absolute -top-2 left-6 transform w-3 h-3 rotate-45 bg-gray-800 border-t border-l border-gray-700"></div>
+                      <p className="text-sm text-gray-300">
+                        {filterDescriptions[filter.toLowerCase()]}
+                      </p>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
             ))}
           </motion.div>
 
