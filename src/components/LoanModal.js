@@ -198,11 +198,11 @@ const LoanModal = ({
 
   const renderActionButton = () => {
     const wallet = useWallet()
-    const isLiquidatable = (parseFloat(collateralRatio) <= 150 && loan.canLiquidate) || (isExpired && loan.canLiquidate)
     const startTime = new Date(loan.createdAt).getTime()
     const endTime = startTime + parseInt(loan.term)
     const now = new Date().getTime()
     const isExpired = now >= endTime
+    const isLiquidatable = (parseFloat(collateralRatio) <= 150 && loan.canLiquidate) || (isExpired && loan.canLiquidate)
     const isActive = loan.status === 'active'
     const isPending = loan.status === 'pending'
     const isBorrower = loan.borrower === wallet?.account?.address
