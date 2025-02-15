@@ -1,3 +1,5 @@
+// this product will be deleted and sole focus will be on p2p
+
 Contract LoanMarket (
     creator: Address,
     token: ByteVec,

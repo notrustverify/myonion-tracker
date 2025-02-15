@@ -22,7 +22,7 @@ const deployScript: DeployFunction<Settings> = async (
     let tx = await PayLoan.execute(signer, {
       initialFields: {
           loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
-          contract: "b9f19fc9e925c3f864f1d26141f5f03ab78ce71d523c40b17ce2626b17066800"
+          contract: "8e3c2a88c52f166161b7201cfb9d8bbb2ef935cec8d6dd2b47934cc2f6b9c300"
       },
       attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
       tokens: [{id: ALPH_TOKEN_ID, amount: ONE_ALPH * 3n}]

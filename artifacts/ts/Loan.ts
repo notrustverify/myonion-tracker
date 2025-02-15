@@ -35,14 +35,7 @@ import {
 } from "@alephium/web3";
 import { default as LoanContractJson } from "../loans/Loan.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import {
-  CollateralInfo,
-  DIAOracleValue,
-  LoanInfo,
-  OracleData,
-  PairInfo,
-  AllStructs,
-} from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
 // Custom types for the contract
 export namespace LoanTypes {
@@ -490,7 +483,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "fd8b4d323192cec0569e5593c27c200c9deacfaa20ae0616f60d06e259282c43",
+    "4226ec696448d90faa1dc4682a7b08f8babed118e5d10b86e15a29a8171f0621",
     AllStructs
   )
 );

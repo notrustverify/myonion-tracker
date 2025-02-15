@@ -35,14 +35,7 @@ import {
 } from "@alephium/web3";
 import { default as LoanMarketContractJson } from "../loans/LoanMarket.ral.json";
 import { getContractByCodeHash, registerContract } from "./contracts";
-import {
-  CollateralInfo,
-  DIAOracleValue,
-  LoanInfo,
-  OracleData,
-  PairInfo,
-  AllStructs,
-} from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
 // Custom types for the contract
 export namespace LoanMarketTypes {

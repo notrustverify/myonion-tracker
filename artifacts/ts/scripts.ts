@@ -38,14 +38,7 @@ import { default as UpdateMarketFieldsScriptJson } from "../loans/UpdateMarketFi
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
-import {
-  CollateralInfo,
-  DIAOracleValue,
-  LoanInfo,
-  OracleData,
-  PairInfo,
-  AllStructs,
-} from "./types";
+import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
 export const AcceptLoan = new ExecutableScript<{
   loanFactory: HexString;
