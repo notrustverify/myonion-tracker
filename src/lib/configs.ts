@@ -79,7 +79,7 @@ export function calculateLoanRepayment(
   loanAmount: number,
   interestRatePer10k: number,
   acceptedDate: Date
-): { interest: number; totalRepayment: number } {
+): { interest: number; totalRepayment: number; loanAmount: number } {
   
   const annualInterestRate = interestRatePer10k / 10000;
   
@@ -92,7 +92,7 @@ export function calculateLoanRepayment(
   
   const totalRepayment = loanAmount + interest;
   
-  return { interest, totalRepayment };
+  return { interest, totalRepayment, loanAmount };
 }
 
 export function getTokensList(): TokenInfo[] {

@@ -146,11 +146,12 @@ const DashboardLoanModal = ({
     setIsLoading(true)
     setError(null)
     
-    const { totalRepayment } = calculateLoanRepayment(
+    const { interest, totalRepayment, loanAmount } = calculateLoanRepayment(
       Number(loan.tokenAmount),
       Number(loan.interest),
       new Date(loan.createdAt)
     );
+    console.log("interest, totalRepayment, loanAmount", interest, totalRepayment, loanAmount)
 
     try {
       const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, totalRepayment)
@@ -158,7 +159,7 @@ const DashboardLoanModal = ({
       onClose()
     } catch (err) {
       console.error("Error repaying loan:", err)
-      setError(err.message)
+      setError(err.message + " interest: " + interest + " totalRepayment: " + totalRepayment + " loanAmount: " + loanAmount)
     } finally {
       setIsLoading(false)
     }
