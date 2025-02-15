@@ -198,7 +198,7 @@ const LoanModal = ({
 
   const renderActionButton = () => {
     const wallet = useWallet()
-    const isLiquidatable = (parseFloat(collateralRatio) <= 150)
+    const isLiquidatable = (parseFloat(collateralRatio) <= 150 && loan.canLiquidate) || (isExpired && loan.canLiquidate)
     const startTime = new Date(loan.createdAt).getTime()
     const endTime = startTime + parseInt(loan.term)
     const now = new Date().getTime()
@@ -207,7 +207,7 @@ const LoanModal = ({
     const isPending = loan.status === 'pending'
     const isBorrower = loan.borrower === wallet?.account?.address
 
-    if (isLiquidatable && isActive) {
+    if (isLiquidatable) {
       return (
         <button 
           onClick={handleLiquidate}

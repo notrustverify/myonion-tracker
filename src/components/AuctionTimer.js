@@ -2,22 +2,19 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
-const Timer = ({ createdAt, duration }) => {
+const AuctionTimer = ({ endTime }) => {
   const [timeLeft, setTimeLeft] = useState(() => {
-    const startTime = new Date(createdAt).getTime()
-    const endTime = startTime + duration
+    const end = new Date(endTime).getTime()
     const now = new Date().getTime()
-    const difference = endTime - now
+    const difference = end - now
 
-    if (difference <= 0) return 'Expired'
+    if (difference <= 0) return 'Ended'
 
-    const months = Math.floor(difference / (30 * 24 * 60 * 60 * 1000))
-    const days = Math.floor((difference % (30 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000))
+    const days = Math.floor(difference / (24 * 60 * 60 * 1000))
     const hours = Math.floor((difference % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
     const minutes = Math.floor((difference % (60 * 60 * 1000)) / (60 * 1000))
     const seconds = Math.floor((difference % (60 * 1000)) / 1000)
 
-    if (months > 0) return `${months}m ${days}d`
     if (days > 0) return `${days}d ${hours}h`
     if (hours > 0) return `${hours}h ${minutes}m`
     if (minutes > 0) return `${minutes}m ${seconds}s`
@@ -25,35 +22,28 @@ const Timer = ({ createdAt, duration }) => {
   })
 
   const calculateTimeLeft = useCallback(() => {
-    const startTime = new Date(createdAt).getTime()
-    const endTime = startTime + duration
+    const end = new Date(endTime).getTime()
     const now = new Date().getTime()
-    const difference = endTime - now
+    const difference = end - now
 
-    if (difference <= 0) {
-      clearInterval(timer.current)
-      return 'Expired'
-    }
+    if (difference <= 0) return 'Ended'
 
-    const months = Math.floor(difference / (30 * 24 * 60 * 60 * 1000))
-    const days = Math.floor((difference % (30 * 24 * 60 * 60 * 1000)) / (24 * 60 * 60 * 1000))
+    const days = Math.floor(difference / (24 * 60 * 60 * 1000))
     const hours = Math.floor((difference % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000))
     const minutes = Math.floor((difference % (60 * 60 * 1000)) / (60 * 1000))
     const seconds = Math.floor((difference % (60 * 1000)) / 1000)
 
-    if (months > 0) return `${months}m ${days}d`
     if (days > 0) return `${days}d ${hours}h`
     if (hours > 0) return `${hours}h ${minutes}m`
     if (minutes > 0) return `${minutes}m ${seconds}s`
     return `${seconds}s`
-  }, [createdAt, duration])
+  }, [endTime])
 
   useEffect(() => {
     const getUpdateInterval = () => {
-      const startTime = new Date(createdAt).getTime()
-      const endTime = startTime + duration
+      const end = new Date(endTime).getTime()
       const now = new Date().getTime()
-      const difference = endTime - now
+      const difference = end - now
 
       if (difference <= 0) return null
       if (difference < 60 * 1000) return 1000
@@ -69,7 +59,7 @@ const Timer = ({ createdAt, duration }) => {
     }, updateInterval)
 
     return () => clearInterval(timer)
-  }, [createdAt, duration, calculateTimeLeft])
+  }, [endTime, calculateTimeLeft])
 
   return (
     <span className="tabular-nums">
@@ -78,4 +68,4 @@ const Timer = ({ createdAt, duration }) => {
   )
 }
 
-export default Timer 
+export default AuctionTimer 
