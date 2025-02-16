@@ -93,6 +93,7 @@ Contract Loan (
         assert!(active == false, 4)
 
         // transfer tokens to person requesting them
+        transferToken!(acceptor, creator, ALPH, dustAmount!())
         transferToken!(acceptor, creator, tokenRequested, tokenAmount)
 
         // loan is now active
