@@ -10,7 +10,8 @@ import {
   CancelLoanService, 
   PayLoanService, 
   AcceptLoanService, 
-  ForfeitLoanService
+  ForfeitLoanService,
+  LiquidateLoanService
 } from '../../services/loan.services'
 import AddCollateralModal from './AddCollateralModal'
 import RemoveCollateralModal from './RemoveCollateralModal'
@@ -82,7 +83,7 @@ const DashboardLoanModal = ({
   const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
   const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
   
-  const { totalRepayment } = calculateLoanRepayment(
+  const totalRepayment = calculateLoanRepayment(
     Number(loan.tokenAmount),
     Number(loan.interest),
     new Date(loan.createdAt)
@@ -98,6 +99,10 @@ const DashboardLoanModal = ({
 
   const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
   const riskLevel = getRiskLevel(collateralRatio)
+  const startTime = new Date(loan.createdAt).getTime()
+  const endTime = startTime + parseInt(loan.term)
+  const now = new Date().getTime()
+  const isExpired = now >= endTime
 
   const isBorrower = account?.address === loan.borrower
   const isLender = account?.address === loan.lender
@@ -146,11 +151,12 @@ const DashboardLoanModal = ({
     setIsLoading(true)
     setError(null)
     
-    const { totalRepayment } = calculateLoanRepayment(
+    const totalRepayment = calculateLoanRepayment(
       Number(loan.tokenAmount),
       Number(loan.interest),
       new Date(loan.createdAt)
     );
+    console.log("totalRepayment", totalRepayment)
 
     try {
       const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, totalRepayment)
@@ -158,6 +164,36 @@ const DashboardLoanModal = ({
       onClose()
     } catch (err) {
       console.error("Error repaying loan:", err)
+      setError(err.message + " totalRepayment: " + totalRepayment)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleLiquidate = async () => {
+    if (!signer) {
+      setError('Please connect your wallet')
+      return
+    }
+
+    setIsLoading(true)
+    setError(null)
+    const tokenInfo = getTokenInfo(loan.tokenRequested)
+    const collateralInfo = getTokenInfo(loan.collateralToken)
+    const config = getAlephiumLoanConfig();
+    try {
+      const result = await LiquidateLoanService(
+        signer,
+        config.loanFactoryContractId,
+        loan.id,
+        collateralInfo.isOracle,
+        tokenInfo.isOracle
+      )
+      window.addTransactionToast('Liquidating Loan', result.txId)
+      
+      onClose()
+    } catch (err) {
+      console.error("Error liquidating loan:", err)
       setError(err.message)
     } finally {
       setIsLoading(false)
@@ -179,35 +215,6 @@ const DashboardLoanModal = ({
         loan.id
       )
       window.addTransactionToast('Forfeiting Loan', result.txId)
-      onClose()
-    } catch (err) {
-      console.error("Error accepting loan:", err)
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  const handleAcceptLoan = async () => {
-    if (!signer) {
-      setError('Please connect your wallet')
-      return
-    }
-
-    setIsLoading(true)
-    setError(null)
-    const tokenInfo = getTokenInfo(loan.tokenRequested)
-    const collateralInfo = getTokenInfo(loan.collateralToken)
-
-    try {
-      const result = await AcceptLoanService(
-        signer,
-        config.loanFactoryContractId,
-        loan.id,
-        collateralInfo.isOracle,
-        tokenInfo.isOracle
-      )
-      window.addTransactionToast('Accepting Loan', result.txId)
       onClose()
     } catch (err) {
       console.error("Error accepting loan:", err)
@@ -563,16 +570,16 @@ const DashboardLoanModal = ({
 
                       {isBorrower && loan.status === 'active' && (
                         <button 
-                          onClick={handleRepayLoan}
-                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-                            hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-                            border border-green-500/20 hover:border-green-500/30 
+                          onClick={isExpired ? handleLiquidate : handleRepayLoan}
+                          className={`group px-6 py-4 rounded-xl bg-gradient-to-r ${isExpired ? "from-red-500/20 via-red-500/30 to-red-400/20" : "from-green-500/20 via-green-500/30 to-green-400/20"} 
+                            ${isExpired ? "hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30" : "hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30"}
+                            border ${isExpired ? "border-red-500/20" : "border-green-500/20"} hover:border-${isExpired ? "red-500/30" : "green-500/30"} 
                             transition-all duration-300 ease-out
-                            text-green-400 hover:text-green-300 font-medium 
-                            shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-                            flex items-center justify-center gap-2"
+                            text-${isExpired ? "red-400" : "green-400"} hover:text-${isExpired ? "red-300" : "green-300"} font-medium 
+                            shadow-lg shadow-${isExpired ? "red-900/20" : "green-900/20"} hover:shadow-${isExpired ? "red-900/30" : "green-900/30"}
+                            flex items-center justify-center gap-2`}
                         >
-                          <span>Repay Loan</span>
+                          <span>{isExpired ? "Liquidate" : "Repay Loan"}</span>
                           <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 

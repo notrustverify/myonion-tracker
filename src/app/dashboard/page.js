@@ -94,23 +94,24 @@ export default function Dashboard() {
       const borrowedData = borrowedResponse.data;
       
       const debts = {};
-      if(createdResponse.data.length > 0) {
-        for (const loan of createdResponse.data) {
-          if (loan.active) {
-            try {
-              const { totalRepayment } = calculateLoanRepayment(
-                Number(loan.tokenAmount),
-                Number(loan.interest),
-                new Date(loan.createdAt)
-              );
-              debts[loan.id] = totalRepayment;
-            } catch (error) {
-              console.error('Error calculating loan debt:', error);
-            }
+      [...createdData, ...borrowedData].forEach(loan => {
+        if (loan.active) {
+          try {
+            const totalRepayment = calculateLoanRepayment(
+              Number(loan.tokenAmount),
+              Number(loan.interest),
+              new Date(loan.createdAt)
+            );
+            console.log("totalRepayment", totalRepayment); 
+            debts[loan.id] = totalRepayment;
+            console.log("debts[loan.id]", debts[loan.id]);
+          } catch (error) {
+            console.error('Error calculating loan debt:', error);
           }
         }
-        setLoanDebts(debts);
-      }
+      });
+      console.log("debts", debts);
+      setLoanDebts(debts);
 
       const transformLoan = loan => ({
         value: loan.tokenAmount,
@@ -167,7 +168,7 @@ export default function Dashboard() {
     {
       title: "Total Value Borrowed",
       value: `$${loans.reduce((acc, loan) => {
-        if (loan.type === 'created') {
+        if (loan.type === 'created' && loan.status === 'active') {
           const tokenDecimals = getTokenDecimals(loan.currency);
           const tokenAmount = Number(loan.value) / Math.pow(10, tokenDecimals);
           const tokenPrice = tokenPrices[loan.currency] || 0;
@@ -181,9 +182,9 @@ export default function Dashboard() {
     {
       title: "Total Debt",
       value: `$${loans.reduce((acc, loan) => {
-        if (loan.type === 'borrowed' && loan.status === 'active' && loanDebts[loan.id]) {
+        if (loan.type === 'created' && loan.status === 'active') {
           const tokenDecimals = getTokenDecimals(loan.currency);
-          const debtAmount = Number(loanDebts[loan.id]) / Math.pow(10, tokenDecimals);
+          const debtAmount = Number(loan.currentDebt) / Math.pow(10, tokenDecimals);
           const tokenPrice = tokenPrices[loan.currency] || 0;
           return acc + (debtAmount * tokenPrice);
         }
@@ -195,10 +196,18 @@ export default function Dashboard() {
     {
       title: "Collateral Locked",
       value: `$${loans.reduce((acc, loan) => {
-        const collateralDecimals = getTokenDecimals(loan.collateralCurrency);
-        const collateralAmount = Number(loan.collateralAmount) / Math.pow(10, collateralDecimals);
-        const collateralPrice = tokenPrices[loan.collateralCurrency] || 0;
-        return acc + (collateralAmount * collateralPrice);
+        if (loan.type === 'created' && loan.status === 'active') {
+          const collateralDecimals = getTokenDecimals(loan.collateralCurrency);
+          const collateralAmount = Number(loan.collateralAmount) / Math.pow(10, collateralDecimals);
+          const collateralPrice = tokenPrices[loan.collateralCurrency] || 0;
+          return acc + (collateralAmount * collateralPrice);
+        } else if (loan.type === 'borrowed' && loan.status === 'active') {
+          const tokenDecimals = getTokenDecimals(loan.currency);
+          const tokenAmount = Number(loan.value) / Math.pow(10, tokenDecimals);
+          const tokenPrice = tokenPrices[loan.currency] || 0;
+          return acc + (tokenAmount * tokenPrice);
+        }
+        return acc;
       }, 0).toLocaleString()}`,
       isPositive: true,
       icon: <FaChartLine className="w-6 h-6" />
