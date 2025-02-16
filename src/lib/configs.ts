@@ -79,20 +79,22 @@ export function calculateLoanRepayment(
   loanAmount: number,
   interestRatePer10k: number,
   acceptedDate: Date
-): { interest: number; totalRepayment: number; loanAmount: number } {
-  
-  const annualInterestRate = interestRatePer10k / 10000;
-  
-  const daysInYear = 365;
-  
-  const today = new Date();
-  const loanDurationDays = Math.floor((today.getTime() - acceptedDate.getTime()) / (1000 * 60 * 60 * 24));
-  
-  const interest = loanAmount * annualInterestRate * (loanDurationDays / daysInYear);
-  
-  const totalRepayment = loanAmount + interest;
-  
-  return { interest, totalRepayment, loanAmount };
+): number {
+  if (interestRatePer10k > 0) {
+    // Calculate elapsed time
+    let elapsedTime = new Date().getTime() - acceptedDate.getTime()
+
+    // Avoid integer truncation: multiply first, then divide
+    let gain = (loanAmount * interestRatePer10k * elapsedTime) / (31556926000 * 10000)
+
+    // Calculate 7% flat interest (tokenAmount * 7 / 100)
+    let flatInterest = (loanAmount * 7) / 100
+
+    // Return the original amount + accrued interest + flat interest
+    return loanAmount + gain + flatInterest
+  } else {
+    return loanAmount
+  }
 }
 
 export function getTokensList(): TokenInfo[] {
