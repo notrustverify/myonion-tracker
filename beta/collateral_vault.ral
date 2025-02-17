@@ -1,0 +1,29 @@
+// can store up to 8 assets
+Contract CollateralStorage (
+    parentContract: Address,
+    linkedNFT: ByteVec
+) {
+    pub fn removeAssetViaParent() -> () {
+
+    }
+
+    pub fn removeAssetViaNFT() -> () {
+
+    }
+
+    pub fn addAssetViaParent() -> () {
+
+    }
+
+    pub fn removeAssetViaNFT() -> () {
+
+    }
+
+    pub fn destoryViaParent() -> () {
+
+    }
+
+    pub fn destroyViaNFT -> () {
+        
+    }
+}

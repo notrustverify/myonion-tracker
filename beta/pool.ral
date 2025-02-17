@@ -11,10 +11,6 @@ struct LoanInfo {
     mut lastInterestUpdate: U256
 }
 
-struct BadDebtCollateral {
-    
-}
-
 Contract Pool (
     admin: Address,
     poolToken: ByteVec,
@@ -26,7 +22,7 @@ Contract Pool (
     // sPoolToken
     symbol: ByteVec,
     name: ByteVec,
-    //
+    // pool specs
     mut exchangeRate: U256,
     mut sPoolSupply: U256,
     mut totalDeposits: U256,

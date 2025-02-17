@@ -6,7 +6,7 @@ struct Asset {
 }
 
 struct Assets {
-    mut portfolio: [Asset; 20]  // 10 assets
+    mut portfolio: [Asset; 8]  // 8 assets
 }
 
 Contract CollateralAccounts (
@@ -31,17 +31,14 @@ Contract CollateralAccounts (
         NotAdmin = 4
     }
 
-    // base uri
     pub fn getCollectionUri() -> ByteVec {
         return collectionUri
     }
 
-    // total supply at runtime
     pub fn totalSupply() -> U256 {
         return totalSupply
     }
 
-    // get the nft by index
     @using(checkExternalCaller = false)
     pub fn nftByIndex(index: U256) -> INFT {
         let nftTokenId = subContractId!(toByteVec!(index))
@@ -50,7 +47,6 @@ Contract CollateralAccounts (
         return INFT(nftTokenId)
     }
 
-    // validation ? ~ not being used
     @using(checkExternalCaller = false)
     pub fn validateNFT(nftId: ByteVec, index: U256) -> () {
       let expectedTokenContract = nftByIndex(index)
@@ -94,7 +90,7 @@ Contract CollateralAccounts (
         // create the mapping 
         let n = Asset { token: b``, amount: 0}
         let b = Assets {
-            portfolio: [n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n]
+            portfolio: [n, n, n, n, n, n, n, n]
         }
 
         account.insert!(caller, contractId, b) // created mapping
@@ -106,8 +102,10 @@ Contract CollateralAccounts (
     // ------------------------------------
 
     // should burn the nft | refund the assets | remove the mapping
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true, assetsInContract = true)
     pub fn burnAccountNFT() -> () {
-        // code ...
+        // approve the nft in the txscript
+        
     }
 
     pub fn addAsset(nft: ByteVec, token: ByteVec, amount: U256) -> () {
