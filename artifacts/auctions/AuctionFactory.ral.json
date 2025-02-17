@@ -1,0 +1,172 @@
+{
+  "version": "v3.11.1",
+  "name": "AuctionFactory",
+  "bytecode": "04044059408b40b040c501010509004031d304b0e037b41705b2160216001601a0011604130664160316040c13036417071706b47ad10e2ca216001601a3561605a000130364ce0116061607c11708a0000d2aa1000516051600160116021603160874010104080017d364aedb6116001704160116021603a3160116030e0f16040101170717061705061601160016051606160773010202050010d3e5796b081600170216010d0e160201021704170307160116001603160461010001010008d366b0cd96b4ce00450c7b1600a101",
+  "codeHash": "cf44d38fe030049b845239b5824cb78de1d6d5fbc2dbe55b5bbee2a22a8a1efa",
+  "fieldsSig": {
+    "names": [
+      "admin",
+      "auctionTemplate",
+      "auctionNumber",
+      "fee"
+    ],
+    "types": [
+      "Address",
+      "ByteVec",
+      "U256",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      false,
+      true,
+      true
+    ]
+  },
+  "eventsSig": [
+    {
+      "name": "CreateAuction",
+      "fieldNames": [
+        "who",
+        "collateralToken",
+        "collateralAmount",
+        "tokenRequested",
+        "tokenAmount",
+        "contract"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "U256",
+        "ByteVec",
+        "U256",
+        "ByteVec"
+      ]
+    },
+    {
+      "name": "BidAuction",
+      "fieldNames": [
+        "who",
+        "contract",
+        "token",
+        "amount",
+        "timeEnd"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256",
+        "U256"
+      ]
+    },
+    {
+      "name": "RedeemAuction",
+      "fieldNames": [
+        "who",
+        "contract",
+        "token",
+        "tokenAmount"
+      ],
+      "fieldTypes": [
+        "Address",
+        "ByteVec",
+        "ByteVec",
+        "U256"
+      ]
+    }
+  ],
+  "functions": [
+    {
+      "name": "createAuction",
+      "paramNames": [
+        "collateral",
+        "collateralAmount",
+        "tokenRequested",
+        "tokenAmount",
+        "loaner"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "U256",
+        "ByteVec",
+        "U256",
+        "Address"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "bid",
+      "paramNames": [
+        "contract",
+        "caller",
+        "token",
+        "amount"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "Address",
+        "ByteVec",
+        "U256"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "redeem",
+      "paramNames": [
+        "contract",
+        "caller"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "Address"
+      ],
+      "paramIsMutable": [
+        false,
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "editRate",
+      "paramNames": [
+        "newFee"
+      ],
+      "paramTypes": [
+        "U256"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": [
+    {
+      "name": "AuctionCodes",
+      "fields": [
+        {
+          "name": "NotAdmin",
+          "value": {
+            "type": "U256",
+            "value": "0"
+          }
+        }
+      ]
+    }
+  ]
+}

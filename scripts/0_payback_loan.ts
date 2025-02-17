@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { AcceptLoan, CreateLoan, PayLoan } from "../artifacts/ts";
+import { AcceptLoan, CreateLoan, DestroyLoanFactory, PayLoan } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -19,6 +19,7 @@ const deployScript: DeployFunction<Settings> = async (
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
     
+    /*
     let tx = await PayLoan.execute(signer, {
       initialFields: {
           loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
@@ -26,6 +27,14 @@ const deployScript: DeployFunction<Settings> = async (
       },
       attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
       tokens: [{id: ALPH_TOKEN_ID, amount: ONE_ALPH * 5n}]
+    })
+    */
+
+    let tx = await DestroyLoanFactory.execute(signer, {
+      initialFields: {
+          loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800"
+      },
+      attoAlphAmount: DUST_AMOUNT
     })
 
     // should add this everywhere

@@ -17,6 +17,7 @@ import { default as AddCollateralScriptJson } from "../loans/AddCollateral.ral.j
 import { default as BidLoanScriptJson } from "../loans/BidLoan.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
+import { default as DestroyLoanFactoryScriptJson } from "../loans/DestroyLoanFactory.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
 import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json";
 import { default as ForceCancelMarketScriptJson } from "../loans/ForceCancelMarket.ral.json";
@@ -89,6 +90,13 @@ export const CreateLoan = new ExecutableScript<{
   canLiquidate: boolean;
 }>(
   Script.fromJson(CreateLoanScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const DestroyLoanFactory = new ExecutableScript<{
+  loanFactory: HexString;
+}>(
+  Script.fromJson(DestroyLoanFactoryScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

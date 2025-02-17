@@ -1,0 +1,108 @@
+Contract AuctionFactory (
+    admin: Address,
+    auctionTemplate: ByteVec,
+    mut auctionNumber: U256,
+    mut fee: U256
+) {
+    event CreateAuction(
+        who: Address, 
+        collateralToken: ByteVec,
+        collateralAmount: U256,
+        tokenRequested: ByteVec,
+        tokenAmount: U256,
+        contract: ByteVec
+    )
+    event BidAuction(
+        who: Address,
+        contract: ByteVec,
+        token: ByteVec,
+        amount: U256,
+        timeEnd: U256
+    )
+    event RedeemAuction(
+        who: Address,
+        contract: ByteVec,
+        token: ByteVec,
+        tokenAmount: U256
+    )
+
+    enum AuctionCodes {
+		NotAdmin = 0
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn createAuction(collateral: ByteVec, collateralAmount: U256, tokenRequested: ByteVec, tokenAmount: U256, loaner: Address) -> () {
+
+        let caller = callerAddress!()
+
+        let (encodeImmutableFields, encodeMutableFields) = Auction.encodeFields!(
+            selfAddress!(), 
+            tokenRequested,
+            tokenAmount,
+            collateral,
+            collateralAmount,
+            fee,                // fee
+            loaner,             // loaner
+            loaner,             // loaner is also highest bidder if no bid has been placed
+            0                   // no time until bid is placed
+        )
+        
+        // work on this bit
+	    let auctionId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, collateral: collateralAmount}(
+		    encodeToByteVec!(blockTimeStamp!(), caller, auctionNumber),
+		    auctionTemplate,
+		    encodeImmutableFields,
+		    encodeMutableFields
+	    )
+
+        auctionNumber = auctionNumber + 1
+
+	    emit CreateAuction(
+		    caller,
+            collateral,
+            collateralAmount,
+            tokenRequested,
+            tokenAmount,
+            auctionId
+	    )
+    }
+
+    // bid up on mapping
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = enforced)
+    pub fn bid(contract: ByteVec, caller: Address, token: ByteVec, amount: U256) -> () {
+
+        let auction = Auction(contract)
+
+        let (t, a, time) = auction.bid{caller -> token: amount}(caller, amount)
+
+        emit BidAuction(
+            caller,
+            contract,
+            t,
+            a,
+            time
+        )
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = enforced)
+    pub fn redeem(contract: ByteVec, caller: Address) -> () {
+        let auction = Auction(contract)
+
+        let (token, amount) = auction.redeem(caller)
+
+        emit RedeemAuction(
+            caller,
+            contract,
+            token,
+            amount
+        )
+    }
+
+    // admin functions
+    @using(checkExternalCaller = true, updateFields = true)
+    pub fn editRate(newFee: U256) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        fee = newFee
+    }
+}
