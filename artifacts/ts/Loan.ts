@@ -40,8 +40,8 @@ import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 // Custom types for the contract
 export namespace LoanTypes {
   export type Fields = {
-    creator: Address;
-    loanee: Address;
+    borrower: Address;
+    lender: Address;
     tokenRequested: HexString;
     tokenAmount: bigint;
     collateralToken: HexString;
@@ -53,11 +53,8 @@ export namespace LoanTypes {
     active: boolean;
     parentContract: Address;
     canLiquidate: boolean;
-    liquidation: boolean;
     ratio: bigint;
-    highestBidder: Address;
-    highestBid: bigint;
-    timeToEnd: bigint;
+    auctionContract: HexString;
   };
 
   export type State = ContractState<Fields>;
@@ -66,10 +63,6 @@ export namespace LoanTypes {
     getTokenRequested: {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<[HexString, bigint]>;
-    };
-    getHighestBid: {
-      params: Omit<CallContractParams<{}>, "args">;
-      result: CallContractResult<bigint>;
     };
     getTokenCollateral: {
       params: Omit<CallContractParams<{}>, "args">;
@@ -119,16 +112,16 @@ export namespace LoanTypes {
       }>;
       result: CallContractResult<bigint>;
     };
-    activateLiquidation: {
-      params: CallContractParams<{ collateralLevel: bigint }>;
-      result: CallContractResult<null>;
-    };
-    bid: {
-      params: CallContractParams<{ caller: Address; bidAmount: bigint }>;
+    removeCollateral: {
+      params: CallContractParams<{
+        caller: Address;
+        collateralRemoved: bigint;
+        newRatio: bigint;
+      }>;
       result: CallContractResult<bigint>;
     };
-    redeem: {
-      params: CallContractParams<{ caller: Address }>;
+    activateLiquidation: {
+      params: CallContractParams<{ collateralLevel: bigint }>;
       result: CallContractResult<null>;
     };
     updateLoanCode: {
@@ -142,14 +135,6 @@ export namespace LoanTypes {
         mutFields: HexString;
       }>;
       result: CallContractResult<null>;
-    };
-    removeCollateral: {
-      params: CallContractParams<{
-        caller: Address;
-        collateralRemoved: bigint;
-        newRatio: bigint;
-      }>;
-      result: CallContractResult<bigint>;
     };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
@@ -170,10 +155,6 @@ export namespace LoanTypes {
 
   export interface SignExecuteMethodTable {
     getTokenRequested: {
-      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
-      result: SignExecuteScriptTxResult;
-    };
-    getHighestBid: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
@@ -228,19 +209,16 @@ export namespace LoanTypes {
       }>;
       result: SignExecuteScriptTxResult;
     };
-    activateLiquidation: {
-      params: SignExecuteContractMethodParams<{ collateralLevel: bigint }>;
-      result: SignExecuteScriptTxResult;
-    };
-    bid: {
+    removeCollateral: {
       params: SignExecuteContractMethodParams<{
         caller: Address;
-        bidAmount: bigint;
+        collateralRemoved: bigint;
+        newRatio: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
-    redeem: {
-      params: SignExecuteContractMethodParams<{ caller: Address }>;
+    activateLiquidation: {
+      params: SignExecuteContractMethodParams<{ collateralLevel: bigint }>;
       result: SignExecuteScriptTxResult;
     };
     updateLoanCode: {
@@ -252,14 +230,6 @@ export namespace LoanTypes {
         newCode: HexString;
         immFields: HexString;
         mutFields: HexString;
-      }>;
-      result: SignExecuteScriptTxResult;
-    };
-    removeCollateral: {
-      params: SignExecuteContractMethodParams<{
-        caller: Address;
-        collateralRemoved: bigint;
-        newRatio: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -304,14 +274,6 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         params,
         getContractByCodeHash
       );
-    },
-    getHighestBid: async (
-      params: Omit<
-        TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
-        "testArgs"
-      >
-    ): Promise<TestContractResultWithoutMaps<bigint>> => {
-      return testMethod(this, "getHighestBid", params, getContractByCodeHash);
     },
     getTokenCollateral: async (
       params: Omit<
@@ -408,6 +370,19 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
     ): Promise<TestContractResultWithoutMaps<bigint>> => {
       return testMethod(this, "addCollateral", params, getContractByCodeHash);
     },
+    removeCollateral: async (
+      params: TestContractParamsWithoutMaps<
+        LoanTypes.Fields,
+        { caller: Address; collateralRemoved: bigint; newRatio: bigint }
+      >
+    ): Promise<TestContractResultWithoutMaps<bigint>> => {
+      return testMethod(
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
     activateLiquidation: async (
       params: TestContractParamsWithoutMaps<
         LoanTypes.Fields,
@@ -420,22 +395,6 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         params,
         getContractByCodeHash
       );
-    },
-    bid: async (
-      params: TestContractParamsWithoutMaps<
-        LoanTypes.Fields,
-        { caller: Address; bidAmount: bigint }
-      >
-    ): Promise<TestContractResultWithoutMaps<bigint>> => {
-      return testMethod(this, "bid", params, getContractByCodeHash);
-    },
-    redeem: async (
-      params: TestContractParamsWithoutMaps<
-        LoanTypes.Fields,
-        { caller: Address }
-      >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
-      return testMethod(this, "redeem", params, getContractByCodeHash);
     },
     updateLoanCode: async (
       params: TestContractParamsWithoutMaps<
@@ -458,19 +417,6 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         getContractByCodeHash
       );
     },
-    removeCollateral: async (
-      params: TestContractParamsWithoutMaps<
-        LoanTypes.Fields,
-        { caller: Address; collateralRemoved: bigint; newRatio: bigint }
-      >
-    ): Promise<TestContractResultWithoutMaps<bigint>> => {
-      return testMethod(
-        this,
-        "removeCollateral",
-        params,
-        getContractByCodeHash
-      );
-    },
   };
 
   stateForTest(initFields: LoanTypes.Fields, asset?: Asset, address?: string) {
@@ -483,7 +429,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "4226ec696448d90faa1dc4682a7b08f8babed118e5d10b86e15a29a8171f0621",
+    "fc001ed267de02374c6e638e5227f5a511130b8f0d9bb6701d27b002d96d4c10",
     AllStructs
   )
 );
@@ -507,17 +453,6 @@ export class LoanInstance extends ContractInstance {
         Loan,
         this,
         "getTokenRequested",
-        params === undefined ? {} : params,
-        getContractByCodeHash
-      );
-    },
-    getHighestBid: async (
-      params?: LoanTypes.CallMethodParams<"getHighestBid">
-    ): Promise<LoanTypes.CallMethodResult<"getHighestBid">> => {
-      return callMethod(
-        Loan,
-        this,
-        "getHighestBid",
         params === undefined ? {} : params,
         getContractByCodeHash
       );
@@ -637,6 +572,17 @@ export class LoanInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    removeCollateral: async (
+      params: LoanTypes.CallMethodParams<"removeCollateral">
+    ): Promise<LoanTypes.CallMethodResult<"removeCollateral">> => {
+      return callMethod(
+        Loan,
+        this,
+        "removeCollateral",
+        params,
+        getContractByCodeHash
+      );
+    },
     activateLiquidation: async (
       params: LoanTypes.CallMethodParams<"activateLiquidation">
     ): Promise<LoanTypes.CallMethodResult<"activateLiquidation">> => {
@@ -647,16 +593,6 @@ export class LoanInstance extends ContractInstance {
         params,
         getContractByCodeHash
       );
-    },
-    bid: async (
-      params: LoanTypes.CallMethodParams<"bid">
-    ): Promise<LoanTypes.CallMethodResult<"bid">> => {
-      return callMethod(Loan, this, "bid", params, getContractByCodeHash);
-    },
-    redeem: async (
-      params: LoanTypes.CallMethodParams<"redeem">
-    ): Promise<LoanTypes.CallMethodResult<"redeem">> => {
-      return callMethod(Loan, this, "redeem", params, getContractByCodeHash);
     },
     updateLoanCode: async (
       params: LoanTypes.CallMethodParams<"updateLoanCode">
@@ -680,17 +616,6 @@ export class LoanInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
-    removeCollateral: async (
-      params: LoanTypes.CallMethodParams<"removeCollateral">
-    ): Promise<LoanTypes.CallMethodResult<"removeCollateral">> => {
-      return callMethod(
-        Loan,
-        this,
-        "removeCollateral",
-        params,
-        getContractByCodeHash
-      );
-    },
   };
 
   transact = {
@@ -698,11 +623,6 @@ export class LoanInstance extends ContractInstance {
       params: LoanTypes.SignExecuteMethodParams<"getTokenRequested">
     ): Promise<LoanTypes.SignExecuteMethodResult<"getTokenRequested">> => {
       return signExecuteMethod(Loan, this, "getTokenRequested", params);
-    },
-    getHighestBid: async (
-      params: LoanTypes.SignExecuteMethodParams<"getHighestBid">
-    ): Promise<LoanTypes.SignExecuteMethodResult<"getHighestBid">> => {
-      return signExecuteMethod(Loan, this, "getHighestBid", params);
     },
     getTokenCollateral: async (
       params: LoanTypes.SignExecuteMethodParams<"getTokenCollateral">
@@ -759,20 +679,15 @@ export class LoanInstance extends ContractInstance {
     ): Promise<LoanTypes.SignExecuteMethodResult<"addCollateral">> => {
       return signExecuteMethod(Loan, this, "addCollateral", params);
     },
+    removeCollateral: async (
+      params: LoanTypes.SignExecuteMethodParams<"removeCollateral">
+    ): Promise<LoanTypes.SignExecuteMethodResult<"removeCollateral">> => {
+      return signExecuteMethod(Loan, this, "removeCollateral", params);
+    },
     activateLiquidation: async (
       params: LoanTypes.SignExecuteMethodParams<"activateLiquidation">
     ): Promise<LoanTypes.SignExecuteMethodResult<"activateLiquidation">> => {
       return signExecuteMethod(Loan, this, "activateLiquidation", params);
-    },
-    bid: async (
-      params: LoanTypes.SignExecuteMethodParams<"bid">
-    ): Promise<LoanTypes.SignExecuteMethodResult<"bid">> => {
-      return signExecuteMethod(Loan, this, "bid", params);
-    },
-    redeem: async (
-      params: LoanTypes.SignExecuteMethodParams<"redeem">
-    ): Promise<LoanTypes.SignExecuteMethodResult<"redeem">> => {
-      return signExecuteMethod(Loan, this, "redeem", params);
     },
     updateLoanCode: async (
       params: LoanTypes.SignExecuteMethodParams<"updateLoanCode">
@@ -783,11 +698,6 @@ export class LoanInstance extends ContractInstance {
       params: LoanTypes.SignExecuteMethodParams<"updateLoanFields">
     ): Promise<LoanTypes.SignExecuteMethodResult<"updateLoanFields">> => {
       return signExecuteMethod(Loan, this, "updateLoanFields", params);
-    },
-    removeCollateral: async (
-      params: LoanTypes.SignExecuteMethodParams<"removeCollateral">
-    ): Promise<LoanTypes.SignExecuteMethodResult<"removeCollateral">> => {
-      return signExecuteMethod(Loan, this, "removeCollateral", params);
     },
   };
 

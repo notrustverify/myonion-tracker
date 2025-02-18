@@ -1,0 +1,140 @@
+Contract Auction (
+    parentContract: Address,
+    tokenRequested: ByteVec,
+    mut tokenAmount: U256,
+    // collateral
+    collateralToken: ByteVec,
+    collateralAmount: U256,
+    // bidding variables,
+    fee: U256,
+    loaner: Address,
+    mut highestBidder: Address,
+    mut timeToEnd: U256          // set at 0
+) {
+    enum AuctionCodes {
+        InvalidAmount = 0
+        InvalidCaller = 1
+        AuctionNotDone = 2
+        CopyNotUpgradable = 3
+    }
+
+    // helper functions
+    pub fn calculateFee(amount: U256) -> (U256) {
+        if (fee > 0) {
+            let fees = (amount * fee) / 10000
+            // return the original amount plus interest
+            return fees 
+        }
+        else {
+            return 0
+        }
+    }
+
+    @using(checkExternalCaller = false, updateFields = true, assetsInContract = true, preapprovedAssets = true) 
+    pub fn bid(caller: Address, amount: U256) -> (ByteVec, U256, U256) {
+        // check if highest bid
+
+        assert!(amount > tokenAmount, AuctionCodes.InvalidAmount)
+
+        // check if caller == highest bidder (no bid ups)
+        assert!(caller != highestBidder, AuctionCodes.InvalidCaller)
+
+        // return previous top bid if not origin
+        if (timeToEnd != 0) {
+            transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), highestBidder, tokenRequested, tokenAmount)
+        }
+
+        // transfer assets
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+        transferToken!(caller, selfAddress!(), tokenRequested, amount)
+
+        // assign highest bidder
+        highestBidder = caller
+        tokenAmount = amount
+        
+        // init condition
+        if (timeToEnd == 0) {
+            timeToEnd = blockTimeStamp!() + 10800000 // 3 hours till auction end once bid
+        }
+
+        // anti sniper
+        if ((timeToEnd - blockTimeStamp!()) < 180000) {
+            timeToEnd = timeToEnd + 300000 // Add 5 minutes (300,000 ms)
+        }
+
+        return tokenRequested, amount, timeToEnd
+    }
+
+    // loaner can instantly redeem if no bid has been placed
+    @using(checkExternalCaller = false, assetsInContract = true)
+    pub fn redeem(caller: Address) -> (ByteVec, U256) {
+        // loaner is instant redeeming
+        if (caller == highestBidder && timeToEnd == 0) {
+            // instant redeem
+            let feeTotal = calculateFee(collateralAmount)
+
+            transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), parentContract, collateralToken, collateralAmount - feeTotal)
+
+            destroySelf!(highestBidder)
+
+            return tokenRequested, tokenAmount
+        }
+
+        // auction has ended
+        assert!(timeToEnd < blockTimeStamp!(), AuctionCodes.AuctionNotDone)
+
+        // get auctionplace fees for liquidations
+        let collateralFee = calculateFee(collateralAmount)
+        let tokenFee = calculateFee(tokenAmount)
+
+        // transfer assets to loaner
+        transferToken!(selfAddress!(), loaner, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), loaner, tokenRequested, tokenAmount - tokenFee)
+
+        // transfer collateral to highest bidder
+        transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), highestBidder, collateralToken, collateralAmount - collateralFee)
+
+        // auction house / protocol fees
+        transferToken!(selfAddress!(), loaner, ALPH, dustAmount!())
+        transferToken!(selfAddress!(), parentContract, collateralToken, collateralFee)
+        transferToken!(selfAddress!(), parentContract, tokenRequested, tokenFee)
+
+        return tokenRequested, tokenAmount
+    }
+
+    // allows you to upgrade the template while maintaining contract integrity with security
+    @using(checkExternalCaller = false)
+    pub fn upgradeAuctionCode(newCode: ByteVec) -> () {
+        assert!(parentContract == loaner, AuctionCodes.CopyNotUpgradable)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = false)
+    pub fn upgradeAuctionFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        assert!(parentContract == loaner, AuctionCodes.CopyNotUpgradable)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    }
+}
+
+// implement upgrade TX scripts
+
+TxScript UpdateAuctionCode (
+    auction: Auction,
+    newCode: ByteVec
+) {
+    auction.upgradeAuctionCode(newCode)
+}
+
+TxScript UpdateAuctionFields (
+    auction: Auction,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    auction.upgradeAuctionFields(newCode, immFields, mutFields)
+}

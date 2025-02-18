@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "UpdateLoanFactoryCode",
-  "bytecodeTemplate": "01010300000005{1}0d0c{0}0116",
+  "bytecodeTemplate": "01010300000005{1}0d0c{0}010e",
   "fieldsSig": {
     "names": [
       "loanFactory",

@@ -17,4 +17,36 @@ Contract CollateralAccountNFT (
     pub fn getCollectionIndex() -> (ByteVec, U256) {
         return collectionId, nftIndex
     }
+
+    pub fn removeAssetViaParent(caller: Address, token: ByteVec, amount: U256) -> () {
+        checkCaller!(contractIdToAddress!(collectionId) == callerAddress!(), 0)
+
+        transferToken!(caller, caller, selfContractId!(), 1) // transfer token to self
+    }
+
+    pub fn removeAssetViaNFT() -> () {
+
+    }
+
+    pub fn addAssetViaParent(caller: Address, token: ByteVec, amount: U256) -> () {
+        checkCaller!(contractIdToAddress!(collectionId) == callerAddress!(), 0)
+
+        transferToken!(caller, caller, selfContractId!(), 1) // transfer token to self
+    }
+
+    pub fn removeAssetViaNFT() -> () {
+
+    }
+
+    pub fn destoryViaParent(caller: Address) -> () {
+        checkCaller!(contractIdToAddress!(collectionId) == callerAddress!(), 0)
+
+        burnToken!
+
+        destroySelf!(caller)
+    }
+
+    pub fn destroyViaNFT -> () {
+        
+    }
 }

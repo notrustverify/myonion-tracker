@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { CreateLoan, Loan, LoanMarket, TokenMapping, UpdateLoanCode, UpdateMarketCode } from "../artifacts/ts";
+import { ForceCancel, Loan, UpdateLoanCode } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -18,11 +18,19 @@ const deployScript: DeployFunction<Settings> = async (
     network: Network<Settings>
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
-    
-    await UpdateMarketCode.execute(signer, {
+    /*
+    await UpdateLoanCode.execute(signer, {
       initialFields: {
-          market: "8457244d771cb3097dbf07b141a9eda9863292b4f5954b2ace53eceb9cef7d00",
-          newCode: LoanMarket.contract.bytecode
+          loan: "38d777236fc0553ea388b43355f01e3ffb8047b2d7c9fe07d9b6fb5aa506be00",
+          newCode: Loan.contract.bytecode
+      },
+      attoAlphAmount: DUST_AMOUNT
+    })
+    */
+
+    await ForceCancel.execute(signer, {
+      initialFields: {
+          loan: "38d777236fc0553ea388b43355f01e3ffb8047b2d7c9fe07d9b6fb5aa506be00",
       },
       attoAlphAmount: DUST_AMOUNT
     })

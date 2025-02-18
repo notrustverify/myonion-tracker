@@ -1,0 +1,159 @@
+Contract AuctionFactory (
+    admin: Address,
+    auctionTemplate: ByteVec,
+    mut auctionNumber: U256,
+    mut fee: U256
+) {
+    event CreateAuction(
+        who: Address, 
+        collateralToken: ByteVec,
+        collateralAmount: U256,
+        tokenRequested: ByteVec,
+        tokenAmount: U256,
+        contract: ByteVec
+    )
+    event BidAuction(
+        who: Address,
+        contract: ByteVec,
+        token: ByteVec,
+        amount: U256,
+        timeEnd: U256
+    )
+    event RedeemAuction(
+        who: Address,
+        contract: ByteVec,
+        token: ByteVec,
+        tokenAmount: U256
+    )
+
+    enum AuctionCodes {
+		NotAdmin = 0
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
+    pub fn createAuction(collateral: ByteVec, collateralAmount: U256, tokenRequested: ByteVec, tokenAmount: U256, loaner: Address) -> () {
+
+        // might wanna edit this @larkben; caller logic
+        let caller = callerAddress!()
+
+        let (encodeImmutableFields, encodeMutableFields) = Auction.encodeFields!(
+            selfAddress!(), 
+            tokenRequested,
+            tokenAmount,
+            collateral,
+            collateralAmount,
+            fee,                // fee
+            loaner,             // loaner
+            loaner,             // loaner is also highest bidder if no bid has been placed
+            0                   // no time until bid is placed
+        )
+        
+        // work on this bit
+	    let auctionId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, collateral: collateralAmount}(
+		    encodeToByteVec!(blockTimeStamp!(), caller, auctionNumber),
+		    auctionTemplate,
+		    encodeImmutableFields,
+		    encodeMutableFields
+	    )
+
+        auctionNumber = auctionNumber + 1
+
+	    emit CreateAuction(
+		    caller,
+            collateral,
+            collateralAmount,
+            tokenRequested,
+            tokenAmount,
+            auctionId
+	    )
+    }
+
+    // bid up on mapping
+    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = enforced)
+    pub fn bid(contract: ByteVec, token: ByteVec, amount: U256) -> () {
+
+        let auction = Auction(contract)
+        let caller = callerAddress!()
+
+        let (t, a, time) = auction.bid{caller -> token: amount}(caller, amount)
+
+        emit BidAuction(
+            caller,
+            contract,
+            t,
+            a,
+            time
+        )
+    }
+
+    @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = enforced)
+    pub fn redeem(contract: ByteVec) -> () {
+
+        let auction = Auction(contract)
+        let caller = callerAddress!()
+
+        let (token, amount) = auction.redeem(caller)
+
+        emit RedeemAuction(
+            caller,
+            contract,
+            token,
+            amount
+        )
+    }
+
+    // admin functions
+    @using(checkExternalCaller = true, updateFields = true)
+    pub fn editRate(newFee: U256) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        fee = newFee
+    }
+
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateAuctionFactoryCode(newCode: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateAuctionFactoryFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    }
+}
+
+TxScript Bid (
+    contract: AuctionFactory,
+    path: ByteVec,
+    token: ByteVec,
+    amount: U256
+) {
+    contract.bid{callerAddress!() -> token: amount}(path, token, amount)
+}
+
+TxScript Redeem (
+    contract: AuctionFactory,
+    path: ByteVec
+) {
+    contract.redeem(path)
+}
+
+TxScript UpdateAuctionFactoryCode (
+    auctionFactory: AuctionFactory,
+    newCode: ByteVec
+) {
+    auctionFactory.updateAuctionFactoryCode(newCode)
+}
+
+TxScript UpdateAuctionFactoryFields (
+    auctionFactory: AuctionFactory,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    auctionFactory.updateAuctionFactoryFields(newCode, immFields, mutFields)
+}
+

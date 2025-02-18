@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "WithdrawLoanFactoryFees",
-  "bytecodeTemplate": "01010300000007{1}{2}{3}0f0c{0}0115",
+  "bytecodeTemplate": "01010300000007{1}{2}{3}0f0c{0}010d",
   "fieldsSig": {
     "names": [
       "loanFactory",
