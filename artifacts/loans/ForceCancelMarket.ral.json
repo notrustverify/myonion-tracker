@@ -1,13 +1,13 @@
 {
-  "version": "v3.11.2",
+  "version": "v3.11.1",
   "name": "ForceCancelMarket",
-  "bytecodeTemplate": "010103000000040c0c{0}0109",
+  "bytecodeTemplate": "010103000000040c0c{0}0108",
   "fieldsSig": {
     "names": [
       "loan"
     ],
     "types": [
-      "Loan"
+      "LoanMarket"
     ],
     "isMutable": [
       false

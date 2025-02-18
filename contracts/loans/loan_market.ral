@@ -121,7 +121,7 @@ Contract LoanMarket (
 }
 
 TxScript ForceCancelMarket (
-    loan: Loan
+    loan: LoanMarket
 ) {
     loan.forceCancel()
 }
