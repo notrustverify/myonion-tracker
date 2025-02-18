@@ -19,6 +19,7 @@ const deployScript: DeployFunction<Settings> = async (
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
 
+    /*
     const contractFields: LoanFactoryTypes.Fields = {
         admin: "",  // non-mut
         loanTemplate: "",   // non-mut
@@ -28,6 +29,7 @@ const deployScript: DeployFunction<Settings> = async (
         oracle: "", // non-mut
         alpaca: ""  // non-mut
     }
+    */
     
       const encodedImmFields = encodePrimitiveValues([
         addressVal(deployer.account.address),
@@ -44,7 +46,7 @@ const deployScript: DeployFunction<Settings> = async (
     
     await UpdateLoanFactoryFields.execute(signer, {
       initialFields: {
-          loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
+          loanFactory: "291ef5ba0bec2d64a0cb8ccf474464b118fc7a1a1186a8e03187cc0a8fd4d400",
           newCode: LoanFactory.contract.bytecode,
           immFields: binToHex(encodedImmFields),
           mutFields: binToHex(encodedMutFields)
