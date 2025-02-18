@@ -1,7 +1,8 @@
 struct PairInfo {
     // need to have decimals for liquidation
     pair: ByteVec,
-    mut decimals: U256
+    mut decimals: U256,
+    oracle: Bool
 }
 
 struct DIAOracleValue {
@@ -17,6 +18,7 @@ Contract LoanFactory (
     admin: Address,
     loanTemplate: ByteVec,
     marketTemplate: ByteVec,
+    auctionHouse: ByteVec,
     mut activeLoans: U256,
     mut rate: U256,
     oracle: IDIAOracle,
@@ -181,10 +183,8 @@ Contract LoanFactory (
     pub fn createLoan(
         tokenRequested: ByteVec, 
         tokenAmount: U256,
-        tokenOracle: Bool, 
         collateralToken: ByteVec, 
         collateralAmount: U256,
-        collateralOracle: Bool,
         interest: U256, 
         duration: U256,
         canLiquidate: Bool
@@ -193,14 +193,17 @@ Contract LoanFactory (
 
         checkTokenAmount(tokenAmount, rate)
 
+        let oracleOne = tokenPairs[tokenRequested].oracle
+        let oracleTwo = tokenPairs[collateralToken].oracle
+
         // need a solution for un-supported oracle tokens
         let (ratio, condition) = determineCollateralRatio(
             tokenRequested, 
             tokenAmount,
-            tokenOracle,
+            oracleOne,
             collateralToken, 
             collateralAmount, 
-            collateralOracle,
+            oracleTwo,
             15000 // 150%
         )
 
@@ -224,11 +227,8 @@ Contract LoanFactory (
             false,
             selfAddress!(),
             canLiquidate,
-            false,
             ratio,
-            nullContractAddress!(),
-            tokenAmount,
-            0
+            auctionHouse
         )
 
         let contractID = copyCreateContract!{caller -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
@@ -244,7 +244,7 @@ Contract LoanFactory (
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = true)
-    pub fn accept(contractId: ByteVec, tokenOracle: Bool, collateralOracle: Bool) -> () {
+    pub fn accept(contractId: ByteVec) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
@@ -252,13 +252,16 @@ Contract LoanFactory (
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
 
+        let oracleOne = tokenPairs[token].oracle
+        let oracleTwo = tokenPairs[collateral].oracle
+
         let (ratio, condition) = determineCollateralRatio(
             token, 
             tokenAmount,
-            tokenOracle,
+            oracleOne,
             collateral, 
             collateralAmount, 
-            collateralOracle,
+            oracleTwo,
             15000
         )
 
@@ -324,7 +327,7 @@ Contract LoanFactory (
 
     // check liquidation
     @using(checkExternalCaller = false, updateFields = false)
-    pub fn liquidation(contractId: ByteVec, tokenOracle: Bool, collateralOracle: Bool) -> () {
+    pub fn liquidation(contractId: ByteVec) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
@@ -332,13 +335,16 @@ Contract LoanFactory (
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
 
+        let oracleOne = tokenPairs[token].oracle
+        let oracleTwo = tokenPairs[collateral].oracle
+
         let (ratio, condition) = determineCollateralRatio(
             token, 
             tokenAmount,
-            tokenOracle,
+            oracleOne,
             collateral, 
             collateralAmount, 
-            collateralOracle,
+            oracleTwo,
             15000
         )
 
@@ -349,39 +355,9 @@ Contract LoanFactory (
         emit LoanLiquidation(contractId, token, tokenAmount)
     }
 
-    // auction functions
-    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true)
-    pub fn bid(contractId: ByteVec, bidAmount: U256) -> () {
-        let loan = Loan(contractId)
-
-        let caller = callerAddress!()
-
-        let (token, _) = loan.getTokenRequested()
-        
-        let highestBid = loan.getHighestBid()
-
-        assert!(bidAmount > highestBid, 9)
-
-        let timeEnd = loan.bid{caller -> token: bidAmount, ALPH: dustAmount!()}(caller, bidAmount)
-
-        // ... emit liquidation
-        emit AuctionBid(contractId, caller, bidAmount)
-    }
-
-    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
-    pub fn redeem(contractId: ByteVec) -> () {
-        let loan = Loan(contractId)
-
-        let caller = callerAddress!()
-
-        loan.redeem(caller)
-
-        emit AuctionRedeem(contractId, caller)
-    }
-
     // add collateral function
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true)
-    pub fn addCollateral(contractId: ByteVec, amount: U256, tokenOracle: Bool, collateralOracle: Bool) -> () {
+    pub fn addCollateral(contractId: ByteVec, amount: U256) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
@@ -389,13 +365,16 @@ Contract LoanFactory (
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
 
+        let oracleOne = tokenPairs[token].oracle
+        let oracleTwo = tokenPairs[collateral].oracle
+
         let (ratio, _) = determineCollateralRatio(
             token, 
             tokenAmount,
-            tokenOracle,
+            oracleOne,
             collateral, 
             collateralAmount + amount, 
-            collateralOracle,
+            oracleTwo,
             0
         )
 
@@ -405,7 +384,7 @@ Contract LoanFactory (
     }
 
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
-    pub fn removeCollateral(contractId: ByteVec, amount: U256, tokenOracle: Bool, collateralOracle: Bool) -> () {
+    pub fn removeCollateral(contractId: ByteVec, amount: U256) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
@@ -413,13 +392,16 @@ Contract LoanFactory (
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
 
+        let oracleOne = tokenPairs[token].oracle
+        let oracleTwo = tokenPairs[collateral].oracle
+
         let (ratio, _) = determineCollateralRatio(
             token, 
             tokenAmount,
-            tokenOracle,
+            oracleOne,
             collateral, 
             collateralAmount - amount, // remove collateral and perform calculation
-            collateralOracle,
+            oracleTwo,
             0
         )
 
@@ -441,13 +423,14 @@ Contract LoanFactory (
 
     // ... complete this
     @using(checkExternalCaller = true, preapprovedAssets = true, updateFields = false)
-    pub fn tokenMapping(token: ByteVec, add: Bool, pairtoken: ByteVec, decimals: U256) -> () {
+    pub fn tokenMapping(token: ByteVec, add: Bool, pairtoken: ByteVec, decimals: U256, alephiumOracle: Bool) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
 
         if (add) {
             let b = PairInfo {
                 pair: pairtoken,
-                decimals: decimals
+                decimals: decimals,
+                oracle: alephiumOracle
             }
 
             tokenPairs.insert!(callerAddress!(), token, b)
@@ -487,10 +470,8 @@ TxScript CreateLoan (
     loanFactory: LoanFactory,
     tokenRequested: ByteVec,
     tokenAmount: U256,
-    tokenOracle: Bool,
     collateralToken: ByteVec,
     collateralAmount: U256,
-    collateralOracle: Bool,
     interest: U256,
     duration: U256,
     canLiquidate: Bool
@@ -498,10 +479,8 @@ TxScript CreateLoan (
     loanFactory.createLoan{callerAddress!() -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
         tokenRequested,
         tokenAmount,
-        tokenOracle,
         collateralToken,
         collateralAmount,
-        collateralOracle,
         interest,
         duration,
         canLiquidate
@@ -510,13 +489,11 @@ TxScript CreateLoan (
 
 TxScript AcceptLoan (
     loanFactory: LoanFactory,
-    contract: ByteVec,
-    tokenOracle: Bool,
-    collateralOracle: Bool
+    contract: ByteVec
 ) {
     let (token, amount) = loanFactory.getRequiredTokens(contract, false)
 
-    loanFactory.accept{callerAddress!() -> token: amount}(contract, tokenOracle, collateralOracle)
+    loanFactory.accept{callerAddress!() -> token: amount}(contract)
 }
 
 TxScript CancelLoan (
@@ -547,50 +524,28 @@ TxScript ForfeitLoan (
 TxScript AddCollateral (
     loanFactory: LoanFactory,
     contractId: ByteVec, 
-    amount: U256, 
-    tokenOracle: Bool, 
-    collateralOracle: Bool
+    amount: U256
 ) {
     let (token, _) = Loan(contractId).getTokenCollateral()
 
-    loanFactory.addCollateral{callerAddress!() -> token: amount}(contractId, amount, tokenOracle, collateralOracle)
+    loanFactory.addCollateral{callerAddress!() -> token: amount}(contractId, amount)
 }
 
 TxScript RemoveCollateral (
     loanFactory: LoanFactory,
     contractId: ByteVec, 
-    amount: U256, 
-    tokenOracle: Bool, 
-    collateralOracle: Bool
+    amount: U256
 ) {
     let (token, _) = Loan(contractId).getTokenCollateral()
 
-    loanFactory.removeCollateral(contractId, amount, tokenOracle, collateralOracle)
+    loanFactory.removeCollateral(contractId, amount)
 }
 
 TxScript LiquidationLoan (
     loanFactory: LoanFactory,
-    contract: ByteVec,
-    tokenOracle: Bool,
-    collateralOracle: Bool
-) {
-    loanFactory.liquidation(contract, tokenOracle, collateralOracle)
-}
-
-TxScript BidLoan (
-    loanFactory: LoanFactory,
-    contract: ByteVec,
-    bidAmount: U256,
-    token: ByteVec
-) {
-    loanFactory.bid{callerAddress!() -> token: bidAmount, ALPH: dustAmount!()}(contract, bidAmount)
-}
-
-TxScript RedeemLoan (
-    loanFactory: LoanFactory,
     contract: ByteVec
 ) {
-    loanFactory.redeem(contract)
+    loanFactory.liquidation(contract)
 }
 
 // admin
@@ -616,9 +571,10 @@ TxScript TokenMapping (
     token: ByteVec, 
     add: Bool,
     pairtoken: ByteVec,
-    decimals: U256
+    decimals: U256,
+    alephiumOracle: Bool
 ) {
-    loanFactory.tokenMapping{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, add, pairtoken, decimals)
+    loanFactory.tokenMapping{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, add, pairtoken, decimals, alephiumOracle)
 }
 
 // upgrade / destroy

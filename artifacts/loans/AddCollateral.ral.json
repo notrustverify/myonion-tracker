@@ -1,25 +1,19 @@
 {
   "version": "v3.11.1",
   "name": "AddCollateral",
-  "bytecodeTemplate": "010103000100120c0e{1}0102181700b41600{2}a3{1}{2}{3}{4}100c{0}010b",
+  "bytecodeTemplate": "010103000100100c0e{1}0101181700b41600{2}a3{1}{2}0e0c{0}0109",
   "fieldsSig": {
     "names": [
       "loanFactory",
       "contractId",
-      "amount",
-      "tokenOracle",
-      "collateralOracle"
+      "amount"
     ],
     "types": [
       "LoanFactory",
       "ByteVec",
-      "U256",
-      "Bool",
-      "Bool"
+      "U256"
     ],
     "isMutable": [
-      false,
-      false,
       false,
       false,
       false

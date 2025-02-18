@@ -3,15 +3,18 @@
     "name": "PairInfo",
     "fieldNames": [
       "pair",
-      "decimals"
+      "decimals",
+      "oracle"
     ],
     "fieldTypes": [
       "ByteVec",
-      "U256"
+      "U256",
+      "Bool"
     ],
     "isMutable": [
       false,
-      true
+      true,
+      false
     ]
   },
   {

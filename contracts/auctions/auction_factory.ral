@@ -33,6 +33,7 @@ Contract AuctionFactory (
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
     pub fn createAuction(collateral: ByteVec, collateralAmount: U256, tokenRequested: ByteVec, tokenAmount: U256, loaner: Address) -> () {
 
+        // might wanna edit this @larkben; caller logic
         let caller = callerAddress!()
 
         let (encodeImmutableFields, encodeMutableFields) = Auction.encodeFields!(
@@ -69,9 +70,10 @@ Contract AuctionFactory (
 
     // bid up on mapping
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = enforced)
-    pub fn bid(contract: ByteVec, caller: Address, token: ByteVec, amount: U256) -> () {
+    pub fn bid(contract: ByteVec, token: ByteVec, amount: U256) -> () {
 
         let auction = Auction(contract)
+        let caller = callerAddress!()
 
         let (t, a, time) = auction.bid{caller -> token: amount}(caller, amount)
 
@@ -85,8 +87,10 @@ Contract AuctionFactory (
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = enforced)
-    pub fn redeem(contract: ByteVec, caller: Address) -> () {
+    pub fn redeem(contract: ByteVec) -> () {
+
         let auction = Auction(contract)
+        let caller = callerAddress!()
 
         let (token, amount) = auction.redeem(caller)
 
@@ -105,4 +109,20 @@ Contract AuctionFactory (
 
         fee = newFee
     }
+}
+
+TxScript Bid (
+    contract: AuctionFactory,
+    path: ByteVec,
+    token: ByteVec,
+    amount: U256
+) {
+    contract.bid{callerAddress!() -> token: amount}(path, token, amount)
+}
+
+TxScript Redeem (
+    contract: AuctionFactory,
+    path: ByteVec
+) {
+    contract.redeem(path)
 }
