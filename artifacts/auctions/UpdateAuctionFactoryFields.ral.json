@@ -1,17 +1,23 @@
 {
   "version": "v3.11.1",
-  "name": "UpdateMarketCode",
-  "bytecodeTemplate": "01010300000005{1}0d0c{0}0109",
+  "name": "UpdateAuctionFactoryFields",
+  "bytecodeTemplate": "01010300000007{1}{2}{3}0f0c{0}0105",
   "fieldsSig": {
     "names": [
-      "market",
-      "newCode"
+      "auctionFactory",
+      "newCode",
+      "immFields",
+      "mutFields"
     ],
     "types": [
-      "LoanMarket",
+      "AuctionFactory",
+      "ByteVec",
+      "ByteVec",
       "ByteVec"
     ],
     "isMutable": [
+      false,
+      false,
       false,
       false
     ]

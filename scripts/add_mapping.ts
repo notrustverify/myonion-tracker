@@ -22,11 +22,12 @@ const deployScript: DeployFunction<Settings> = async (
     
     await TokenMapping.execute(signer, {
       initialFields: {
-          loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
-          token: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
-          add: true,
-          pairtoken: stringToHex("ABX/USD"),
-          decimals: 9n
+        loanFactory: "291ef5ba0bec2d64a0cb8ccf474464b118fc7a1a1186a8e03187cc0a8fd4d400",
+        token: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
+        add: true,
+        pairtoken: stringToHex("ABX/USD"),
+        decimals: 9n,
+        alephiumOracle: false
       },
       attoAlphAmount: DUST_AMOUNT + MINIMAL_CONTRACT_DEPOSIT
     })

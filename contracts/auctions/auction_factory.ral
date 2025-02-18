@@ -109,6 +109,20 @@ Contract AuctionFactory (
 
         fee = newFee
     }
+
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateAuctionFactoryCode(newCode: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateAuctionFactoryFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    }
 }
 
 TxScript Bid (
@@ -126,3 +140,20 @@ TxScript Redeem (
 ) {
     contract.redeem(path)
 }
+
+TxScript UpdateAuctionFactoryCode (
+    auctionFactory: AuctionFactory,
+    newCode: ByteVec
+) {
+    auctionFactory.updateAuctionFactoryCode(newCode)
+}
+
+TxScript UpdateAuctionFactoryFields (
+    auctionFactory: AuctionFactory,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    auctionFactory.updateAuctionFactoryFields(newCode, immFields, mutFields)
+}
+

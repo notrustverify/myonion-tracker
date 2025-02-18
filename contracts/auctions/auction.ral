@@ -122,3 +122,19 @@ Contract Auction (
 }
 
 // implement upgrade TX scripts
+
+TxScript UpdateAuctionCode (
+    auction: Auction,
+    newCode: ByteVec
+) {
+    auction.upgradeAuctionCode(newCode)
+}
+
+TxScript UpdateAuctionFields (
+    auction: Auction,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    auction.upgradeAuctionFields(newCode, immFields, mutFields)
+}

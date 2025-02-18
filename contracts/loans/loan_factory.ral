@@ -17,7 +17,6 @@ Interface IDIAOracle {
 Contract LoanFactory (
     admin: Address,
     loanTemplate: ByteVec,
-    marketTemplate: ByteVec,
     auctionHouse: ByteVec,
     mut activeLoans: U256,
     mut rate: U256,

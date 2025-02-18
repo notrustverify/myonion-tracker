@@ -16,6 +16,10 @@ import {
   LoanMarketInstance,
   LoanFactory,
   LoanFactoryInstance,
+  Auction,
+  AuctionInstance,
+  AuctionFactory,
+  AuctionFactoryInstance,
 } from ".";
 import { default as mainnetDeployments } from "../../deployments/.deployments.mainnet.json";
 
@@ -26,6 +30,8 @@ export type Deployments = {
     Loan: DeployContractExecutionResult<LoanInstance>;
     LoanMarket: DeployContractExecutionResult<LoanMarketInstance>;
     LoanFactory: DeployContractExecutionResult<LoanFactoryInstance>;
+    Auction: DeployContractExecutionResult<AuctionInstance>;
+    AuctionFactory: DeployContractExecutionResult<AuctionFactoryInstance>;
   };
 };
 
@@ -53,6 +59,18 @@ function toDeployments(json: any): Deployments {
       ...json.contracts["LoanFactory"],
       contractInstance: LoanFactory.at(
         json.contracts["LoanFactory"].contractInstance.address
+      ),
+    },
+    Auction: {
+      ...json.contracts["Auction"],
+      contractInstance: Auction.at(
+        json.contracts["Auction"].contractInstance.address
+      ),
+    },
+    AuctionFactory: {
+      ...json.contracts["AuctionFactory"],
+      contractInstance: AuctionFactory.at(
+        json.contracts["AuctionFactory"].contractInstance.address
       ),
     },
   };

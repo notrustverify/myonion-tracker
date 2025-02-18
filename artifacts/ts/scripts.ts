@@ -19,7 +19,6 @@ import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
 import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json";
-import { default as ForceCancelMarketScriptJson } from "../loans/ForceCancelMarket.ral.json";
 import { default as ForfeitLoanScriptJson } from "../loans/ForfeitLoan.ral.json";
 import { default as InsertPairScriptJson } from "../oracle/InsertPair.ral.json";
 import { default as LiquidationLoanScriptJson } from "../loans/LiquidationLoan.ral.json";
@@ -28,13 +27,15 @@ import { default as RedeemScriptJson } from "../auctions/Redeem.ral.json";
 import { default as RemoveCollateralScriptJson } from "../loans/RemoveCollateral.ral.json";
 import { default as RemovePairScriptJson } from "../oracle/RemovePair.ral.json";
 import { default as TokenMappingScriptJson } from "../loans/TokenMapping.ral.json";
+import { default as UpdateAuctionCodeScriptJson } from "../auctions/UpdateAuctionCode.ral.json";
+import { default as UpdateAuctionFactoryCodeScriptJson } from "../auctions/UpdateAuctionFactoryCode.ral.json";
+import { default as UpdateAuctionFactoryFieldsScriptJson } from "../auctions/UpdateAuctionFactoryFields.ral.json";
+import { default as UpdateAuctionFieldsScriptJson } from "../auctions/UpdateAuctionFields.ral.json";
 import { default as UpdateBotAddressScriptJson } from "../oracle/UpdateBotAddress.ral.json";
 import { default as UpdateLoanCodeScriptJson } from "../loans/UpdateLoanCode.ral.json";
 import { default as UpdateLoanFactoryCodeScriptJson } from "../loans/UpdateLoanFactoryCode.ral.json";
 import { default as UpdateLoanFactoryFieldsScriptJson } from "../loans/UpdateLoanFactoryFields.ral.json";
 import { default as UpdateLoanFieldsScriptJson } from "../loans/UpdateLoanFields.ral.json";
-import { default as UpdateMarketCodeScriptJson } from "../loans/UpdateMarketCode.ral.json";
-import { default as UpdateMarketFieldsScriptJson } from "../loans/UpdateMarketFields.ral.json";
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
@@ -96,11 +97,6 @@ export const EditLoanRate = new ExecutableScript<{
 
 export const ForceCancel = new ExecutableScript<{ loan: HexString }>(
   Script.fromJson(ForceCancelScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const ForceCancelMarket = new ExecutableScript<{ loan: HexString }>(
-  Script.fromJson(ForceCancelMarketScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -170,6 +166,42 @@ export const TokenMapping = new ExecutableScript<{
   getContractByCodeHash
 );
 
+export const UpdateAuctionCode = new ExecutableScript<{
+  auction: HexString;
+  newCode: HexString;
+}>(
+  Script.fromJson(UpdateAuctionCodeScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const UpdateAuctionFactoryCode = new ExecutableScript<{
+  auctionFactory: HexString;
+  newCode: HexString;
+}>(
+  Script.fromJson(UpdateAuctionFactoryCodeScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const UpdateAuctionFactoryFields = new ExecutableScript<{
+  auctionFactory: HexString;
+  newCode: HexString;
+  immFields: HexString;
+  mutFields: HexString;
+}>(
+  Script.fromJson(UpdateAuctionFactoryFieldsScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const UpdateAuctionFields = new ExecutableScript<{
+  auction: HexString;
+  newCode: HexString;
+  immFields: HexString;
+  mutFields: HexString;
+}>(
+  Script.fromJson(UpdateAuctionFieldsScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
 export const UpdateBotAddress = new ExecutableScript<{
   oracle: HexString;
   newBot: Address;
@@ -211,24 +243,6 @@ export const UpdateLoanFields = new ExecutableScript<{
   mutFields: HexString;
 }>(
   Script.fromJson(UpdateLoanFieldsScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const UpdateMarketCode = new ExecutableScript<{
-  market: HexString;
-  newCode: HexString;
-}>(
-  Script.fromJson(UpdateMarketCodeScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
-
-export const UpdateMarketFields = new ExecutableScript<{
-  market: HexString;
-  newCode: HexString;
-  immFields: HexString;
-  mutFields: HexString;
-}>(
-  Script.fromJson(UpdateMarketFieldsScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

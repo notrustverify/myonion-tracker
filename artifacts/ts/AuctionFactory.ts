@@ -97,6 +97,18 @@ export namespace AuctionFactoryTypes {
       params: CallContractParams<{ newFee: bigint }>;
       result: CallContractResult<null>;
     };
+    updateAuctionFactoryCode: {
+      params: CallContractParams<{ newCode: HexString }>;
+      result: CallContractResult<null>;
+    };
+    updateAuctionFactoryFields: {
+      params: CallContractParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -139,6 +151,18 @@ export namespace AuctionFactoryTypes {
     };
     editRate: {
       params: SignExecuteContractMethodParams<{ newFee: bigint }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateAuctionFactoryCode: {
+      params: SignExecuteContractMethodParams<{ newCode: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateAuctionFactoryFields: {
+      params: SignExecuteContractMethodParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -206,6 +230,32 @@ class Factory extends ContractFactory<
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "editRate", params, getContractByCodeHash);
     },
+    updateAuctionFactoryCode: async (
+      params: TestContractParamsWithoutMaps<
+        AuctionFactoryTypes.Fields,
+        { newCode: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "updateAuctionFactoryCode",
+        params,
+        getContractByCodeHash
+      );
+    },
+    updateAuctionFactoryFields: async (
+      params: TestContractParamsWithoutMaps<
+        AuctionFactoryTypes.Fields,
+        { newCode: HexString; immFields: HexString; mutFields: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "updateAuctionFactoryFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(
@@ -222,7 +272,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "8bc8456ef4e4fffd0ff26c6d4a3fa2441f267ff459d29edb02f8cfef497a59bd",
+    "507e4e50f0965a778ea9c9355368eefb75dc1bdc2b49c745354f5995b64db996",
     AllStructs
   )
 );
@@ -342,6 +392,32 @@ export class AuctionFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    updateAuctionFactoryCode: async (
+      params: AuctionFactoryTypes.CallMethodParams<"updateAuctionFactoryCode">
+    ): Promise<
+      AuctionFactoryTypes.CallMethodResult<"updateAuctionFactoryCode">
+    > => {
+      return callMethod(
+        AuctionFactory,
+        this,
+        "updateAuctionFactoryCode",
+        params,
+        getContractByCodeHash
+      );
+    },
+    updateAuctionFactoryFields: async (
+      params: AuctionFactoryTypes.CallMethodParams<"updateAuctionFactoryFields">
+    ): Promise<
+      AuctionFactoryTypes.CallMethodResult<"updateAuctionFactoryFields">
+    > => {
+      return callMethod(
+        AuctionFactory,
+        this,
+        "updateAuctionFactoryFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -366,6 +442,30 @@ export class AuctionFactoryInstance extends ContractInstance {
       params: AuctionFactoryTypes.SignExecuteMethodParams<"editRate">
     ): Promise<AuctionFactoryTypes.SignExecuteMethodResult<"editRate">> => {
       return signExecuteMethod(AuctionFactory, this, "editRate", params);
+    },
+    updateAuctionFactoryCode: async (
+      params: AuctionFactoryTypes.SignExecuteMethodParams<"updateAuctionFactoryCode">
+    ): Promise<
+      AuctionFactoryTypes.SignExecuteMethodResult<"updateAuctionFactoryCode">
+    > => {
+      return signExecuteMethod(
+        AuctionFactory,
+        this,
+        "updateAuctionFactoryCode",
+        params
+      );
+    },
+    updateAuctionFactoryFields: async (
+      params: AuctionFactoryTypes.SignExecuteMethodParams<"updateAuctionFactoryFields">
+    ): Promise<
+      AuctionFactoryTypes.SignExecuteMethodResult<"updateAuctionFactoryFields">
+    > => {
+      return signExecuteMethod(
+        AuctionFactory,
+        this,
+        "updateAuctionFactoryFields",
+        params
+      );
     },
   };
 }

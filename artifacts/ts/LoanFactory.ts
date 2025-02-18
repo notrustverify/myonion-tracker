@@ -43,7 +43,6 @@ export namespace LoanFactoryTypes {
   export type Fields = {
     admin: Address;
     loanTemplate: HexString;
-    marketTemplate: HexString;
     auctionHouse: HexString;
     activeLoans: bigint;
     rate: bigint;
@@ -588,7 +587,7 @@ export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
     "=54-2+e6=2-2+ff=1-2+6=1+3=1-3+62b=2763-1+6=29-1+4=60+7a7e0214696e73657274206174206d617020706174683a2000=23-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=144",
-    "4e5c6016141c0260cdcfc8e0ad7d4ff13bd60a2d2120d2f910a5016565f6e342",
+    "38bb7025946454a04b17091ad7be83a7dbae39aaf598d24ba49ea36bbd3493eb",
     AllStructs
   )
 );
