@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "EditLoanRate",
-  "bytecodeTemplate": "01010300000005{1}0d0c{0}010d",
+  "bytecodeTemplate": "01010300000005{1}0d0c{0}010b",
   "fieldsSig": {
     "names": [
       "loanFactory",

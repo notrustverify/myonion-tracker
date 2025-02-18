@@ -1,23 +1,17 @@
 {
   "version": "v3.11.1",
-  "name": "BidLoan",
-  "bytecodeTemplate": "0101030000000db47a{3}{2}a313c3038d7ea4c68000a2{1}{2}0e0c{0}0109",
+  "name": "Redeem",
+  "bytecodeTemplate": "01010300000005{1}0d0c{0}0102",
   "fieldsSig": {
     "names": [
-      "loanFactory",
       "contract",
-      "bidAmount",
-      "token"
+      "path"
     ],
     "types": [
-      "LoanFactory",
-      "ByteVec",
-      "U256",
+      "AuctionFactory",
       "ByteVec"
     ],
     "isMutable": [
-      false,
-      false,
       false,
       false
     ]

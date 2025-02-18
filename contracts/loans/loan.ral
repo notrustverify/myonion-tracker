@@ -15,7 +15,6 @@ Contract Loan (
     parentContract: Address,
     // liquidation
     canLiquidate: Bool,
-    mut liquidation: Bool,
     mut ratio: U256,
     // auction contract
     auctionContract: ByteVec
@@ -28,10 +27,6 @@ Contract Loan (
 
     pub fn getTokenRequested() -> (ByteVec, U256) {
         return tokenRequested, tokenAmount
-    }
-
-    pub fn getHighestBid() -> (U256) {
-        return highestBid
     }
 
     pub fn getTokenCollateral() -> (ByteVec, U256) {
@@ -112,7 +107,7 @@ Contract Loan (
     
     @using(checkExternalCaller = false, assetsInContract = true)
     pub fn forceCancel() -> () {
-        checkCaller!(callerAddress!() == creator, 5)
+        checkCaller!(callerAddress!() == borrower, 5)
 
         assert!(active == false, 1)
 
@@ -145,7 +140,7 @@ Contract Loan (
         destroySelf!(borrower)
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = false)
     pub fn acceptForfeit() -> (Bool) {
         checkCaller!(callerAddress!() == parentContract, 0)
 
@@ -177,6 +172,8 @@ Contract Loan (
 
             // should just return 0.1 alphs
             destroySelf!(borrower)  // liquidation notification
+
+            return true
         }
     }
 
@@ -190,9 +187,6 @@ Contract Loan (
 
         // confirm the contract is a liquid contract and can be given collateral
         assert!(canLiquidate == true, 6)
-
-        // should not be able to add collateral during liquidation
-        assert!(liquidation == false, 7)
 
         // transfer additional collateral to offset liquidation
         transferToken!(borrower, selfAddress!(), ALPH, dustAmount!())
@@ -226,7 +220,7 @@ Contract Loan (
         return collateralAmount
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = false, updateFields = true)
+    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = false)
     pub fn activateLiquidation(collateralLevel: U256) -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 

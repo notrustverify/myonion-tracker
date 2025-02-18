@@ -17,4 +17,5 @@ export interface OracleData extends Record<string, Val> {
 export interface PairInfo extends Record<string, Val> {
   pair: HexString;
   decimals: bigint;
+  oracle: boolean;
 }

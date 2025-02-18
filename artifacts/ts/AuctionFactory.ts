@@ -84,14 +84,13 @@ export namespace AuctionFactoryTypes {
     bid: {
       params: CallContractParams<{
         contract: HexString;
-        caller: Address;
         token: HexString;
         amount: bigint;
       }>;
       result: CallContractResult<null>;
     };
     redeem: {
-      params: CallContractParams<{ contract: HexString; caller: Address }>;
+      params: CallContractParams<{ contract: HexString }>;
       result: CallContractResult<null>;
     };
     editRate: {
@@ -129,17 +128,13 @@ export namespace AuctionFactoryTypes {
     bid: {
       params: SignExecuteContractMethodParams<{
         contract: HexString;
-        caller: Address;
         token: HexString;
         amount: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
     redeem: {
-      params: SignExecuteContractMethodParams<{
-        contract: HexString;
-        caller: Address;
-      }>;
+      params: SignExecuteContractMethodParams<{ contract: HexString }>;
       result: SignExecuteScriptTxResult;
     };
     editRate: {
@@ -190,12 +185,7 @@ class Factory extends ContractFactory<
     bid: async (
       params: TestContractParamsWithoutMaps<
         AuctionFactoryTypes.Fields,
-        {
-          contract: HexString;
-          caller: Address;
-          token: HexString;
-          amount: bigint;
-        }
+        { contract: HexString; token: HexString; amount: bigint }
       >
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "bid", params, getContractByCodeHash);
@@ -203,7 +193,7 @@ class Factory extends ContractFactory<
     redeem: async (
       params: TestContractParamsWithoutMaps<
         AuctionFactoryTypes.Fields,
-        { contract: HexString; caller: Address }
+        { contract: HexString }
       >
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "redeem", params, getContractByCodeHash);
@@ -232,7 +222,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "cf44d38fe030049b845239b5824cb78de1d6d5fbc2dbe55b5bbee2a22a8a1efa",
+    "8bc8456ef4e4fffd0ff26c6d4a3fa2441f267ff459d29edb02f8cfef497a59bd",
     AllStructs
   )
 );
