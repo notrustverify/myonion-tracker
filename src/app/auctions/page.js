@@ -5,24 +5,16 @@ import { Footer } from '../../components/footer'
 import { useState, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import { getBackendUrl, getTokensList, getAlephiumLoanConfig } from '../../lib/configs'
-import LoanModal from '../../components/LoanModal'
 import { ANS } from '@alph-name-service/ans-sdk'
 import AuctionCard from '../../components/AuctionCard'
 
 export default function AuctionsPage() {
-  const [loans, setLoans] = useState([])
+  const [auctions, setAuctions] = useState([])
   const [loading, setLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedLoan, setSelectedLoan] = useState(null)
   const [ansProfiles, setAnsProfiles] = useState({})
   const [isPricesLoading, setIsPricesLoading] = useState(true)
   const [tokenPrices, setTokenPrices] = useState({})
   const [totalAuctionsValue, setTotalAuctionsValue] = useState(0)
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    total: 0
-  })
   const backendUrl = getBackendUrl()
 
   const DEFAULT_ADDRESS = "tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq"
@@ -78,52 +70,49 @@ export default function AuctionsPage() {
     }
   }, [])
 
-  const fetchLoans = useCallback(async () => {
+  const fetchAuctions = useCallback(async () => {
     setLoading(true)
     try {
-      const response = await fetch(`${backendUrl}/api/loans/auctions`)
+      const response = await fetch(`${backendUrl}/api/auctions`)
       const data = await response.json()
       
-      const transformedLoans = data.map(loan => ({
-        id: loan.id,
-        value: loan.highestBid || loan.tokenAmount,
-        currency: loan.tokenRequested,
-        collateralAmount: loan.collateralAmount,
-        collateralCurrency: loan.collateralToken,
-        term: parseInt(loan.duration),
-        interest: loan.interest,
-        lender: loan.highestBidder || loan.loanee,
-        borrower: loan.creator,
-        status: loan.active ? 'active' : 'pending',
-        liquidation: loan.liquidation,
-        canLiquidate: loan.canLiquidate,
-        createdAt: loan.createdAt,
-        startTime: loan.startTime,
-        timeToEnd: loan.timeToEnd,
-        type: loan.type
+      const transformedAuctions = data.map(auction => ({
+        id: auction.id,
+        bidAmount: auction.bidAmount || auction.tokenAmount,
+        tokenRequested: auction.tokenRequested,
+        collateralAmount: auction.collateralAmount,
+        collateralToken: auction.collateralToken,
+        term: parseInt(auction.duration),
+        highestBidder: auction.highestBidder || auction.loanee,
+        loaner: auction.creator,
+        status: auction.active ? 'active' : 'pending',
+        createdAt: auction.createdAt,
+        timeToEnd: auction.timeToEnd,
+        endDate: auction.endDate,
+        type: auction.type
       }))
 
-      setLoans(transformedLoans)
+      setAuctions(transformedAuctions)
 
       if (!isPricesLoading) {
-        const total = transformedLoans.reduce((sum, loan) => {
-          const tokenPrice = tokenPrices[loan.currency] || 0
-          const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
-          return sum + loanValue
+        const total = transformedAuctions.reduce((sum, auction) => {
+          const tokenPrice = tokenPrices[auction.tokenRequested] || 0
+          const auctionValue = (parseFloat(auction.bidAmount) / 1e18) * tokenPrice
+          return sum + auctionValue
         }, 0)
         setTotalAuctionsValue(total)
       }
 
       const addresses = new Set()
-      transformedLoans.forEach(loan => {
-        if (loan.borrower) addresses.add(loan.borrower)
-        if (loan.lender) addresses.add(loan.lender)
+      transformedAuctions.forEach(auction => {
+        if (auction.loaner) addresses.add(auction.loaner)
+        if (auction.highestBidder) addresses.add(auction.highestBidder)
       })
 
       await fetchAnsProfiles(Array.from(addresses))
     } catch (error) {
-      console.error('Error fetching loans:', error)
-      setLoans([])
+      console.error('Error fetching auctions:', error)
+      setAuctions([])
     } finally {
       setLoading(false)
     }
@@ -136,15 +125,10 @@ export default function AuctionsPage() {
   }, [fetchTokenPrices])
 
   useEffect(() => {
-    fetchLoans()
-    const loansInterval = setInterval(fetchLoans, 30000)
-    return () => clearInterval(loansInterval)
-  }, [fetchLoans])
-
-  const handleOpenModal = (loan) => {
-    setSelectedLoan(loan)
-    setIsModalOpen(true)
-  }
+    fetchAuctions()
+    const auctionsInterval = setInterval(fetchAuctions, 30000)
+    return () => clearInterval(auctionsInterval)
+  }, [fetchAuctions])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -170,7 +154,7 @@ export default function AuctionsPage() {
   const stats = [
     { 
       label: 'Auctions', 
-      value: loans.length 
+      value: auctions.length 
     },
     { 
       label: 'Total Value', 
@@ -180,16 +164,16 @@ export default function AuctionsPage() {
     },
     { 
       label: 'Average Collateral Ratio', 
-      value: `${loans.length ? Math.round(loans.reduce((acc, loan) => {
-        const tokenPrice = tokenPrices[loan.currency] || 0
-        const collateralPrice = tokenPrices[loan.collateralCurrency] || 0
+      value: `${auctions.length ? Math.round(auctions.reduce((acc, auction) => {
+        const tokenPrice = tokenPrices[auction.tokenRequested] || 0
+        const collateralPrice = tokenPrices[auction.collateralToken] || 0
         
-        const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
-        const collateralValue = (parseFloat(loan.collateralAmount) / 1e18) * collateralPrice
+        const auctionValue = (parseFloat(auction.bidAmount) / 1e18) * tokenPrice
+        const collateralValue = (parseFloat(auction.collateralAmount) / 1e18) * collateralPrice
         
-        const ratio = loanValue > 0 ? (collateralValue / loanValue) * 100 : 0
+        const ratio = auctionValue > 0 ? (collateralValue / auctionValue) * 100 : 0
         return acc + ratio
-      }, 0) / loans.length) : 0}%` 
+      }, 0) / auctions.length) : 0}%` 
     },
   ]
 
@@ -257,7 +241,7 @@ export default function AuctionsPage() {
             animate="visible"
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
           >
-            {loans.length === 0 ? (
+            {auctions.length === 0 ? (
               <motion.div 
                 variants={itemVariants}
                 className="col-span-full text-center py-12"
@@ -267,19 +251,19 @@ export default function AuctionsPage() {
                 </div>
               </motion.div>
             ) : (
-              loans.map((loan) => (
+              auctions.map((auction) => (
                 <motion.div
-                  key={loan.id}
+                  key={auction.id}
                   variants={itemVariants}
                   className="relative"
                 >
                   <AuctionCard 
-                    {...loan} 
+                    {...auction} 
                     tokenPrices={tokenPrices} 
                     isPricesLoading={isPricesLoading} 
                     ansProfile={{ 
-                      borrower: ansProfiles[loan.borrower], 
-                      lender: ansProfiles[loan.lender] 
+                      loaner: ansProfiles[auction.loaner], 
+                      highestBidder: ansProfiles[auction.highestBidder] 
                     }} 
                   />
                 </motion.div>
@@ -288,19 +272,6 @@ export default function AuctionsPage() {
           </motion.div>
         )}
       </motion.main>
-
-      <LoanModal
-        isOpen={isModalOpen}
-        onClose={() => {setIsModalOpen(false), setSelectedLoan(null)}}
-        loan={selectedLoan || {}}
-        tokenPrices={tokenPrices}
-        isPricesLoading={isPricesLoading}
-        ansProfile={selectedLoan ? {
-          borrower: ansProfiles[selectedLoan.borrower],
-          lender: ansProfiles[selectedLoan.lender]
-        } : {}}
-      />
-
       <Footer />
     </div>
   )

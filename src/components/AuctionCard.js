@@ -33,26 +33,26 @@ const shortenAddress = (address) => {
 
 const AuctionCard = ({ 
   id,
-  value,
-  currency = 'ALPH',
+  bidAmount,
+  bidToken,
   collateralAmount,
-  collateralCurrency,
-  currentBid,
+  collateralToken,
   timeToEnd,
-  lender,
-  borrower,
+  endDate,
+  loaner,
+  highestBidder,
   tokenPrices,
   isPricesLoading,
   ansProfile
 }) => {
-  const [bidAmount, setBidAmount] = useState('')
+  const [bidsAmount, setBidsAmount] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [tokenBalance, setTokenBalance] = useState(0)
   const { account, signer } = useWallet()
   const config = getAlephiumLoanConfig()
-  const tokenInfo = getTokenInfo(currency)
-  const currentBidValue = currentBid || value
+  const tokenInfo = getTokenInfo(bidToken)
+  const currentBidValue = bidsAmount || bidAmount
   const minBidInTokens = currentBidValue / Math.pow(10, tokenInfo.decimals)
   
   useEffect(() => {
@@ -67,23 +67,23 @@ const AuctionCard = ({
     }
 
     fetchBalance()
-  }, [account?.address, currency, tokenInfo.id, tokenInfo.decimals])
+  }, [account?.address, bidToken, tokenInfo.id, tokenInfo.decimals])
 
   const handleSetMaxAmount = () => {
-    setBidAmount(tokenBalance.toFixed(2).toString())
+    setBidsAmount(tokenBalance.toFixed(2).toString())
   }
 
-  const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
-  const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
+  const displayValue = formatNumber(bidAmount / Math.pow(10, getTokenInfo(bidToken).decimals))
+  const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals))
   
-  const displayCurrentBid = formatNumber(currentBidValue / Math.pow(10, getTokenInfo(currency).decimals))
+  const displayCurrentBid = formatNumber(currentBidValue / Math.pow(10, getTokenInfo(bidToken).decimals))
 
   const handleBid = async () => {
     setError('')
     setIsLoading(true)
     try {
-      const bidAmountInTokens = parseFloat(bidAmount) * Math.pow(10, tokenInfo.decimals)
-      const result = await BidAuctionService(signer, config.auctionFactoryContractId, id, currency, bidAmountInTokens)
+      const bidAmountInTokens = parseFloat(bidsAmount) * Math.pow(10, tokenInfo.decimals)
+      const result = await BidAuctionService(signer, config.auctionFactoryContractId, id, bidToken, bidAmountInTokens)
       window.addTransactionToast('Placing Bid', result.txId)
     } catch (error) {
       setError('Failed to place bid')
@@ -93,7 +93,7 @@ const AuctionCard = ({
     }
   }
 
-  const isValidBid = bidAmount && !isNaN(bidAmount) && parseFloat(bidAmount) >= minBidInTokens
+  const isValidBid = bidsAmount && !isNaN(bidsAmount) && parseFloat(bidsAmount) >= minBidInTokens
 
   const isAuctionEnded = new Date(timeToEnd).getTime() <= new Date().getTime()
 
@@ -142,12 +142,12 @@ const AuctionCard = ({
               <span className="text-xs text-gray-400 mb-1">Collateral for auction</span>
               <div className="flex items-center gap-2">
                 <img 
-                  src={getTokenInfo(collateralCurrency).logoURI}
-                  alt={getTokenInfo(collateralCurrency).symbol}
+                  src={getTokenInfo(collateralToken).logoURI}
+                  alt={getTokenInfo(collateralToken).symbol}
                   className="w-6 h-6 rounded-full"
                 />
                 <span className="text-2xl font-semibold">{displayCollateral}</span>
-                <span className="text-sm text-gray-400">{getTokenInfo(collateralCurrency).symbol}</span>
+                <span className="text-sm text-gray-400">{getTokenInfo(collateralToken).symbol}</span>
               </div>
             </div>
           </div>
@@ -156,7 +156,7 @@ const AuctionCard = ({
         <div className="mb-6 p-3 bg-gray-800/50 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs text-gray-400">
-              {currentBid ? 'Current Bid' : 'Starting Bid'}
+              {currentBidValue ? 'Current Bid' : 'Starting Bid'}
             </span>
             <span className="text-xs text-purple-300">
               Min: {formatNumber(minBidInTokens)} {tokenInfo.symbol}
@@ -164,13 +164,13 @@ const AuctionCard = ({
           </div>
           <div className="flex items-center gap-3">
             <img 
-              src={getTokenInfo(currency).logoURI}
-              alt={getTokenInfo(currency).symbol}
+              src={getTokenInfo(bidToken).logoURI}
+              alt={getTokenInfo(bidToken).symbol}
               className="w-8 h-8 rounded-full"
             />
             <div>
               <span className="font-medium text-lg">{displayCurrentBid}</span>
-              <span className="text-gray-400 ml-2">{getTokenInfo(currency).symbol}</span>
+              <span className="text-gray-400 ml-2">{getTokenInfo(bidToken).symbol}</span>
             </div>
           </div>
         </div>
@@ -178,15 +178,15 @@ const AuctionCard = ({
         <div className="border-t border-purple-500/20 pt-4 mb-4">
           <div className="flex justify-between">
             <div className="flex flex-col gap-1">
-              <span className="text-xs text-gray-400">Borrower</span>
+              <span className="text-xs text-gray-400">Loaner</span>
               <span className="text-sm font-medium">
-                {ansProfile?.borrower?.name || shortenAddress(borrower)}
+                {ansProfile?.loaner?.name || shortenAddress(loaner)}
               </span>
             </div>
             <div className="flex flex-col gap-1 text-right">
-              <span className="text-xs text-gray-400">Current Winner</span>
+              <span className="text-xs text-gray-400">Highest Bidder</span>
               <span className="text-sm font-medium text-purple-300">
-                {ansProfile?.lender?.name || shortenAddress(lender) || 'No bids yet'}
+                {ansProfile?.highestBidder?.name || shortenAddress(highestBidder) || 'No bids yet'}
               </span>
             </div>
           </div>
@@ -225,8 +225,8 @@ const AuctionCard = ({
             <div className="relative">
               <input
                 type="number"
-                value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
+                value={bidsAmount}
+                onChange={(e) => setBidsAmount(e.target.value)}
                 placeholder={`Enter bid amount in ${tokenInfo.symbol}`}
                 className="w-full px-4 py-2 rounded-lg bg-gray-800/50 border border-purple-500/20 
                   text-white placeholder-gray-400 focus:outline-none focus:border-purple-500/50
@@ -242,9 +242,9 @@ const AuctionCard = ({
                 >
                   MAX
                 </button>
-                {!isPricesLoading && bidAmount && (
+                {!isPricesLoading && bidsAmount && (
                   <span className="text-sm text-gray-400">
-                    ≈ ${formatNumber(parseFloat(bidAmount) * (tokenPrices[currency] || 0))}
+                    ≈ ${formatNumber(parseFloat(bidsAmount) * (tokenPrices[bidToken] || 0))}
                   </span>
                 )}
               </div>

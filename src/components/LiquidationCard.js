@@ -39,16 +39,15 @@ const shortenAddress = (address) => {
 }
 
 const LiquidationCard = ({ 
-  value,
-  currency = 'ALPH',
+  tokenAmount,
+  tokenRequested,
   collateralAmount,
-  collateralCurrency,
-  term,
+  collateralToken,
+  duration,
   interest,
   lender,
   borrower,
   status = 'active',
-  liquidation,
   canLiquidate,
   id,
   tokenPrices,
@@ -60,17 +59,17 @@ const LiquidationCard = ({
   const [error, setError] = useState(null)
   const { signer } = useWallet()
 
-  const displayValue = formatNumber(value / Math.pow(10, getTokenInfo(currency).decimals))
-  const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals))
+  const displayValue = formatNumber(tokenAmount / Math.pow(10, getTokenInfo(tokenRequested).decimals))
+  const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals))
   
-  const usdValue = !isPricesLoading && tokenPrices && tokenPrices[currency] ? 
-    formatNumber((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) : '...'
-  const usdCollateral = !isPricesLoading && tokenPrices && tokenPrices[collateralCurrency] ? 
-    formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) : '...'
+  const usdValue = !isPricesLoading && tokenPrices && tokenPrices[tokenRequested] ? 
+    formatNumber((tokenAmount / Math.pow(10, getTokenInfo(tokenRequested).decimals)) * tokenPrices[tokenRequested]) : '...'
+  const usdCollateral = !isPricesLoading && tokenPrices && tokenPrices[collateralToken] ? 
+    formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]) : '...'
 
-  const collateralRatio = !isPricesLoading && tokenPrices && tokenPrices[currency] && tokenPrices[collateralCurrency] ? 
-    (((collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]) / 
-    ((value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]) * 100).toFixed(0) : '...'
+  const collateralRatio = !isPricesLoading && tokenPrices && tokenPrices[tokenRequested] && tokenPrices[collateralToken] ? 
+    (((collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]) / 
+    ((tokenAmount / Math.pow(10, getTokenInfo(tokenRequested).decimals)) * tokenPrices[tokenRequested]) * 100).toFixed(0) : '...'
 
     const handleLiquidate = async () => {
         if (!signer) {
@@ -78,16 +77,12 @@ const LiquidationCard = ({
         }
     
         setIsLoading(true)
-        const tokenInfo = getTokenInfo(currency)
-        const collateralInfo = getTokenInfo(collateralCurrency)
         const config = getAlephiumLoanConfig();
         try {
           const result = await LiquidateLoanService(
             signer,
             config.loanFactoryContractId,
-            id,
-            collateralInfo.isOracle,
-            tokenInfo.isOracle
+            id
           )
           window.addTransactionToast('Liquidating Loan', result.txId)
           
@@ -113,12 +108,12 @@ const LiquidationCard = ({
             <span className="text-xs text-gray-400 mb-1">Loan amount</span>
             <div className="flex items-center gap-2">
               <img 
-                src={getTokenInfo(currency).logoURI}
-                alt={getTokenInfo(currency).symbol}
+                src={getTokenInfo(tokenRequested).logoURI}
+                alt={getTokenInfo(tokenRequested).symbol}
                 className="w-6 h-6 rounded-full"
               />
               <span className="text-2xl font-semibold">{displayValue}</span>
-              <span className="text-sm text-gray-400">{getTokenInfo(currency).symbol}</span>
+              <span className="text-sm text-gray-400">{getTokenInfo(tokenRequested).symbol}</span>
               <span className="text-xs text-gray-500">(${usdValue})</span>
             </div>
           </div>
@@ -134,13 +129,13 @@ const LiquidationCard = ({
         </div>
         <div className="flex items-center gap-3">
           <img 
-            src={getTokenInfo(collateralCurrency).logoURI}
-            alt={getTokenInfo(collateralCurrency).symbol}
+            src={getTokenInfo(collateralToken).logoURI}
+            alt={getTokenInfo(collateralToken).symbol}
             className="w-8 h-8 rounded-full"
           />
           <div>
             <span className="font-medium text-lg">{displayCollateral}</span>
-            <span className="text-gray-400 ml-2">{getTokenInfo(collateralCurrency).symbol}</span>
+            <span className="text-gray-400 ml-2">{getTokenInfo(collateralToken).symbol}</span>
             <span className="text-xs text-gray-500 ml-2">(${usdCollateral})</span>
           </div>
         </div>
@@ -150,7 +145,7 @@ const LiquidationCard = ({
         <div className="p-3 bg-gray-800/50 rounded-lg">
           <span className="text-xs text-gray-400 block mb-1">Time Left</span>
           <span className="font-medium">
-            <Timer createdAt={createdAt} duration={term} />
+            <Timer createdAt={createdAt} duration={duration} />
           </span>
         </div>
         <div className="p-3 bg-gray-800/50 rounded-lg">
