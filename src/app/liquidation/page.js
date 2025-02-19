@@ -83,16 +83,15 @@ export default function LiquidationPage() {
       
       const transformedLoans = loansData.map(loan => ({
         id: loan.id,
-        value: loan.tokenAmount,
-        currency: loan.tokenRequested,
+        tokenAmount: loan.tokenAmount,
+        tokenRequested: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
-        collateralCurrency: loan.collateralToken,
-        term: parseInt(loan.duration),
+        collateralToken: loan.collateralToken,
+        duration: parseInt(loan.duration),
         interest: loan.interest,
-        lender: loan.loanee,
-        borrower: loan.creator,
+        lender: loan.lender,
+        borrower: loan.borrower,
         status: loan.active ? 'active' : 'pending',
-        liquidation: loan.liquidation,
         canLiquidate: loan.canLiquidate,
         createdAt: loan.createdAt
       }))
@@ -130,8 +129,8 @@ export default function LiquidationPage() {
     if (!isPricesLoading && loans.length > 0) {
 
       const total = loans.reduce((sum, loan) => {
-        const tokenPrice = tokenPrices[loan.currency] || 0
-        const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
+        const tokenPrice = tokenPrices[loan.tokenRequested] || 0
+        const loanValue = (parseFloat(loan.tokenAmount) / 1e18) * tokenPrice
 
         return sum + loanValue
       }, 0)
@@ -175,10 +174,10 @@ export default function LiquidationPage() {
     { 
       label: 'Average Collateral Ratio', 
       value: `${loans.length ? Math.round(loans.reduce((acc, loan) => {
-        const tokenPrice = tokenPrices[loan.currency] || 0
-        const collateralPrice = tokenPrices[loan.collateralCurrency] || 0
+        const tokenPrice = tokenPrices[loan.tokenRequested] || 0
+        const collateralPrice = tokenPrices[loan.collateralToken] || 0
         
-        const loanValue = (parseFloat(loan.value) / 1e18) * tokenPrice
+        const loanValue = (parseFloat(loan.tokenAmount) / 1e18) * tokenPrice
         const collateralValue = (parseFloat(loan.collateralAmount) / 1e18) * collateralPrice
         
         const ratio = loanValue > 0 ? (collateralValue / loanValue) * 100 : 0

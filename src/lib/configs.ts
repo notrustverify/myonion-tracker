@@ -7,6 +7,8 @@ export interface AlephiumLoanConfig {
   groupIndex: number,
   loanFactoryContractId: string,
   loanFactoryContractAddress: string,
+  auctionFactoryContractId: string,
+  auctionFactoryContractAddress: string,
   loanAdminAddress: string,
   pollingInterval: number,
   defaultNodeUrl: string,
@@ -60,6 +62,7 @@ export function getAlephiumLoanConfig(): AlephiumLoanConfig {
   const network = getNetwork()
   const deployments = loadDeployments(network, "16gAmGuCysLjGxHK8TUENkvhbqvwZRb6BabUbsxLYkSkd")
   const loanFactory = deployments?.contracts?.LoanFactory?.contractInstance
+  const auctionFactory = deployments?.contracts?.AuctionFactory?.contractInstance
   const groupIndex = loanFactory?.groupIndex
   return {
     network,
@@ -67,6 +70,8 @@ export function getAlephiumLoanConfig(): AlephiumLoanConfig {
     loanAdminAddress: deployments.deployerAddress,
     loanFactoryContractId: loanFactory?.contractId || '',
     loanFactoryContractAddress: loanFactory?.address || '',
+    auctionFactoryContractId: auctionFactory?.contractId || '',
+    auctionFactoryContractAddress: auctionFactory?.address || '',
     defaultNodeUrl: getDefaultNodeUrl(),
     defaultExplorerUrl: getDefaultExplorerUrl(),
     backendUrl: getBackendUrl(),
