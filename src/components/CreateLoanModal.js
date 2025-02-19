@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CreateLoanService } from '../services/loan.services'
+import { newLoan } from '../services/loan.services'
 import { getAlephiumLoanConfig, getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
 import { alphBalanceOf, balanceOf } from '../lib/utils'
@@ -201,7 +201,7 @@ const CreateLoanModal = ({
       const adjustedCollateralAmount = adjustAmountWithDecimals(parseFloat(collateralAmount), collateralTokenInfo?.decimals)
       const adjustedInterestRate = Math.round(parseFloat(interestRate) * 100)
       
-      const createLoanResponse = await CreateLoanService(
+      const createLoanResponse = await newLoan(
         signer,
         config.loanFactoryContractId,
         loanTokenInfo?.id,
@@ -210,9 +210,7 @@ const CreateLoanModal = ({
         adjustedCollateralAmount,
         adjustedInterestRate,
         parseInt(term) * 60 * 1000,
-        enableLiquidation,
-        collateralTokenInfo?.isOracle,
-        loanTokenInfo?.isOracle
+        enableLiquidation
       )
       window.addTransactionToast('New Loan Request', createLoanResponse.txId)
       onClose()

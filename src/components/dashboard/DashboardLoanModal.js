@@ -9,7 +9,6 @@ import { getAlephiumLoanConfig } from '../../lib/configs'
 import { 
   CancelLoanService, 
   PayLoanService, 
-  AcceptLoanService, 
   ForfeitLoanService,
   LiquidateLoanService
 } from '../../services/loan.services'
@@ -374,7 +373,7 @@ const DashboardLoanModal = ({
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                     <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                     <span className="text-lg font-medium text-white">
-                      <Timer createdAt={loan.createdAt} duration={loan.term} />
+                      <Timer createdAt={loan.createdAt} duration={loan.duration} />
                     </span>
                   </div>
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">

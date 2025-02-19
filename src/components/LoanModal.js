@@ -52,18 +52,19 @@ const LoanModal = ({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const displayTokenAmount = formatNumber(loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals))
-  const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals))
+  const displayTokenAmount = formatNumber(loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
+  const displayCollateralAmount = formatNumber(loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals))
 
-  const usdTokenAmount = !isPricesLoading && tokenPrices[loan.currency] ? 
-    formatNumber((loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals)) * tokenPrices[loan.currency]) : '...'
+  const usdTokenAmount = !isPricesLoading && tokenPrices[loan.tokenRequested] ? 
+    formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
     
-  const usdCollateralAmount = !isPricesLoading && tokenPrices[loan.collateralCurrency] ? 
-    formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals)) * tokenPrices[loan.collateralCurrency]) : '...'
+  const usdCollateralAmount = !isPricesLoading && tokenPrices[loan.collateralToken] ? 
+    formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
 
-  const collateralRatio = !isPricesLoading && tokenPrices[loan.currency] && tokenPrices[loan.collateralCurrency] ? 
-    (((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralCurrency).decimals)) * tokenPrices[loan.collateralCurrency]) / 
-    ((loan.value / Math.pow(10, getTokenInfo(loan.currency).decimals)) * tokenPrices[loan.currency]) * 100).toFixed(0) : '...'
+  const collateralRatio = tokenPrices[loan.collateralToken] && tokenPrices[loan.tokenRequested] 
+  ? ((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) / 
+    ((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) * 100
+  : 0
 
   const getRiskLevel = (ratio) => {
     const numericRatio = parseFloat(ratio)
@@ -73,7 +74,7 @@ const LoanModal = ({
     if (numericRatio < 400) return 'moderate'
     return 'conservative'
   }
-
+  
   const riskLevel = getRiskLevel(collateralRatio)
 
   const handleOverlayClick = (e) => {
@@ -142,18 +143,14 @@ const LoanModal = ({
 
     setIsLoading(true)
     setError(null)
-    const tokenInfo = getTokenInfo(loan.currency)
-    const collateralInfo = getTokenInfo(loan.collateralCurrency)
     const config = getAlephiumLoanConfig();
     try {
       const result = await AcceptLoanService(
         signer,
         config.loanFactoryContractId,
         loan.id,
-        loan.currency,
-        loan.value,
-        collateralInfo.isOracle,
-        tokenInfo.isOracle
+        loan.tokenRequested,
+        loan.tokenAmount
       )
       window.addTransactionToast('Accepting Loan', result.txId)
 
@@ -174,16 +171,12 @@ const LoanModal = ({
 
     setIsLoading(true)
     setError(null)
-    const tokenInfo = getTokenInfo(loan.currency)
-    const collateralInfo = getTokenInfo(loan.collateralCurrency)
     const config = getAlephiumLoanConfig();
     try {
       const result = await LiquidateLoanService(
         signer,
         config.loanFactoryContractId,
-        loan.id,
-        collateralInfo.isOracle,
-        tokenInfo.isOracle
+        loan.id
       )
       window.addTransactionToast('Liquidating Loan', result.txId)
       
@@ -196,13 +189,12 @@ const LoanModal = ({
     }
   }
 
-  const renderActionButton = () => {
+  const renderActionButton = () => {  
     const wallet = useWallet()
-    const startTime = new Date(loan.createdAt).getTime()
-    const endTime = startTime + parseInt(loan.term)
+    const endTime = new Date(loan.endDate).getTime()
     const now = new Date().getTime()
     const isExpired = now >= endTime
-    const isLiquidatable = (parseFloat(collateralRatio) <= 150 && loan.canLiquidate) || (isExpired && loan.canLiquidate)
+    const isLiquidatable = (parseFloat(loan.collateralRatio) <= 150 && loan.canLiquidate) || (isExpired && loan.canLiquidate)
     const isActive = loan.status === 'active'
     const isPending = loan.status === 'pending'
     const isBorrower = loan.borrower === wallet?.account?.address
@@ -437,15 +429,15 @@ const LoanModal = ({
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
                     <div className="flex items-center gap-2">
                       <img 
-                        src={getTokenInfo(loan.currency).logoURI}
-                        alt={getTokenInfo(loan.currency).symbol}
+                        src={getTokenInfo(loan.tokenRequested).logoURI}
+                        alt={getTokenInfo(loan.tokenRequested).symbol}
                         className="w-8 h-8 rounded-full"
                       />
                       <span className="text-2xl font-semibold text-white">
                         {displayTokenAmount}
                       </span>
                       <span className="text-gray-400">
-                        {getTokenInfo(loan.currency).symbol}
+                        {getTokenInfo(loan.tokenRequested).symbol}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-500">
@@ -458,15 +450,15 @@ const LoanModal = ({
                   <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
                     <div className="flex items-center gap-2">
                       <img 
-                        src={getTokenInfo(loan.collateralCurrency).logoURI}
-                        alt={getTokenInfo(loan.collateralCurrency).symbol}
+                        src={getTokenInfo(loan.collateralToken).logoURI}
+                        alt={getTokenInfo(loan.collateralToken).symbol}
                         className="w-8 h-8 rounded-full"
                       />
                       <span className="text-2xl font-semibold text-white">
                         {displayCollateralAmount}
                       </span>
                       <span className="text-gray-400">
-                        {getTokenInfo(loan.collateralCurrency).symbol}
+                        {getTokenInfo(loan.collateralToken).symbol}
                       </span>
                     </div>
                     <div className="mt-1 text-sm text-gray-500">
@@ -480,7 +472,7 @@ const LoanModal = ({
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                   <span className="text-sm text-gray-400 block mb-1">Time Left</span>
                   <span className="text-lg font-medium text-white">
-                    <Timer createdAt={loan.createdAt} duration={loan.term} />
+                    <Timer createdAt={loan.createdAt} duration={loan.duration} />
                   </span>
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
@@ -492,7 +484,7 @@ const LoanModal = ({
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
                   <span className="text-sm text-gray-400 block mb-1">Collateral Ratio</span>
                   <span className={`text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
-                    {collateralRatio}%
+                    {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
               </div>
