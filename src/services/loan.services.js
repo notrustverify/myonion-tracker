@@ -42,7 +42,7 @@ export const BidAuctionService = async (
       token: tokenId,
       amount: BigInt(amount)
     },
-    attoAlphAmount: DUST_AMOUNT * 2n,
+    attoAlphAmount: DUST_AMOUNT * 3n,
     tokens: [{id: tokenId, amount: BigInt(amount)}]
   })
 }
@@ -57,7 +57,7 @@ export const RedeemAuctionService = async (
       contract: auctionFactory,
       id: auctionId
     },
-    attoAlphAmount: DUST_AMOUNT * 2n
+    attoAlphAmount: DUST_AMOUNT * 3n
   })
 } 
 
@@ -74,7 +74,7 @@ export const AddCollateralService = async (
       contractId: loanId,
       amount: BigInt(collateralAmount),
     },
-    attoAlphAmount: DUST_AMOUNT * 2n,
+    attoAlphAmount: DUST_AMOUNT * 3n,
     tokens: [{id: collateralToken, amount: BigInt(collateralAmount)}]
   })
 }
@@ -91,7 +91,7 @@ export const RemoveCollateralService = async (
       contractId: loanId,
       amount: BigInt(collateralAmount),
     },
-    attoAlphAmount: DUST_AMOUNT * 2n
+    attoAlphAmount: DUST_AMOUNT * 3n
   })
 }
 
@@ -105,7 +105,7 @@ export const LiquidateLoanService = async (
       loanFactory: loanFactory,
       contract: loanId,
     },
-    attoAlphAmount: DUST_AMOUNT * 2n
+    attoAlphAmount: DUST_AMOUNT * 3n
   })
 }
 
@@ -119,7 +119,7 @@ export const ForfeitLoanService = async (
       loanFactory: loanFactory,
       contract: loanId
     },
-    attoAlphAmount: DUST_AMOUNT * 2n
+    attoAlphAmount: DUST_AMOUNT * 3n
   })
 }
 export const CancelLoanService = async (
@@ -132,7 +132,7 @@ export const CancelLoanService = async (
         loanFactory: loanFactory,
         contract: contractId
     },
-    attoAlphAmount: DUST_AMOUNT * 2n,
+    attoAlphAmount: DUST_AMOUNT * 3n,
     })
 }
 
@@ -142,7 +142,7 @@ export const PayLoanService = async (signerProvider, loanFactory, loanId, tokenI
       loanFactory: loanFactory,
       contract: loanId
     },
-    attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+    attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 3n),
     tokens: [{id: tokenId, amount: BigInt(amount)}]
   })
 }
@@ -159,7 +159,7 @@ export const AcceptLoanService = async (
           loanFactory: loanFactory,
           contract: contractId,
       },
-      attoAlphAmount: (DUST_AMOUNT * 2n ),
+      attoAlphAmount: (DUST_AMOUNT * 3n ),
       tokens: [{id: tokenId, amount: BigInt(amount)}]
     })
 }

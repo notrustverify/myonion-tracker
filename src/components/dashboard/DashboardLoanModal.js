@@ -501,25 +501,27 @@ const DashboardLoanModal = ({
                     </button>
                   ) : (
                     <>
+                      {isBorrower && (
+                        <button 
+                        onClick={() => setIsAddCollateralModalOpen(true)}
+                        className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
+                        hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
+                        border border-blue-500/20 hover:border-blue-500/30 
+                        transition-all duration-300 ease-out
+                        text-blue-400 hover:text-blue-300 font-medium 
+                        shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                        flex items-center justify-center gap-2"
+                      >
+                        <span>Add Collateral</span>
+                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                      )}
                       {isBorrower && loan.status === 'pending' && (
                         <>
-                          <button 
-                            onClick={() => setIsAddCollateralModalOpen(true)}
-                            className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                            hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                            border border-blue-500/20 hover:border-blue-500/30 
-                            transition-all duration-300 ease-out
-                            text-blue-400 hover:text-blue-300 font-medium 
-                            shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
-                            flex items-center justify-center gap-2"
-                          >
-                            <span>Add Collateral</span>
-                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                            </svg>
-                          </button>
 
                           <button 
                             onClick={() => setIsRemoveCollateralModalOpen(true)}
