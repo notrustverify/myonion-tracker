@@ -6,7 +6,7 @@ import { getAlephiumLoanConfig, getTokensList } from '../lib/configs'
 import { useWallet } from '@alephium/web3-react'
 import { alphBalanceOf, balanceOf } from '../lib/utils'
 import AuctionTimer from './AuctionTimer'
-import { BidLoanService, RedeemLoanService } from '../services/loan.services'
+import { BidAuctionService, RedeemAuctionService } from '../services/loan.services'
 
 const DEFAULT_ADDRESS = "tgx7VNFoP9DJiFMFgXXtafQZkUvyEdDHT9ryamHJYrjq"
 
@@ -83,7 +83,7 @@ const AuctionCard = ({
     setIsLoading(true)
     try {
       const bidAmountInTokens = parseFloat(bidAmount) * Math.pow(10, tokenInfo.decimals)
-      const result = await BidLoanService(signer, config.loanFactoryContractId, id, bidAmountInTokens, currency)
+      const result = await BidAuctionService(signer, config.auctionFactoryContractId, id, currency, bidAmountInTokens)
       window.addTransactionToast('Placing Bid', result.txId)
     } catch (error) {
       setError('Failed to place bid')
@@ -107,9 +107,9 @@ const AuctionCard = ({
     setError(null)
     const config = getAlephiumLoanConfig();
     try {
-      const result = await RedeemLoanService(
+      const result = await RedeemAuctionService(
         signer,
-        config.loanFactoryContractId,
+        config.auctionFactoryContractId,
         id
       )
       window.addTransactionToast('Redeeming Auction', result.txId)

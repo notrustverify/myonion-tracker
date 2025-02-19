@@ -30,7 +30,7 @@ const deployScript: DeployFunction<Settings> = async (
           duration: 86400000n,
           canLiquidate: true
       },
-      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 3n),
       tokens: [{id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00", amount: 20000000000n}]
     })
 
