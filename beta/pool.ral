@@ -6,9 +6,10 @@ struct CollateralInfo {
 }
 
 struct LoanInfo {
-    mut loanAmount: U256,
+    principal: U256,
+    accruedInterest: U256,
     borrower: Address,
-    mut lastInterestUpdate: U256
+    lastUpdate: U256
 }
 
 Contract Pool (
@@ -97,13 +98,13 @@ Contract Pool (
     @using(updateFields = true)
     fn updateExchangeRate() -> () {
         if (sPoolSupply > 0) {
-            exchangeRate = (totalDeposits + totalBorrowed) / sPoolSupply
+            exchangeRate = (totalDeposits + totalInterestEarned) / sPoolSupply
         }
     }
 
-    fn calculateAccruedInterest(loan: LoanInfo) -> (U256) {
-        let elapsedTime = blockTimeStamp!() - loan.lastInterestUpdate
-        return (loan.loanAmount * interestRate * elapsedTime) / (365 * 86400 * 10000)
+    fn calculateAccruedInterest(loan: LoanInfo) -> U256 {
+        let elapsed = blockTimestamp!() - loan.lastUpdate
+        (loan.principal * interestRate * elapsed) / (365 * 86400 * 10000)
     }
 
     fn min(a: U256, b: U256) -> (U256) {
@@ -195,7 +196,7 @@ Contract Pool (
         assert!(sPoolAmount > 0, PoolCodes.CannotDepositZero)
 
         let withdrawAmount = (sPoolAmount * exchangeRate)
-        assert!(totalDeposits >= withdrawAmount, PoolCodes.InsufficientLiquidity)
+        assert!(totalDeposits - totalBorrowed >= withdrawAmount, PoolCodes.InsufficientLiquidity)
 
         sPoolSupply = sPoolSupply - sPoolAmount
         totalDeposits = totalDeposits - withdrawAmount
