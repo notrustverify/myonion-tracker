@@ -24,15 +24,13 @@ const deployScript: DeployFunction<Settings> = async (
           loanFactory: "e8b899d2238e845321762afb6046afe6898fd37cd4140b3176349006850a9800",
           tokenRequested: ALPH_TOKEN_ID,
           tokenAmount: ONE_ALPH * 1n,
-          tokenOracle: true,
           collateralToken: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
           collateralAmount: 20000000000n,  
-          collateralOracle: false,
           interest: 800n,
           duration: 86400000n,
           canLiquidate: true
       },
-      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 2n),
+      attoAlphAmount: DUST_AMOUNT + (MINIMAL_CONTRACT_DEPOSIT * 3n),
       tokens: [{id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00", amount: 20000000000n}]
     })
 
