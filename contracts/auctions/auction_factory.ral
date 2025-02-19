@@ -10,18 +10,18 @@ Contract AuctionFactory (
         collateralAmount: U256,
         tokenRequested: ByteVec,
         tokenAmount: U256,
-        contract: ByteVec
+        contractId: ByteVec
     )
     event BidAuction(
         who: Address,
-        contract: ByteVec,
+        contractId: ByteVec,
         token: ByteVec,
         amount: U256,
         timeEnd: U256
     )
     event RedeemAuction(
         who: Address,
-        contract: ByteVec,
+        contractId: ByteVec,
         token: ByteVec,
         tokenAmount: U256
     )
@@ -47,10 +47,13 @@ Contract AuctionFactory (
             loaner,             // loaner is also highest bidder if no bid has been placed
             0                   // no time until bid is placed
         )
+
+        let time = blockTimeStamp!()
+        let value = encodeToByteVec!(time, caller, auctionNumber)
         
         // work on this bit
 	    let auctionId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, collateral: collateralAmount}(
-		    encodeToByteVec!(blockTimeStamp!(), caller, auctionNumber),
+		    value,
 		    auctionTemplate,
 		    encodeImmutableFields,
 		    encodeMutableFields
@@ -127,18 +130,18 @@ Contract AuctionFactory (
 
 TxScript Bid (
     contract: AuctionFactory,
-    path: ByteVec,
+    id: ByteVec,
     token: ByteVec,
     amount: U256
 ) {
-    contract.bid{callerAddress!() -> token: amount}(path, token, amount)
+    contract.bid{callerAddress!() -> token: amount}(id, token, amount)
 }
 
 TxScript Redeem (
     contract: AuctionFactory,
-    path: ByteVec
+    id: ByteVec
 ) {
-    contract.redeem(path)
+    contract.redeem(id)
 }
 
 TxScript UpdateAuctionFactoryCode (
