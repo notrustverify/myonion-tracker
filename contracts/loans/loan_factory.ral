@@ -74,17 +74,6 @@ Contract LoanFactory (
         startingBid: U256
     )
 
-    event AuctionRedeem (
-        contract: ByteVec, 
-        who: Address
-    )
-
-    event AuctionBid(
-        contract: ByteVec, 
-        who: Address, 
-        amount: U256
-    )
-
     enum LoanCodes {
         NotAdmin = 0
         TokenSizeTooSmall = 1
@@ -230,7 +219,7 @@ Contract LoanFactory (
             auctionHouse
         )
 
-        let contractID = copyCreateContract!{caller -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
+        let contractID = copyCreateContract!{caller -> ALPH: (minimalContractDeposit!() * 3), collateralToken: collateralAmount}(
             loanTemplate,                                                                                  
             encodeImmutableFields,
             encodeMutableFields
@@ -475,7 +464,7 @@ TxScript CreateLoan (
     duration: U256,
     canLiquidate: Bool
 ) {
-    loanFactory.createLoan{callerAddress!() -> ALPH: (minimalContractDeposit!() * 2), collateralToken: collateralAmount}(
+    loanFactory.createLoan{callerAddress!() -> ALPH: (minimalContractDeposit!() * 3), collateralToken: collateralAmount}(
         tokenRequested,
         tokenAmount,
         collateralToken,
