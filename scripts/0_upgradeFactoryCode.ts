@@ -19,10 +19,10 @@ const deployScript: DeployFunction<Settings> = async (
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
     
-    await UpdateAuctionFactoryCode.execute(signer, {
+    await UpdateLoanFactoryCode.execute(signer, {
       initialFields: {
-          auctionFactory: "b88a9891213af953a06c0bdc5f4a03ee25ab4d24a3b911ff59c2320b8a54fd00",
-          newCode: AuctionFactory.contract.bytecode
+          loanFactory: "291ef5ba0bec2d64a0cb8ccf474464b118fc7a1a1186a8e03187cc0a8fd4d400",
+          newCode: LoanFactory.contract.bytecode
       },
       attoAlphAmount: DUST_AMOUNT
     })

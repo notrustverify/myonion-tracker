@@ -12,6 +12,8 @@ import {
   AlpacaFiOracleInstance,
   Loan,
   LoanInstance,
+  LoanMarket,
+  LoanMarketInstance,
   LoanFactory,
   LoanFactoryInstance,
   Auction,
@@ -26,6 +28,7 @@ export type Deployments = {
   contracts: {
     AlpacaFiOracle: DeployContractExecutionResult<AlpacaFiOracleInstance>;
     Loan: DeployContractExecutionResult<LoanInstance>;
+    LoanMarket: DeployContractExecutionResult<LoanMarketInstance>;
     LoanFactory: DeployContractExecutionResult<LoanFactoryInstance>;
     Auction: DeployContractExecutionResult<AuctionInstance>;
     AuctionFactory: DeployContractExecutionResult<AuctionFactoryInstance>;
@@ -44,6 +47,12 @@ function toDeployments(json: any): Deployments {
       ...json.contracts["Loan"],
       contractInstance: Loan.at(
         json.contracts["Loan"].contractInstance.address
+      ),
+    },
+    LoanMarket: {
+      ...json.contracts["LoanMarket"],
+      contractInstance: LoanMarket.at(
+        json.contracts["LoanMarket"].contractInstance.address
       ),
     },
     LoanFactory: {

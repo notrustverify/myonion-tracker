@@ -259,7 +259,7 @@ Contract LoanFactory (
             assert!(condition == true, 8)
         }
 
-        loan.acceptLoan{caller -> token: tokenAmount}(caller, ratio)
+        loan.acceptLoan{caller -> token: tokenAmount, ALPH: dustAmount!()}(caller, ratio)
 
         // emit event
         emit AcceptedLoan(contractId, caller)
@@ -481,7 +481,7 @@ TxScript AcceptLoan (
 ) {
     let (token, amount) = loanFactory.getRequiredTokens(contract, false)
 
-    loanFactory.accept{callerAddress!() -> token: amount}(contract)
+    loanFactory.accept{callerAddress!() -> token: amount, ALPH: dustAmount!()}(contract)
 }
 
 TxScript CancelLoan (
