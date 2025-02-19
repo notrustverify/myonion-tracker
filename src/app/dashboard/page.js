@@ -86,8 +86,8 @@ export default function Dashboard() {
     setLoading(true);
     try {
       const [createdResponse, borrowedResponse] = await Promise.all([
-        axios.get(`${backendUrl}/api/loans/creator/${wallet.account.address}`),
-        axios.get(`${backendUrl}/api/loans/loanee/${wallet.account.address}`)
+        axios.get(`${backendUrl}/api/loans/borrower/${wallet.account.address}`),
+        axios.get(`${backendUrl}/api/loans/lender/${wallet.account.address}`)
       ]);
 
       const createdData = createdResponse.data;
@@ -102,31 +102,26 @@ export default function Dashboard() {
               Number(loan.interest),
               new Date(loan.createdAt)
             );
-            console.log("totalRepayment", totalRepayment); 
             debts[loan.id] = totalRepayment;
-            console.log("debts[loan.id]", debts[loan.id]);
           } catch (error) {
             console.error('Error calculating loan debt:', error);
           }
         }
       });
-      console.log("debts", debts);
       setLoanDebts(debts);
 
       const transformLoan = loan => ({
-        value: loan.tokenAmount,
-        currency: loan.tokenRequested,
+        tokenAmount: loan.tokenAmount,
+        tokenRequested: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
-        collateralCurrency: loan.collateralToken,
-        term: parseFloat(loan.duration),
-        duration: loan.duration,
+        collateralToken: loan.collateralToken,
+        duration: parseInt(loan.duration),
         interest: Number(loan.interest),
-        lender: loan.loanee,
-        borrower: loan.creator,
+        lender: loan.lender,
+        borrower: loan.borrower,
         status: loan.active ? 'active' : 'pending',
         id: loan.id,
-        type: loan.creator === wallet.account.address ? 'created' : 'borrowed',
-        liquidation: loan.liquidation,
+        type: loan.borrower === wallet.account.address ? 'created' : 'borrowed',
         canLiquidate: loan.canLiquidate,
         createdAt: loan.createdAt,
         currentDebt: debts[loan.id] || loan.tokenAmount

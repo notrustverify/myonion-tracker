@@ -93,21 +93,18 @@ export default function LoanPage() {
 
       const transformedLoans = nonLiquidatedLoans.map(loan => ({
         id: loan.id,
-        value: loan.tokenAmount,
-        currency: loan.tokenRequested,
+        tokenAmount: loan.tokenAmount,
+        tokenRequested: loan.tokenRequested,
         collateralAmount: loan.collateralAmount,
-        collateralCurrency: loan.collateralToken,
-        term: parseInt(loan.duration),
+        collateralToken: loan.collateralToken,
+        duration: parseInt(loan.duration),
         interest: loan.interest,
-        lender: loan.loanee,
-        borrower: loan.creator,
+        lender: loan.lender,
+        borrower: loan.borrower,
         status: loan.active ? 'active' : 'pending',
-        liquidation: loan.liquidation,
         canLiquidate: loan.canLiquidate,
-        createdAt: loan.createdAt,
-        collateralRatio: loan.collateralRatio
+        createdAt: loan.createdAt
       }))
-
       setLoans(transformedLoans)
 
       const addresses = new Set()
@@ -245,9 +242,9 @@ export default function LoanPage() {
 
   const getFilteredLoans = useCallback(() => {
     return loans.filter(loan => {
-      const collateralRatio = tokenPrices[loan.collateralCurrency] && tokenPrices[loan.currency] 
-        ? ((loan.collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralCurrency]) / 
-          ((loan.value / Math.pow(10, 18)) * tokenPrices[loan.currency]) * 100
+      const collateralRatio = tokenPrices[loan.collateralToken] && tokenPrices[loan.tokenRequested] 
+        ? ((loan.collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralToken]) / 
+          ((loan.tokenAmount / Math.pow(10, 18)) * tokenPrices[loan.tokenRequested]) * 100
         : 0;
 
       switch (activeFilter.toLowerCase()) {
