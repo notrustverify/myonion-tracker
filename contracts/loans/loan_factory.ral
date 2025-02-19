@@ -23,10 +23,8 @@ Contract LoanFactory (
     oracle: IDIAOracle,
     alpaca: ByteVec
 ) {
-    // price mappings
     mapping [ByteVec, PairInfo] tokenPairs
 
-    // events
     event NewLoan (
         contract: ByteVec, 
         tokenRequested: ByteVec, 
@@ -79,7 +77,6 @@ Contract LoanFactory (
         TokenSizeTooSmall = 1
     }
 
-    // health / collateral value calculation
     fn determineCollateralRatio(
         tokenRequested: ByteVec,
         tokenAmount: U256,
@@ -165,8 +162,6 @@ Contract LoanFactory (
         assert!(priceIn >= 1000, LoanCodes.TokenSizeTooSmall)
     }
 
-    // create loans (creator)
-    // ---------------------------------------------------------------------------------------
     @using(checkExternalCaller = false, preapprovedAssets = true, updateFields = true)
     pub fn createLoan(
         tokenRequested: ByteVec, 
@@ -292,7 +287,6 @@ Contract LoanFactory (
         emit LoanWithdraw(contractId, false, caller)
     }
     
-    // liquidation
     @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = enforced)
     pub fn forfeit(contractId: ByteVec) -> () {
         let loan = Loan(contractId)
@@ -313,7 +307,6 @@ Contract LoanFactory (
         }
     }
 
-    // check liquidation
     @using(checkExternalCaller = false, updateFields = false)
     pub fn liquidation(contractId: ByteVec) -> () {
         let loan = Loan(contractId)
@@ -343,7 +336,6 @@ Contract LoanFactory (
         emit LoanLiquidation(contractId, token, tokenAmount)
     }
 
-    // add collateral function
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true)
     pub fn addCollateral(contractId: ByteVec, amount: U256) -> () {
         let loan = Loan(contractId)
@@ -400,8 +392,6 @@ Contract LoanFactory (
         emit RemoveCollateralLoan(contractId, caller, collateral, collateralAmount - amount)
     }
 
-    // admin functions
-    // --------------------------------------------------------------------------------------
     @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = true)
     pub fn editRate(newRate: U256) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -409,7 +399,6 @@ Contract LoanFactory (
         rate = newRate
     }
 
-    // ... complete this
     @using(checkExternalCaller = true, preapprovedAssets = true, updateFields = false)
     pub fn tokenMapping(token: ByteVec, add: Bool, pairtoken: ByteVec, decimals: U256, alephiumOracle: Bool) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -428,7 +417,6 @@ Contract LoanFactory (
         }
     }
 
-    // withdraw fees
     @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false, assetsInContract = true)
     pub fn withdrawLoanFactoryFees(who: Address, token: ByteVec, amount: U256) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -438,7 +426,6 @@ Contract LoanFactory (
         // emit event
     }
 
-    // upgrade
     @using(updateFields = false, checkExternalCaller = true)
     pub fn updateLoanFactoryCode(newCode: ByteVec) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -564,8 +551,6 @@ TxScript TokenMapping (
 ) {
     loanFactory.tokenMapping{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, add, pairtoken, decimals, alephiumOracle)
 }
-
-// upgrade / destroy
 
 TxScript UpdateLoanFactoryCode (
     loanFactory: LoanFactory,

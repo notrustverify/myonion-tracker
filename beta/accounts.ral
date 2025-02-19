@@ -103,20 +103,25 @@ Contract CollateralAccounts (
 
     // should burn the nft | refund the assets | remove the mapping
     @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true, assetsInContract = true)
-    pub fn burnAccountNFT() -> () {
+    pub fn burnAccountNFT(caller: Address) -> () {
         // approve the nft in the txscript
-        
+        burnToken!(caller, selfContractId!(), 1)
+
+        // transfer the remaining assets in the contract
     }
 
-    pub fn addAsset(nft: ByteVec, token: ByteVec, amount: U256) -> () {
+    pub fn addAsset(caller: Address, nft: ByteVec, token: ByteVec, amount: U256) -> () {
         // code ...
+        transferToken!(caller, selfAddress!(), token, amount)
     }
 
     pub fn removeAsset(nft: ByteVec, token: ByteVec, amount: U256) -> () {
         // code ...
+        transferToken!(selfAddress!(), caller, token, amount)
     }
 
-    pub fn payCollateral(nft: ByteVec, token: ByteVec, amount: U256) -> () {
+    pub fn payCollateral(caller: Address, nft: ByteVec, token: ByteVec, amount: U256) -> () {
         // code ...
+        transferToken!(selfAddress!(), caller, token, amount)
     } 
 }
