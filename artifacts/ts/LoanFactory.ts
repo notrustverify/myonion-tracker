@@ -92,15 +92,6 @@ export namespace LoanFactoryTypes {
     token: HexString;
     startingBid: bigint;
   }>;
-  export type AuctionRedeemEvent = ContractEvent<{
-    contract: HexString;
-    who: Address;
-  }>;
-  export type AuctionBidEvent = ContractEvent<{
-    contract: HexString;
-    who: Address;
-    amount: bigint;
-  }>;
 
   export interface CallMethodTable {
     determineCollateralRatio: {
@@ -353,8 +344,6 @@ class Factory extends ContractFactory<
     AddCollateralLoan: 4,
     RemoveCollateralLoan: 5,
     LoanLiquidation: 6,
-    AuctionRedeem: 7,
-    AuctionBid: 8,
   };
   consts = {
     LoanCodes: { NotAdmin: BigInt("0"), TokenSizeTooSmall: BigInt("1") },
@@ -587,7 +576,7 @@ export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
     "=54-2+e6=2-2+ff=1-2+6=1+3=1-3+62b=2763-1+6=29-1+4=60+7a7e0214696e73657274206174206d617020706174683a2000=23-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=144",
-    "38bb7025946454a04b17091ad7be83a7dbae39aaf598d24ba49ea36bbd3493eb",
+    "c8d38ff4d321fc4cb44b45c325b51ca0737cb645f15d4c823a3d2c6caef35cba",
     AllStructs
   )
 );
@@ -706,32 +695,6 @@ export class LoanFactoryInstance extends ContractInstance {
     );
   }
 
-  subscribeAuctionRedeemEvent(
-    options: EventSubscribeOptions<LoanFactoryTypes.AuctionRedeemEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      LoanFactory.contract,
-      this,
-      options,
-      "AuctionRedeem",
-      fromCount
-    );
-  }
-
-  subscribeAuctionBidEvent(
-    options: EventSubscribeOptions<LoanFactoryTypes.AuctionBidEvent>,
-    fromCount?: number
-  ): EventSubscription {
-    return subscribeContractEvent(
-      LoanFactory.contract,
-      this,
-      options,
-      "AuctionBid",
-      fromCount
-    );
-  }
-
   subscribeAllEvents(
     options: EventSubscribeOptions<
       | LoanFactoryTypes.NewLoanEvent
@@ -741,8 +704,6 @@ export class LoanFactoryInstance extends ContractInstance {
       | LoanFactoryTypes.AddCollateralLoanEvent
       | LoanFactoryTypes.RemoveCollateralLoanEvent
       | LoanFactoryTypes.LoanLiquidationEvent
-      | LoanFactoryTypes.AuctionRedeemEvent
-      | LoanFactoryTypes.AuctionBidEvent
     >,
     fromCount?: number
   ): EventSubscription {
