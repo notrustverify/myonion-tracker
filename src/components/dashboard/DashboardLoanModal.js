@@ -232,367 +232,365 @@ const DashboardLoanModal = ({
   return (
     <AnimatePresence mode="wait">
       {isOpen && (
-        <>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex items-center justify-center overflow-y-auto"
+          onClick={handleOverlayClick}
+        >
           <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ scale: 0.95, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ 
+              scale: 0.95, 
+              opacity: 0, 
+              y: -20,
+              transition: { duration: 0.15 }
+            }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[50] flex items-center justify-center"
-            onClick={handleOverlayClick}
+            className="relative my-4 mx-4 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl w-full max-w-2xl overflow-hidden border border-gray-700/50"
           >
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ 
-                scale: 0.95, 
-                opacity: 0, 
-                y: -20,
-                transition: { duration: 0.15 }
-              }}
-              transition={{ duration: 0.2 }}
-              className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-700/50"
-            >
-              <div className="border-b border-gray-700/50 p-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-2xl font-semibold text-white">Manage Loan</h3>
-                  <button 
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
+            <div className="border-b border-gray-700/50 p-4 md:p-6">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl md:text-2xl font-semibold text-white">Manage Loan</h3>
+                <button 
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
+            </div>
 
-              <div className="p-6 space-y-6">
-                <div className="grid grid-cols-2 gap-6">
-                  {loan.lender && loan.lender !== DEFAULT_ADDRESS && (
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="block text-sm text-gray-400 mb-3">Lender</span>
+            <div className="p-4 md:p-6 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                {loan.lender && loan.lender !== DEFAULT_ADDRESS && (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                    <span className="block text-xs md:text-sm text-gray-400 mb-3">Lender</span>
                     <div className="flex items-center gap-3">
                       {lenderImage ? (
                         <img 
                           src={lenderImage} 
-                          className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
+                          className="w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
                           alt="" 
                         />
                       ) : (
-                        <div className="w-10 h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
-                          <AiOutlineUser className="w-5 h-5 text-gray-400" />
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
+                          <AiOutlineUser className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                         </div>
                       )}
                       <div>
-                        <h4 className="font-medium text-[15px] text-white">
+                        <h4 className="text-sm md:text-[15px] font-medium text-white">
                           {lenderName || "Unnamed"}
                         </h4>
-                        <p className="text-xs text-gray-400">
+                        <p className="text-[10px] md:text-xs text-gray-400">
                           {shortenAddress(loan.lender)}
                         </p>
                       </div>
                     </div>
                   </div>
-                  )}
+                )}
 
-                  {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && (
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                      <span className="block text-sm text-gray-400 mb-3">Borrower</span>
-                      <div className="flex items-center gap-3">
-                        {borrowerImage ? (
-                          <img 
-                            src={borrowerImage} 
-                            className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
-                            alt="" 
-                          />
-                        ) : (
-                          <div className="w-10 h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
-                            <AiOutlineUser className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <h4 className="font-medium text-[15px] text-white">
-                            {borrowerName || "Unnamed"}
-                          </h4>
-                          <p className="text-xs text-gray-400">
-                            {shortenAddress(loan.borrower)}
-                          </p>
+                {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                    <span className="block text-xs md:text-sm text-gray-400 mb-3">Borrower</span>
+                    <div className="flex items-center gap-3">
+                      {borrowerImage ? (
+                        <img 
+                          src={borrowerImage} 
+                          className="w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
+                          alt="" 
+                        />
+                      ) : (
+                        <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
+                          <AiOutlineUser className="w-4 h-4 md:w-5 md:h-5 text-gray-400" />
                         </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div>
-                    <span className="block text-sm font-medium text-gray-300 mb-2">Amount</span>
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <img 
-                          src={getTokenInfo(loan.tokenRequested).logoURI}
-                          alt={getTokenInfo(loan.tokenRequested).symbol}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <span className="text-2xl font-semibold text-white">
-                          {displayTokenAmount}
-                        </span>
-                        <span className="text-gray-400">
-                          {getTokenInfo(loan.tokenRequested).symbol}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-500">
-                        ≈ ${usdTokenAmount}
+                      )}
+                      <div>
+                        <h4 className="text-sm md:text-[15px] font-medium text-white">
+                          {borrowerName || "Unnamed"}
+                        </h4>
+                        <p className="text-[10px] md:text-xs text-gray-400">
+                          {shortenAddress(loan.borrower)}
+                        </p>
                       </div>
                     </div>
                   </div>
-                  <div>
-                    <span className="block text-sm font-medium text-gray-300 mb-2">Collateral</span>
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <img 
-                          src={getTokenInfo(loan.collateralToken).logoURI}
-                          alt={getTokenInfo(loan.collateralToken).symbol}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <span className="text-2xl font-semibold text-white">
-                          {displayCollateralAmount}
-                        </span>
-                        <span className="text-gray-400">
-                          {getTokenInfo(loan.collateralToken).symbol}
-                        </span>
-                      </div>
-                      <div className="mt-1 text-sm text-gray-500">
-                        ≈ ${usdCollateralAmount}
-                      </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                <div>
+                  <span className="block text-sm font-medium text-gray-300 mb-2">Amount</span>
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 md:px-4 md:py-3">
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={getTokenInfo(loan.tokenRequested).logoURI}
+                        alt={getTokenInfo(loan.tokenRequested).symbol}
+                        className="w-6 h-6 md:w-8 md:h-8 rounded-full"
+                      />
+                      <span className="text-xl md:text-2xl font-semibold text-white">
+                        {displayTokenAmount}
+                      </span>
+                      <span className="text-gray-400">
+                        {getTokenInfo(loan.tokenRequested).symbol}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs md:text-sm text-gray-500">
+                      ≈ ${usdTokenAmount}
                     </div>
                   </div>
                 </div>
+                <div>
+                  <span className="block text-sm font-medium text-gray-300 mb-2">Collateral</span>
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 md:px-4 md:py-3">
+                    <div className="flex items-center gap-2">
+                      <img 
+                        src={getTokenInfo(loan.collateralToken).logoURI}
+                        alt={getTokenInfo(loan.collateralToken).symbol}
+                        className="w-6 h-6 md:w-8 md:h-8 rounded-full"
+                      />
+                      <span className="text-xl md:text-2xl font-semibold text-white">
+                        {displayCollateralAmount}
+                      </span>
+                      <span className="text-gray-400">
+                        {getTokenInfo(loan.collateralToken).symbol}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs md:text-sm text-gray-500">
+                      ≈ ${usdCollateralAmount}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                <div className={`grid ${isBorrower && loan.status === 'active' ? 'grid-cols-4' : 'grid-cols-3'} gap-4`}>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Time Left</span>
-                    <span className="text-lg font-medium text-white">
-                      <Timer createdAt={loan.createdAt} duration={loan.duration} />
-                    </span>
-                  </div>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Interest</span>
-                    <span className="text-lg font-medium text-green-400">
-                      {(loan.interest / 100).toFixed(2)}%
-                    </span>
-                  </div>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                    <span className="text-sm text-gray-400 block mb-1">Collateral Ratio</span>
-                    <span className={`text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
-                      {collateralRatio}%
-                    </span>
-                  </div>
-                  {isBorrower && loan.status === 'active' && (
-                    <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                      <span className="text-sm text-gray-400 block mb-1">Total Debt</span>
-                      <span className="text-lg font-medium text-orange-400">
+              <div className={`grid ${isBorrower && loan.status === 'active' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'} gap-3 md:gap-4`}>
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Time Left</span>
+                  <span className="text-base md:text-lg font-medium text-white">
+                    <Timer createdAt={loan.createdAt} duration={loan.duration} />
+                  </span>
+                </div>
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Interest</span>
+                  <span className="text-base md:text-lg font-medium text-green-400">
+                    {(loan.interest / 100).toFixed(2)}%
+                  </span>
+                </div>
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Collateral Ratio</span>
+                  <span className={`text-base md:text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
+                    {collateralRatio}%
+                  </span>
+                </div>
+                {isBorrower && loan.status === 'active' && (
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                    <span className="text-xs md:text-sm text-gray-400 block mb-1">Total Debt</span>
+                    <span className="text-base md:text-lg font-medium text-orange-400">
                       {displayDebt} {getTokenInfo(loan.tokenRequested).symbol}
                     </span>
-                      <div className="text-xs text-gray-500">≈ ${usdDebtAmount}</div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-400">Risk Level</span>
-                    <div className="flex items-center gap-2">
-                      <motion.span className={`font-medium ${
-                        riskLevel === 'conservative' ? 'text-green-500' :
-                        riskLevel === 'moderate' ? 'text-yellow-500' :
-                        riskLevel === 'aggressive' ? 'text-orange-500' :
-                        riskLevel === 'high' ? 'text-red-500' :
-                        'text-red-600'
-                      }`}>
-                        {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
-                      </motion.span>
-                    </div>
+                    <div className="text-[10px] md:text-xs text-gray-500">≈ ${usdDebtAmount}</div>
                   </div>
-                  
-                  <div className="relative">
-                    <div className="absolute inset-0 flex">
-                      <div className="w-[33%] h-full border-r border-gray-700/50"></div>
-                      <div className="w-[33%] h-full border-r border-gray-700/50"></div>
-                      <div className="w-[34%] h-full"></div>
-                    </div>
+                )}
+              </div>
 
-                    <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ 
-                          width: `${(() => {
-                            const ratio = parseFloat(collateralRatio);
-                            if (ratio <= 150) return 0;
-                            if (ratio <= 200) return ((ratio - 150) / 50) * 33;
-                            if (ratio <= 300) return 33 + ((ratio - 200) / 100) * 33;
-                            if (ratio <= 400) return 66 + ((ratio - 300) / 100) * 34;
-                            return 100;
-                          })()}%`
-                        }}
-                        transition={{ duration: 0.5, ease: "easeOut" }}
-                        className={`h-full transition-all duration-300 ${
-                          riskLevel === 'conservative' ? 'bg-gradient-to-r from-green-500 to-green-400' :
-                          riskLevel === 'moderate' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
-                          riskLevel === 'aggressive' ? 'bg-gradient-to-r from-orange-500 to-orange-400' :
-                          riskLevel === 'high' ? 'bg-gradient-to-r from-red-500 to-red-400' :
-                          'bg-gradient-to-r from-red-700 to-red-600'
-                        }`}
-                      />
-                    </div>
+              <div className="space-y-3 p-3 md:p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Risk Level</span>
+                  <div className="flex items-center gap-2">
+                    <motion.span className={`font-medium ${
+                      riskLevel === 'conservative' ? 'text-green-500' :
+                      riskLevel === 'moderate' ? 'text-yellow-500' :
+                      riskLevel === 'aggressive' ? 'text-orange-500' :
+                      riskLevel === 'high' ? 'text-red-500' :
+                      'text-red-600'
+                    }`}>
+                      {riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}
+                    </motion.span>
+                  </div>
+                </div>
+                
+                <div className="relative">
+                  <div className="absolute inset-0 flex">
+                    <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                    <div className="w-[33%] h-full border-r border-gray-700/50"></div>
+                    <div className="w-[34%] h-full"></div>
+                  </div>
 
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 }}
-                      className="flex justify-between text-xs mt-1 px-1"
-                    >
-                      <span className="text-red-500">150%</span>
-                      <span className="text-orange-500">200%</span>
-                      <span className="text-yellow-500">300%</span>
-                      <span className="text-green-500">400%+</span>
-                    </motion.div>
+                  <div className="h-3 bg-gray-800 rounded-full overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ 
+                        width: `${(() => {
+                          const ratio = parseFloat(collateralRatio);
+                          if (ratio <= 150) return 0;
+                          if (ratio <= 200) return ((ratio - 150) / 50) * 33;
+                          if (ratio <= 300) return 33 + ((ratio - 200) / 100) * 33;
+                          if (ratio <= 400) return 66 + ((ratio - 300) / 100) * 34;
+                          return 100;
+                        })()}%`
+                      }}
+                      transition={{ duration: 0.5, ease: "easeOut" }}
+                      className={`h-full transition-all duration-300 ${
+                        riskLevel === 'conservative' ? 'bg-gradient-to-r from-green-500 to-green-400' :
+                        riskLevel === 'moderate' ? 'bg-gradient-to-r from-yellow-500 to-yellow-400' :
+                        riskLevel === 'aggressive' ? 'bg-gradient-to-r from-orange-500 to-orange-400' :
+                        riskLevel === 'high' ? 'bg-gradient-to-r from-red-500 to-red-400' :
+                        'bg-gradient-to-r from-red-700 to-red-600'
+                      }`}
+                    />
                   </div>
 
                   <motion.div 
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center space-x-2 mt-2"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                    className="flex justify-between text-xs mt-1 px-1"
                   >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span className="text-xs text-gray-400">
-                      Minimum collateral ratio: 150%. Lower ratios risk liquidation.
-                    </span>
+                    <span className="text-red-500">150%</span>
+                    <span className="text-orange-500">200%</span>
+                    <span className="text-yellow-500">300%</span>
+                    <span className="text-green-500">400%+</span>
                   </motion.div>
                 </div>
 
-                <div className="pt-2 flex gap-4">
-                  {error && (
-                    <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
-                      {error}
-                    </div>
-                  )}
-                  
-                  {currentStatus === 'terminated' ? (
-                    <button 
-                      onClick={handleForfeit}
-                      className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
-                        hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
-                        border border-red-500/20 hover:border-red-500/30 
-                        transition-all duration-300 ease-out
-                        text-red-400 hover:text-red-300 font-medium 
-                        shadow-lg shadow-red-900/20 hover:shadow-red-900/30
-                        flex items-center justify-center gap-2"
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex items-center space-x-2 mt-2"
+                >
+                  <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-xs text-gray-400">
+                    Minimum collateral ratio: 150%. Lower ratios risk liquidation.
+                  </span>
+                </motion.div>
+              </div>
+
+              <div className="pt-2 flex flex-col md:flex-row gap-4">
+                {error && (
+                  <div className="mb-4 p-3 md:p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                    {error}
+                  </div>
+                )}
+                
+                {currentStatus === 'terminated' ? (
+                  <button 
+                    onClick={handleForfeit}
+                    className="w-full group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                      hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                      border border-red-500/20 hover:border-red-500/30 
+                      transition-all duration-300 ease-out
+                      text-red-400 hover:text-red-300 font-medium 
+                      shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+                      flex items-center justify-center gap-2"
+                  >
+                    <span>Forfeit</span>
+                    <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                      fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                  </button>
+                ) : (
+                  <>
+                    {isBorrower && (
+                      <button 
+                      onClick={() => setIsAddCollateralModalOpen(true)}
+                      className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
+                      hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
+                      border border-blue-500/20 hover:border-blue-500/30 
+                      transition-all duration-300 ease-out
+                      text-blue-400 hover:text-blue-300 font-medium 
+                      shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
+                      flex items-center justify-center gap-2"
                     >
-                      <span>Forfeit</span>
+                      <span>Add Collateral</span>
                       <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
                         fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                          d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                       </svg>
                     </button>
-                  ) : (
-                    <>
-                      {isBorrower && (
+                    )}
+                    {isBorrower && loan.status === 'pending' && (
+                      <>
+
                         <button 
-                        onClick={() => setIsAddCollateralModalOpen(true)}
-                        className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-blue-500/20 via-blue-500/30 to-blue-400/20 
-                        hover:from-blue-500/30 hover:via-blue-500/40 hover:to-blue-400/30
-                        border border-blue-500/20 hover:border-blue-500/30 
-                        transition-all duration-300 ease-out
-                        text-blue-400 hover:text-blue-300 font-medium 
-                        shadow-lg shadow-blue-900/20 hover:shadow-blue-900/30
-                        flex items-center justify-center gap-2"
-                      >
-                        <span>Add Collateral</span>
-                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                            d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      </button>
-                      )}
-                      {isBorrower && loan.status === 'pending' && (
-                        <>
-
-                          <button 
-                            onClick={() => setIsRemoveCollateralModalOpen(true)}
-                            className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
-                              hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
-                              border border-red-500/20 hover:border-red-500/30 
-                              transition-all duration-300 ease-out
-                              text-red-400 hover:text-red-300 font-medium 
-                              shadow-lg shadow-red-900/20 hover:shadow-red-900/30
-                              flex items-center justify-center gap-2"
-                          >
-                            <span>Remove Collateral</span>
-                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                d="M20 12H4" />
-                            </svg>
-                          </button>
-
-                          <button 
-                          onClick={handleCancelLoan}
-                          disabled={isLoading}
-                          className="group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                          onClick={() => setIsRemoveCollateralModalOpen(true)}
+                          className="w-1/2 group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
                             hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
                             border border-red-500/20 hover:border-red-500/30 
                             transition-all duration-300 ease-out
                             text-red-400 hover:text-red-300 font-medium 
                             shadow-lg shadow-red-900/20 hover:shadow-red-900/30
-                            flex items-center justify-center gap-2
-                            disabled:opacity-50 disabled:cursor-not-allowed"
+                            flex items-center justify-center gap-2"
                         >
-                          {isLoading ? (
-                            <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <>
-                              <span>Cancel Loan</span>
-                              <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
-                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                                  d="M6 18L18 6M6 6l12 12" />
-                              </svg>
-                            </>
-                          )}
-                        </button>
-                        </>
-                      )}
-
-                      {isBorrower && loan.status === 'active' && (
-                        <button 
-                          onClick={isExpired ? handleLiquidate : handleRepayLoan}
-                          className={`group px-6 py-4 rounded-xl bg-gradient-to-r ${isExpired ? "from-red-500/20 via-red-500/30 to-red-400/20" : "from-green-500/20 via-green-500/30 to-green-400/20"} 
-                            ${isExpired ? "hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30" : "hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30"}
-                            border ${isExpired ? "border-red-500/20" : "border-green-500/20"} hover:border-${isExpired ? "red-500/30" : "green-500/30"} 
-                            transition-all duration-300 ease-out
-                            text-${isExpired ? "red-400" : "green-400"} hover:text-${isExpired ? "red-300" : "green-300"} font-medium 
-                            shadow-lg shadow-${isExpired ? "red-900/20" : "green-900/20"} hover:shadow-${isExpired ? "red-900/30" : "green-900/30"}
-                            flex items-center justify-center gap-2`}
-                        >
-                          <span>{isExpired ? "Liquidate" : "Repay Loan"}</span>
+                          <span>Remove Collateral</span>
                           <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
                             fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                              d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                              d="M20 12H4" />
                           </svg>
                         </button>
-                      )}
-                    </>
-                  )}
-                </div>
+
+                        <button 
+                        onClick={handleCancelLoan}
+                        disabled={isLoading}
+                        className="group px-6 py-4 rounded-xl bg-gradient-to-r from-red-500/20 via-red-500/30 to-red-400/20 
+                          hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30
+                          border border-red-500/20 hover:border-red-500/30 
+                          transition-all duration-300 ease-out
+                          text-red-400 hover:text-red-300 font-medium 
+                          shadow-lg shadow-red-900/20 hover:shadow-red-900/30
+                          flex items-center justify-center gap-2
+                          disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? (
+                          <div className="w-5 h-5 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <span>Cancel Loan</span>
+                            <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                      </>
+                    )}
+
+                    {isBorrower && loan.status === 'active' && (
+                      <button 
+                        onClick={isExpired ? handleLiquidate : handleRepayLoan}
+                        className={`group px-6 py-4 rounded-xl bg-gradient-to-r ${isExpired ? "from-red-500/20 via-red-500/30 to-red-400/20" : "from-green-500/20 via-green-500/30 to-green-400/20"} 
+                          ${isExpired ? "hover:from-red-500/30 hover:via-red-500/40 hover:to-red-400/30" : "hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30"}
+                          border ${isExpired ? "border-red-500/20" : "border-green-500/20"} hover:border-${isExpired ? "red-500/30" : "green-500/30"} 
+                          transition-all duration-300 ease-out
+                          text-${isExpired ? "red-400" : "green-400"} hover:text-${isExpired ? "red-300" : "green-300"} font-medium 
+                          shadow-lg shadow-${isExpired ? "red-900/20" : "green-900/20"} hover:shadow-${isExpired ? "red-900/30" : "green-900/30"}
+                          flex items-center justify-center gap-2`}
+                      >
+                        <span>{isExpired ? "Liquidate" : "Repay Loan"}</span>
+                        <svg className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-0.5" 
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                            d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                        </svg>
+                      </button>
+                    )}
+                  </>
+                )}
               </div>
-            </motion.div>
+            </div>
           </motion.div>
 
           <AddCollateralModal
@@ -612,7 +610,7 @@ const DashboardLoanModal = ({
             onClose={() => setIsRepayModalOpen(false)}
             loan={loan}
           />
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   )

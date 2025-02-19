@@ -337,7 +337,7 @@ const LoanModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[50] flex items-center justify-center"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex items-center justify-center overflow-y-auto"
           onClick={handleOverlayClick}
         >
           <motion.div 
@@ -350,11 +350,11 @@ const LoanModal = ({
               transition: { duration: 0.15 }
             }}
             transition={{ duration: 0.2 }}
-            className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-700/50"
+            className="relative my-4 mx-4 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl w-full max-w-2xl overflow-hidden border border-gray-700/50"
           >
-            <div className="border-b border-gray-700/50 p-6">
+            <div className="border-b border-gray-700/50 p-4 md:p-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-semibold text-white">Loan Details</h3>
+                <h3 className="text-xl md:text-2xl font-semibold text-white">Loan Details</h3>
                 <button 
                   onClick={onClose}
                   className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
@@ -366,37 +366,37 @@ const LoanModal = ({
               </div>
             </div>
 
-            <div className="p-6 space-y-6">
-              <div className="grid grid-cols-2 gap-6">
+            <div className="p-4 md:p-6 max-h-[calc(100vh-8rem)] overflow-y-auto space-y-4 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 {loan.lender && loan.lender !== DEFAULT_ADDRESS && (
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="block text-sm text-gray-400 mb-3">Lender</span>
-                  <div className="flex items-center gap-3">
-                    {ansProfile?.lender?.imgUri ? (
-                      <img 
-                        src={ansProfile.lender.imgUri} 
-                        className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
-                        alt="" 
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
-                        <AiOutlineUser className="w-5 h-5 text-gray-400" />
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                    <span className="block text-sm text-gray-400 mb-3">Lender</span>
+                    <div className="flex items-center gap-3">
+                      {ansProfile?.lender?.imgUri ? (
+                        <img 
+                          src={ansProfile.lender.imgUri} 
+                          className="w-10 h-10 rounded-xl border-2 border-gray-700/50 shadow-lg" 
+                          alt="" 
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl border-2 border-gray-700/50 bg-gray-800 flex items-center justify-center">
+                          <AiOutlineUser className="w-5 h-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div>
+                        <h4 className="font-medium text-[15px] text-white">
+                          {ansProfile?.lender?.name || shortenAddress(loan.lender)}
+                        </h4>
+                        <p className="text-xs text-gray-400">
+                          {shortenAddress(loan.lender)}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <h4 className="font-medium text-[15px] text-white">
-                        {ansProfile?.lender?.name || shortenAddress(loan.lender)}
-                      </h4>
-                      <p className="text-xs text-gray-400">
-                        {shortenAddress(loan.lender)}
-                      </p>
                     </div>
                   </div>
-                </div>
                 )}
 
                 {loan.borrower && loan.borrower !== DEFAULT_ADDRESS && (
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
                     <span className="block text-sm text-gray-400 mb-3">Borrower</span>
                     <div className="flex items-center gap-3">
                       {ansProfile?.borrower?.imgUri ? (
@@ -423,73 +423,73 @@ const LoanModal = ({
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <span className="block text-sm font-medium text-gray-300 mb-2">Amount</span>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 md:px-4 md:py-3">
                     <div className="flex items-center gap-2">
                       <img 
                         src={getTokenInfo(loan.tokenRequested).logoURI}
                         alt={getTokenInfo(loan.tokenRequested).symbol}
-                        className="w-8 h-8 rounded-full"
+                        className="w-6 h-6 md:w-8 md:h-8 rounded-full"
                       />
-                      <span className="text-2xl font-semibold text-white">
+                      <span className="text-xl md:text-2xl font-semibold text-white">
                         {displayTokenAmount}
                       </span>
                       <span className="text-gray-400">
                         {getTokenInfo(loan.tokenRequested).symbol}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-gray-500">
+                    <div className="mt-1 text-xs md:text-sm text-gray-500">
                       ≈ ${usdTokenAmount}
                     </div>
                   </div>
                 </div>
                 <div>
                   <span className="block text-sm font-medium text-gray-300 mb-2">Collateral</span>
-                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3">
+                  <div className="bg-gray-900/50 border border-gray-700 rounded-xl px-3 py-2 md:px-4 md:py-3">
                     <div className="flex items-center gap-2">
                       <img 
                         src={getTokenInfo(loan.collateralToken).logoURI}
                         alt={getTokenInfo(loan.collateralToken).symbol}
-                        className="w-8 h-8 rounded-full"
+                        className="w-6 h-6 md:w-8 md:h-8 rounded-full"
                       />
-                      <span className="text-2xl font-semibold text-white">
+                      <span className="text-xl md:text-2xl font-semibold text-white">
                         {displayCollateralAmount}
                       </span>
                       <span className="text-gray-400">
                         {getTokenInfo(loan.collateralToken).symbol}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-gray-500">
+                    <div className="mt-1 text-xs md:text-sm text-gray-500">
                       ≈ ${usdCollateralAmount}
                     </div>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="text-sm text-gray-400 block mb-1">Time Left</span>
-                  <span className="text-lg font-medium text-white">
+              <div className="grid grid-cols-3 gap-3 md:gap-4">
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Time Left</span>
+                  <span className="text-base md:text-lg font-medium text-white">
                     <Timer createdAt={loan.createdAt} duration={loan.duration} />
                   </span>
                 </div>
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="text-sm text-gray-400 block mb-1">Interest</span>
-                  <span className="text-lg font-medium text-green-400">
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Interest</span>
+                  <span className="text-base md:text-lg font-medium text-green-400">
                     {(loan.interest / 100).toFixed(2)}%
                   </span>
                 </div>
-                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
-                  <span className="text-sm text-gray-400 block mb-1">Collateral Ratio</span>
-                  <span className={`text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
+                <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Collateral Ratio</span>
+                  <span className={`text-base md:text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
                     {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
               </div>
 
-              <div className="space-y-3 p-4 bg-gray-900/50 rounded-xl border border-gray-800">
+              <div className="space-y-3 p-3 md:p-4 bg-gray-900/50 rounded-xl border border-gray-800">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-400">Risk Level</span>
                   <div className="flex items-center gap-2">
@@ -566,7 +566,7 @@ const LoanModal = ({
 
               <div className="pt-2">
                 {error && (
-                  <div className="mb-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
+                  <div className="mb-4 p-3 md:p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm">
                     {error}
                   </div>
                 )}
