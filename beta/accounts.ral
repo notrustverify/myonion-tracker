@@ -111,17 +111,35 @@ Contract CollateralAccounts (
     }
 
     pub fn addAsset(caller: Address, nft: ByteVec, token: ByteVec, amount: U256) -> () {
-        // code ...
+        // perform checks
+
+        transferToken!(caller, caller, selfContractId!(), 1)
+        transferToken!(caller, caller, ALPH, dustAmount!())
+
         transferToken!(caller, selfAddress!(), token, amount)
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
+        // log it
     }
 
     pub fn removeAsset(nft: ByteVec, token: ByteVec, amount: U256) -> () {
-        // code ...
-        transferToken!(selfAddress!(), caller, token, amount)
+        // perform checks
+
+        transferToken!(caller, caller, selfContractId!(), 1)
+        transferToken!(caller, caller, ALPH, dustAmount!())
+
+        transferToken!(caller, selfAddress!(), token, amount)
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
+        // log it
     }
 
     pub fn payCollateral(caller: Address, nft: ByteVec, token: ByteVec, amount: U256) -> () {
-        // code ...
+        // perform checks
+
         transferToken!(selfAddress!(), caller, token, amount)
+        transferToken!(selfAddress!(), caller, ALPH, dustAmount!())
+
+        // log it
     } 
 }
