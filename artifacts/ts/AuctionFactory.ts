@@ -54,18 +54,18 @@ export namespace AuctionFactoryTypes {
     collateralAmount: bigint;
     tokenRequested: HexString;
     tokenAmount: bigint;
-    contract: HexString;
+    contractId: HexString;
   }>;
   export type BidAuctionEvent = ContractEvent<{
     who: Address;
-    contract: HexString;
+    contractId: HexString;
     token: HexString;
     amount: bigint;
     timeEnd: bigint;
   }>;
   export type RedeemAuctionEvent = ContractEvent<{
     who: Address;
-    contract: HexString;
+    contractId: HexString;
     token: HexString;
     tokenAmount: bigint;
   }>;
@@ -272,7 +272,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "507e4e50f0965a778ea9c9355368eefb75dc1bdc2b49c745354f5995b64db996",
+    "8b8611c5c8e63d581005f9b919f9c19c328ee023089d8c98aa29a2526157f506",
     AllStructs
   )
 );

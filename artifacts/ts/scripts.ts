@@ -60,7 +60,7 @@ export const AddCollateral = new ExecutableScript<{
 
 export const Bid = new ExecutableScript<{
   contract: HexString;
-  path: HexString;
+  id: HexString;
   token: HexString;
   amount: bigint;
 }>(Script.fromJson(BidScriptJson, "", AllStructs), getContractByCodeHash);
@@ -134,7 +134,7 @@ export const PayLoan = new ExecutableScript<{
 
 export const Redeem = new ExecutableScript<{
   contract: HexString;
-  path: HexString;
+  id: HexString;
 }>(Script.fromJson(RedeemScriptJson, "", AllStructs), getContractByCodeHash);
 
 export const RemoveCollateral = new ExecutableScript<{

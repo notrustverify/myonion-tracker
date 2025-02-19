@@ -37,13 +37,13 @@
     },
     "AuctionFactory": {
       "sourceFile": "auctions/auction_factory.ral",
-      "sourceCodeHash": "d231856bd7cf595bef88e496e09d6f9b66dacf0e97db8e52ec44f828005fd60c",
+      "sourceCodeHash": "664db65e3076d8ccd8a45229e2b235849727fb8a15475d9afa492b44aa2b0fb4",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "507e4e50f0965a778ea9c9355368eefb75dc1bdc2b49c745354f5995b64db996"
+      "codeHashDebug": "8b8611c5c8e63d581005f9b919f9c19c328ee023089d8c98aa29a2526157f506"
     },
     "Bid": {
       "sourceFile": "auctions/auction_factory.ral",
-      "sourceCodeHash": "d231856bd7cf595bef88e496e09d6f9b66dacf0e97db8e52ec44f828005fd60c",
+      "sourceCodeHash": "664db65e3076d8ccd8a45229e2b235849727fb8a15475d9afa492b44aa2b0fb4",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -133,7 +133,7 @@
     },
     "Redeem": {
       "sourceFile": "auctions/auction_factory.ral",
-      "sourceCodeHash": "d231856bd7cf595bef88e496e09d6f9b66dacf0e97db8e52ec44f828005fd60c",
+      "sourceCodeHash": "664db65e3076d8ccd8a45229e2b235849727fb8a15475d9afa492b44aa2b0fb4",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -163,13 +163,13 @@
     },
     "UpdateAuctionFactoryCode": {
       "sourceFile": "auctions/auction_factory.ral",
-      "sourceCodeHash": "d231856bd7cf595bef88e496e09d6f9b66dacf0e97db8e52ec44f828005fd60c",
+      "sourceCodeHash": "664db65e3076d8ccd8a45229e2b235849727fb8a15475d9afa492b44aa2b0fb4",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "UpdateAuctionFactoryFields": {
       "sourceFile": "auctions/auction_factory.ral",
-      "sourceCodeHash": "d231856bd7cf595bef88e496e09d6f9b66dacf0e97db8e52ec44f828005fd60c",
+      "sourceCodeHash": "664db65e3076d8ccd8a45229e2b235849727fb8a15475d9afa492b44aa2b0fb4",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },

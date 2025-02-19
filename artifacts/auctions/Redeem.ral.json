@@ -5,7 +5,7 @@
   "fieldsSig": {
     "names": [
       "contract",
-      "path"
+      "id"
     ],
     "types": [
       "AuctionFactory",
