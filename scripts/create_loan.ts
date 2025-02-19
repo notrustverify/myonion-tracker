@@ -25,7 +25,7 @@ const deployScript: DeployFunction<Settings> = async (
           tokenRequested: ALPH_TOKEN_ID,
           tokenAmount: ONE_ALPH * 1n,
           collateralToken: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
-          collateralAmount: 20000000000n,  
+          collateralAmount: 20000000000n,
           interest: 800n,
           duration: 86400000n,
           canLiquidate: true
