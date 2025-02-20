@@ -16,6 +16,7 @@ Contract Auction (
         InvalidCaller = 1
         AuctionNotDone = 2
         CopyNotUpgradable = 3
+        AuctionNotBidOn = 4
     }
 
     // helper functions
@@ -68,22 +69,21 @@ Contract Auction (
 
     // loaner can instantly redeem if no bid has been placed
     @using(checkExternalCaller = false, assetsInContract = true)
-    pub fn redeem(caller: Address) -> (ByteVec, U256) {
+    pub fn redeem(caller: Address) -> () {
         // loaner is instant redeeming
         if (caller == highestBidder && timeToEnd == 0) {
             // instant redeem
             let feeTotal = calculateFee(collateralAmount)
 
             transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-            transferToken!(selfAddress!(), parentContract, collateralToken, collateralAmount - feeTotal)
+            transferToken!(selfAddress!(), parentContract, collateralToken, feeTotal)
 
             destroySelf!(highestBidder)
-
-            return tokenRequested, tokenAmount
         }
 
         // auction has ended
         assert!(timeToEnd < blockTimeStamp!(), AuctionCodes.AuctionNotDone)
+        assert!(timeToEnd != 0, AuctionCodes.AuctionNotBidOn)
 
         // get auctionplace fees for liquidations
         let collateralFee = calculateFee(collateralAmount)
@@ -102,7 +102,7 @@ Contract Auction (
         transferToken!(selfAddress!(), parentContract, collateralToken, collateralFee)
         transferToken!(selfAddress!(), parentContract, tokenRequested, tokenFee)
 
-        return tokenRequested, tokenAmount
+        destroySelf!(highestBidder)
     }
 
     // allows you to upgrade the template while maintaining contract integrity with security

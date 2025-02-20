@@ -21,8 +21,8 @@ const deployScript: DeployFunction<Settings> = async (
     
     await UpdateAuctionFactoryCode.execute(signer, {
       initialFields: {
-          auctionFactory: "b88a9891213af953a06c0bdc5f4a03ee25ab4d24a3b911ff59c2320b8a54fd00",
-          newCode: AuctionFactory.contract.bytecode
+        auctionFactory: "b88a9891213af953a06c0bdc5f4a03ee25ab4d24a3b911ff59c2320b8a54fd00",
+        newCode: AuctionFactory.contract.bytecode
       },
       attoAlphAmount: DUST_AMOUNT
     })
