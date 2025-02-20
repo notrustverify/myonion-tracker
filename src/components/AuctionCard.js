@@ -52,7 +52,7 @@ const AuctionCard = ({
   const { account, signer } = useWallet()
   const config = getAlephiumLoanConfig()
   const tokenInfo = getTokenInfo(bidToken)
-  const currentBidValue = bidsAmount || bidAmount
+  const currentBidValue = bidAmount
   const minBidInTokens = currentBidValue / Math.pow(10, tokenInfo.decimals)
   
   useEffect(() => {
@@ -77,6 +77,13 @@ const AuctionCard = ({
   const displayCollateral = formatNumber(collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals))
   
   const displayCurrentBid = formatNumber(currentBidValue / Math.pow(10, getTokenInfo(bidToken).decimals))
+
+  const usdBidValue = !isPricesLoading && tokenPrices && tokenPrices[bidToken] ? 
+    formatNumber((bidAmount / Math.pow(10, getTokenInfo(bidToken).decimals)) * tokenPrices[bidToken]) : '...'
+  const usdCollateralValue = !isPricesLoading && tokenPrices && tokenPrices[collateralToken] ? 
+    formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]) : '...'
+  const usdCurrentBidValue = !isPricesLoading && tokenPrices && tokenPrices[bidToken] ? 
+    formatNumber((currentBidValue / Math.pow(10, getTokenInfo(bidToken).decimals)) * tokenPrices[bidToken]) : '...'
 
   const handleBid = async () => {
     setError('')
@@ -130,9 +137,17 @@ const AuctionCard = ({
     >
       <div className="absolute top-0 left-0 right-0 bg-purple-500/20 rounded-t-xl p-3 text-center border-b border-purple-500/20">
         <span className="text-xs text-purple-300 block mb-1">
-          {isAuctionEnded ? 'Auction ended' : 'Auction ends in'}
+          {highestBidder !== loaner ? (
+            <>
+              {isAuctionEnded ? 'Auction ended' : 'Auction ends in'}
+              <AuctionTimer endTime={timeToEnd} className="font-bold text-lg text-purple-300" />
+            </>
+          ) : (
+            <>
+              Place a bid to start the auction
+            </>
+          )}
         </span>
-        <AuctionTimer endTime={timeToEnd} className="font-bold text-lg text-purple-300" />
       </div>
 
       <div className="mt-16">
@@ -148,6 +163,7 @@ const AuctionCard = ({
                 />
                 <span className="text-2xl font-semibold">{displayCollateral}</span>
                 <span className="text-sm text-gray-400">{getTokenInfo(collateralToken).symbol}</span>
+                <span className="text-xs text-gray-500">(${usdCollateralValue})</span>
               </div>
             </div>
           </div>
@@ -156,11 +172,13 @@ const AuctionCard = ({
         <div className="mb-6 p-3 bg-gray-800/50 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs text-gray-400">
-              {currentBidValue ? 'Current Bid' : 'Starting Bid'}
+              {highestBidder !== loaner ? 'Current Bid' : 'Starting Bid'}
             </span>
-            <span className="text-xs text-purple-300">
-              Min: {formatNumber(minBidInTokens)} {tokenInfo.symbol}
-            </span>
+            {highestBidder !== loaner && (
+              <span className="text-xs text-purple-300">
+                Min: {formatNumber(minBidInTokens)} {tokenInfo.symbol}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-3">
             <img 
@@ -171,6 +189,7 @@ const AuctionCard = ({
             <div>
               <span className="font-medium text-lg">{displayCurrentBid}</span>
               <span className="text-gray-400 ml-2">{getTokenInfo(bidToken).symbol}</span>
+              <span className="text-xs text-gray-500 ml-2">(${usdCurrentBidValue})</span>
             </div>
           </div>
         </div>
@@ -186,13 +205,13 @@ const AuctionCard = ({
             <div className="flex flex-col gap-1 text-right">
               <span className="text-xs text-gray-400">Highest Bidder</span>
               <span className="text-sm font-medium text-purple-300">
-                {ansProfile?.highestBidder?.name || shortenAddress(highestBidder) || 'No bids yet'}
+                {highestBidder !== loaner ? ansProfile?.highestBidder?.name || shortenAddress(highestBidder) : 'No bids yet'}
               </span>
             </div>
           </div>
         </div>
 
-        {isAuctionEnded ? (
+        {isAuctionEnded && highestBidder === account?.address ? (
           <div className="mb-4">
             {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
             <button
@@ -220,7 +239,7 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        ) : (
+        ) : (!isAuctionEnded || highestBidder === loaner) && highestBidder !== account?.address ? (
           <div className="mb-4">
             <div className="relative">
               <input
@@ -279,7 +298,11 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        )}
+        ) : !isAuctionEnded && highestBidder === account?.address ? (
+          <div className="mb-4">
+            <p className="text-gray-400 text-sm">You are the highest bidder</p>
+          </div>
+        ) : null}
       </div>
     </motion.div>
   )

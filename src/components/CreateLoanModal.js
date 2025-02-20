@@ -100,6 +100,74 @@ const CustomTokenSelect = ({ value, onChange, options }) => {
   )
 }
 
+const CustomTimeUnitSelect = ({ value, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false)
+  const dropdownRef = useRef(null)
+  const timeUnits = [
+    { value: 'minutes', label: 'Minutes' },
+    { value: 'hours', label: 'Hours' },
+    { value: 'days', label: 'Days' },
+    { value: 'months', label: 'Months' }
+  ]
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  return (
+    <div className="relative min-w-[120px]" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center gap-2 bg-gray-900/50 border border-gray-700 rounded-xl 
+        px-3 py-3 text-white focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50"
+      >
+        <span>{timeUnits.find(unit => unit.value === value)?.label}</span>
+        <svg 
+          className="w-5 h-5 text-gray-400 ml-auto" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            strokeWidth={2} 
+            d="M19 9l-7 7-7-7" 
+          />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-10 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-lg">
+          <div className="max-h-[160px] overflow-y-auto">
+            {timeUnits.map(unit => (
+              <button
+                key={unit.value}
+                type="button"
+                onClick={() => {
+                  onChange({ target: { value: unit.value } })
+                  setIsOpen(false)
+                }}
+                className="w-full flex items-center px-3 py-2 hover:bg-gray-800 text-white text-left"
+              >
+                <span>{unit.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const CreateLoanModal = ({ 
   isOpen, 
   onClose,
@@ -114,6 +182,7 @@ const CreateLoanModal = ({
   const [collateralAmount, setCollateralAmount] = useState('')
   const [enableLiquidation, setEnableLiquidation] = useState(true)
   const [term, setTerm] = useState('')
+  const [termUnit, setTermUnit] = useState('minutes')
   const [interestRate, setInterestRate] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const config = getAlephiumLoanConfig()
@@ -189,6 +258,22 @@ const CreateLoanModal = ({
     setCollateralAmount(collateralTokenBalance.toString())
   }
 
+  const getTermInMilliseconds = () => {
+    const value = parseInt(term)
+    switch(termUnit) {
+      case 'minutes':
+        return value * 60 * 1000
+      case 'hours':
+        return value * 60 * 60 * 1000
+      case 'days':
+        return value * 24 * 60 * 60 * 1000
+      case 'months':
+        return value * 30 * 24 * 60 * 60 * 1000
+      default:
+        return value * 60 * 1000
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setIsSubmitting(true)
@@ -209,7 +294,7 @@ const CreateLoanModal = ({
         collateralTokenInfo?.id,
         adjustedCollateralAmount,
         adjustedInterestRate,
-        parseInt(term) * 60 * 1000,
+        getTermInMilliseconds(),
         enableLiquidation
       )
       window.addTransactionToast('New Loan Request', createLoanResponse.txId)
@@ -254,7 +339,7 @@ const CreateLoanModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[1000] flex items-center justify-center overflow-y-auto"
           onClick={handleOverlayClick}
         >
           <motion.div 
@@ -267,7 +352,7 @@ const CreateLoanModal = ({
               transition: { duration: 0.15 }
             }}
             transition={{ duration: 0.2 }}
-            className="bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-700/50"
+            className="relative my-4 bg-gradient-to-b from-gray-800 to-gray-900 rounded-xl max-w-2xl w-full mx-4 overflow-hidden border border-gray-700/50"
           >
             <div className="border-b border-gray-700/50 p-6">
               <div className="flex justify-between items-center">
@@ -283,7 +368,7 @@ const CreateLoanModal = ({
               </div>
             </div>
 
-            <div className="p-6">
+            <div className="p-6 max-h-[calc(100vh-8rem)] overflow-y-auto">
               <form className="space-y-6" onSubmit={handleSubmit}>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
@@ -361,38 +446,54 @@ const CreateLoanModal = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Term (minutes)
+                      Term
                     </label>
-                    <input
-                      type="number"
-                      value={term}
-                      onChange={(e) => setTerm(e.target.value)}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
-                      focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
-                      placeholder-gray-500 transition-all duration-200
-                      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="60"
-                      required
-                    />
+                    <div className="grid grid-cols-[1fr,auto] gap-2">
+                      <input
+                        type="number"
+                        value={term}
+                        onChange={(e) => setTerm(e.target.value)}
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
+                        focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
+                        placeholder-gray-500 transition-all duration-200
+                        [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="60"
+                        required
+                      />
+                      <CustomTimeUnitSelect 
+                        value={termUnit}
+                        onChange={(e) => setTermUnit(e.target.value)}
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Interest Rate (%)
+                      Interest Rate
                     </label>
-                    <input
-                      type="number"
-                      value={interestRate}
-                      onChange={(e) => setInterestRate(e.target.value)}
-                      className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
-                      focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
-                      placeholder-gray-500 transition-all duration-200
-                      [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      placeholder="5"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={interestRate}
+                        onChange={(e) => {
+                          const value = Math.min(Math.max(0, parseFloat(e.target.value) || 0), 100)
+                          setInterestRate(value.toString())
+                        }}
+                        min="0"
+                        max="100"
+                        className="w-full bg-gray-900/50 border border-gray-700 rounded-xl px-4 py-3 text-white 
+                        focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50
+                        placeholder-gray-500 transition-all duration-200 pr-8
+                        [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        placeholder="5"
+                        required
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                        %
+                      </div>
+                    </div>
                   </div>
                 </div>
 

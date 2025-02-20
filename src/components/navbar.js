@@ -10,6 +10,9 @@ import { FaCoins } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import ConnectWalletModal from "./ConnectWalletModal";
 import { getAlephiumLoanConfig } from '../lib/configs';
+import { HiMenuAlt4 } from "react-icons/hi";
+import { IoClose } from "react-icons/io5";
+
 export function Navbar() {
   const [mounted, setMounted] = useState(false);
   const [isWalletDropdownOpen, setIsWalletDropdownOpen] = useState(false);
@@ -20,6 +23,7 @@ export function Navbar() {
   const [isCopied, setIsCopied] = useState(false);
   const [isConnectModalOpen, setIsConnectModalOpen] = useState(false);
   const config = getAlephiumLoanConfig();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -58,6 +62,21 @@ export function Navbar() {
     setIsConnectModalOpen(false);
   };
 
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.mobile-menu-container')) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isMobileMenuOpen]);
+
   if (!mounted) {
     return (
       <div className="bg-gradient-to-b from-gray-900 to-gray-800/95 backdrop-blur-sm border-b border-gray-700/50 relative z-[100]">
@@ -70,30 +89,16 @@ export function Navbar() {
             </Link>
           </div>
 
-          <nav className="z-50 hidden space-x-6 md:flex">
-            <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Loans
-            </Link>
-            <Link href="/liquidation" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Liquidation
-            </Link>
-            <Link href="/auctions" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
-              Auctions
-            </Link>
-          </nav>
-
-          <div className="z-50 flex items-center space-x-4">
-            <button
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 via-green-500/20 to-green-400/10 
-                hover:from-green-500/20 hover:via-green-500/30 hover:to-green-400/20 
-                border border-green-500/20 hover:border-green-500/30 
-                transition-all duration-300 ease-out
-                text-green-400 hover:text-green-300"
-            >
-              <PiWalletBold className="w-5 h-5" />
-              <span>Connect</span>
-            </button>
-          </div>
+          <button
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/10 via-green-500/20 to-green-400/10 
+              hover:from-green-500/20 hover:via-green-500/30 hover:to-green-400/20 
+              border border-green-500/20 hover:border-green-500/30 
+              transition-all duration-300 ease-out
+              text-green-400 hover:text-green-300"
+          >
+            <PiWalletBold className="w-5 h-5" />
+            <span className="hidden md:inline">Connect</span>
+          </button>
         </header>
       </div>
     );
@@ -111,7 +116,7 @@ export function Navbar() {
             </Link>
           </div>
 
-          <nav className="z-50 hidden space-x-6 md:flex">
+          <nav className="z-50 hidden md:flex space-x-6">
             <Link href="/loan" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
               Loans
             </Link>
@@ -250,14 +255,70 @@ export function Navbar() {
                         text-green-400 hover:text-green-300"
                     >
                       <PiWalletBold className="w-5 h-5" />
-                      <span>Connect</span>
+                      <span className="hidden md:inline">Connect</span>
                     </button>
                   );
                 }}
               </AlephiumConnectButton.Custom>
             )}
+
+            <button
+              onClick={toggleMobileMenu}
+              className="md:hidden text-gray-300 hover:text-green-400 transition-colors p-2"
+            >
+              {isMobileMenuOpen ? (
+                <IoClose className="w-6 h-6" />
+              ) : (
+                <HiMenuAlt4 className="w-6 h-6" />
+              )}
+            </button>
           </div>
         </header>
+
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="md:hidden mobile-menu-container border-t border-gray-700/50"
+            >
+              <nav className="container mx-auto px-6 py-4 flex flex-col space-y-4">
+                <Link 
+                  href="/loan" 
+                  className="text-gray-300 hover:text-green-400 transition-colors duration-200 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Loans
+                </Link>
+                <Link 
+                  href="/liquidation" 
+                  className="text-gray-300 hover:text-green-400 transition-colors duration-200 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Liquidation
+                </Link>
+                <Link 
+                  href="/auctions" 
+                  className="text-gray-300 hover:text-green-400 transition-colors duration-200 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Auctions
+                </Link>
+                {wallet?.account?.address && (
+                  <Link 
+                    href="/dashboard" 
+                    className="text-gray-300 hover:text-green-400 transition-colors duration-200 py-2"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                )}
+              </nav>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <div className="z-[1000]">

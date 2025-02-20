@@ -78,13 +78,13 @@ export default function AuctionsPage() {
       
       const transformedAuctions = data.map(auction => ({
         id: auction.id,
-        bidAmount: auction.bidAmount || auction.tokenAmount,
-        tokenRequested: auction.tokenRequested,
+        bidAmount: auction.bidAmount,
+        bidToken: auction.bidToken,
         collateralAmount: auction.collateralAmount,
         collateralToken: auction.collateralToken,
         term: parseInt(auction.duration),
-        highestBidder: auction.highestBidder || auction.loanee,
-        loaner: auction.creator,
+        highestBidder: auction.highestBidder,
+        loaner: auction.loaner,
         status: auction.active ? 'active' : 'pending',
         createdAt: auction.createdAt,
         timeToEnd: auction.timeToEnd,
@@ -96,7 +96,7 @@ export default function AuctionsPage() {
 
       if (!isPricesLoading) {
         const total = transformedAuctions.reduce((sum, auction) => {
-          const tokenPrice = tokenPrices[auction.tokenRequested] || 0
+          const tokenPrice = tokenPrices[auction.bidToken] || 0
           const auctionValue = (parseFloat(auction.bidAmount) / 1e18) * tokenPrice
           return sum + auctionValue
         }, 0)
@@ -165,7 +165,7 @@ export default function AuctionsPage() {
     { 
       label: 'Average Collateral Ratio', 
       value: `${auctions.length ? Math.round(auctions.reduce((acc, auction) => {
-        const tokenPrice = tokenPrices[auction.tokenRequested] || 0
+        const tokenPrice = tokenPrices[auction.bidToken] || 0
         const collateralPrice = tokenPrices[auction.collateralToken] || 0
         
         const auctionValue = (parseFloat(auction.bidAmount) / 1e18) * tokenPrice
