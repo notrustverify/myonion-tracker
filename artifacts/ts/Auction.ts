@@ -64,7 +64,7 @@ export namespace AuctionTypes {
     };
     redeem: {
       params: CallContractParams<{ caller: Address }>;
-      result: CallContractResult<[HexString, bigint]>;
+      result: CallContractResult<null>;
     };
     upgradeAuctionCode: {
       params: CallContractParams<{ newCode: HexString }>;
@@ -145,6 +145,7 @@ class Factory extends ContractFactory<AuctionInstance, AuctionTypes.Fields> {
       InvalidCaller: BigInt("1"),
       AuctionNotDone: BigInt("2"),
       CopyNotUpgradable: BigInt("3"),
+      AuctionNotBidOn: BigInt("4"),
     },
   };
 
@@ -174,7 +175,7 @@ class Factory extends ContractFactory<AuctionInstance, AuctionTypes.Fields> {
         AuctionTypes.Fields,
         { caller: Address }
       >
-    ): Promise<TestContractResultWithoutMaps<[HexString, bigint]>> => {
+    ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "redeem", params, getContractByCodeHash);
     },
     upgradeAuctionCode: async (
@@ -219,7 +220,7 @@ export const Auction = new Factory(
   Contract.fromJson(
     AuctionContractJson,
     "",
-    "09f70ceed1fe2b3aa3d24af20292f9f76cd4f1e3c0d3964dd65c85d86d688f94",
+    "9598516deb29a1cc200ac7bc41627241f18532d1a0990bb194463d4d5c3eea02",
     AllStructs
   )
 );

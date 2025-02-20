@@ -21,9 +21,7 @@ Contract AuctionFactory (
     )
     event RedeemAuction(
         who: Address,
-        contractId: ByteVec,
-        token: ByteVec,
-        tokenAmount: U256
+        contractId: ByteVec
     )
 
     enum AuctionCodes {
@@ -78,7 +76,7 @@ Contract AuctionFactory (
         let auction = Auction(contract)
         let caller = callerAddress!()
 
-        let (t, a, time) = auction.bid{caller -> token: amount}(caller, amount)
+        let (t, a, time) = auction.bid{caller -> token: amount, ALPH: dustAmount!()}(caller, amount)
 
         emit BidAuction(
             caller,
@@ -95,13 +93,11 @@ Contract AuctionFactory (
         let auction = Auction(contract)
         let caller = callerAddress!()
 
-        let (token, amount) = auction.redeem(caller)
+        auction.redeem(caller)
 
         emit RedeemAuction(
             caller,
-            contract,
-            token,
-            amount
+            contract
         )
     }
 
@@ -134,7 +130,7 @@ TxScript Bid (
     token: ByteVec,
     amount: U256
 ) {
-    contract.bid{callerAddress!() -> token: amount}(id, token, amount)
+    contract.bid{callerAddress!() -> token: amount, ALPH: dustAmount!()}(id, token, amount)
 }
 
 TxScript Redeem (

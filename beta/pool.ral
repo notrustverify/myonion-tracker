@@ -1,14 +1,21 @@
 import "std/fungible_token_interface"
 
-struct CollateralInfo {
-    mut collateral: U256,
-    mut usedCollateral: U256
+// Structs
+struct LoanInfo {
+    principal: U256,          // Outstanding principal
+    collateralLocked: U256,   // Collateral locked for this loan
+    borrower: Address,        // Borrower address
+    lastInterestUpdate: U256  // Timestamp of last interest update
 }
 
-struct LoanInfo {
-    mut loanAmount: U256,
-    borrower: Address,
-    mut lastInterestUpdate: U256
+struct CollateralInfo {
+    totalCollateral: U256,    // Total collateral deposited
+    usedCollateral: U256      // Collateral locked for loans
+}
+
+struct BadDebtCollateral {
+    amount: U256,
+    liquidator: Address
 }
 
 Contract Pool (
@@ -23,33 +30,36 @@ Contract Pool (
     symbol: ByteVec,
     name: ByteVec,
     // pool specs
-    mut exchangeRate: U256,
-    mut sPoolSupply: U256,
-    mut totalDeposits: U256,
-    mut totalBorrowed: U256,
-    collateralFactor: U256,
-    mut interestRate: U256,
-    mut multiplier: U256,
-    mut baseRate: U256,
-    mut liquidationBonus: U256,
+    totalDeposits: U256,
+    totalBorrowed: U256,
+    sPoolSupply: U256,
+    exchangeRate: U256,         // 1000000000000000000 // 1e18, initial 1:1 ratio
+    interestRate: U256,         // 200 // 2% annual in basis points (100 = 1%)
+    baseRate: U256,             // 100 // 1% base rate
+    slope: U256,                // 400 // Interest rate slope factor
+    collateralFactor: U256,     // 15000 // 150% collateral ratio in basis points
     oracle: IDIAOracle
 ) implements IFungibleToken {
     
-    mapping [ByteVec, LoanInfo] loans
+    // Mappings
+    // Loans: (Address, ByteVec) -> LoanInfo for multiple loans per user
+    mapping [Address, LoanInfo] loans
+    // Collateral: Address -> CollateralInfo
     mapping [Address, CollateralInfo] collateral
+    // BadDebtCollateral: For liquidation tracking (not implemented here)
     mapping [ByteVec, BadDebtCollateral] badDebtCollateral
 
+    // Error codes
     enum PoolCodes {
-        CannotDepositZero = 0
-        CannotBorrowZero = 1
-        InsufficientLiquidity = 2
-        InsufficientCollateral = 3
-        NoActiveLoan = 4
+        CannotDepositZero = 0,
+        CannotBorrowZero = 1,
+        InsufficientLiquidity = 2,
+        InsufficientCollateral = 3,
+        NoActiveLoan = 4,
         NoOverPayment = 5
     }
 
-    // poolToken
-
+    // IFungibleToken implementation for sPoolToken
     pub fn getSymbol() -> (ByteVec) {
         return symbol
     }
@@ -63,57 +73,44 @@ Contract Pool (
     }
 
     pub fn getTotalSupply() -> (U256) {
-        return 100000000000000000000000000000000 // 100 trillion
+        return sPoolSupply
     }
 
-    pub fn getPoolTokens() -> (ByteVec, ByteVec) {
-        return poolToken, collateralToken
+    fn min(a: U256, b: U256) -> (U256) {
+        if (a < b) { return a }
+        return b
     }
 
     fn utilizationRate() -> (U256) {
-        if (totalDeposits == 0) {
-            return 0
+        if (totalDeposits == 0) { 
+            return 0 
         }
-        return (totalBorrowed * 10000) / totalDeposits
+        return (totalBorrowed * 10000) / totalDeposits // In basis points
     }
 
     @using(updateFields = true)
     fn updateInterestRate() -> () {
-        let utilization = utilizationRate()
-        
-        // Dynamically adjust multiplier based on utilization
-        if (utilization < 5000) { // < 50% utilization
-            multiplier = 10 // Low sensitivity
-        } else if (utilization < 8000) { // 50% - 80%
-            multiplier = 25 // Medium sensitivity
-        } else { // > 80%
-            multiplier = 50 // High sensitivity
-        }
-
-        // Compute interest rate dynamically
-        interestRate = baseRate + (utilization * multiplier) / 10000
+        let util = utilizationRate()
+        // Linear model: interestRate = baseRate + (util * slope) / 10000
+        interestRate = baseRate + (util * slope) / 10000
     }
 
     @using(updateFields = true)
     fn updateExchangeRate() -> () {
-        if (sPoolSupply > 0) {
-            exchangeRate = (totalDeposits + totalBorrowed) / sPoolSupply
+        let totalPoolToken = tokenBalance!(poolToken)
+        if (sPoolSupply == 0) {
+            exchangeRate = 1000000000000000000 // 1e18
+        } else {
+            exchangeRate = (totalPoolToken) / sPoolSupply
         }
     }
 
-    fn calculateAccruedInterest(loan: LoanInfo) -> (U256) {
-        let elapsedTime = blockTimeStamp!() - loan.lastInterestUpdate
-        return (loan.loanAmount * interestRate * elapsedTime) / (365 * 86400 * 10000)
+    fn calculateAccruedInterest(loanInfo: LoanInfo) -> (U256) {
+        let timeElapsed = blockTimeStamp!() - loanInfo.lastInterestUpdate
+        // Interest = principal * rate * time / (seconds per year * 10000)
+        let secondsPerYear = 31536000
+        return (loanInfo.principal * interestRate * timeElapsed) / (secondsPerYear * 10000)
     }
-
-    fn min(a: U256, b: U256) -> (U256) {
-        if (a < b) {
-            return a
-        }
-        return b
-    }
-
-    // calculations
 
     fn determineCollateralRatio(
         tokenAmount: U256,
@@ -162,193 +159,20 @@ Contract Pool (
         return requiredCollateralAmount
     }
 
-    @using(updateFields = true, checkExternalCaller = true)
-    pub fn editBaseRate(newRate: U256) -> () {
-        checkCaller!(callerAddress!() == admin, 0)
-
-        baseRate = newRate
+    pub fn deposit() -> () {
+        // .. code
     }
 
-    @using(updateFields = true, checkExternalCaller = true)
-    pub fn editLiquidationBonus(newBonus: U256) -> () {
-        checkCaller!(callerAddress!() == admin, 0)
-
-        liquidationBonus = newBonus
+    pub fn withdraw() -> () {
+        // .. code
     }
 
-    pub fn deposit(caller: Address, amount: U256) -> () {
-        assert!(amount > 0, PoolCodes.CannotDepositZero)
-
-        transferToken!(caller, selfAddress!(), poolToken, amount)
-
-        let mintedShares = amount / exchangeRate
-        sPoolSupply = sPoolSupply + mintedShares
-        totalDeposits = totalDeposits + amount
-
-        transferToken!(selfAddress!(), caller, selfContractId!(), mintedShares)
-
-        updateInterestRate()
-        updateExchangeRate()
+    pub fn borrow() -> () {
+        // .. code
     }
 
-    pub fn withdraw(caller: Address, sPoolAmount: U256) -> () {
-        assert!(sPoolAmount > 0, PoolCodes.CannotDepositZero)
-
-        let withdrawAmount = (sPoolAmount * exchangeRate)
-        assert!(totalDeposits >= withdrawAmount, PoolCodes.InsufficientLiquidity)
-
-        sPoolSupply = sPoolSupply - sPoolAmount
-        totalDeposits = totalDeposits - withdrawAmount
-
-        transferToken!(caller, selfAddress!(), selfContractId!(), sPoolAmount)
-        transferToken!(selfAddress!(), caller, poolToken, withdrawAmount)
-
-        updateInterestRate()
-        updateExchangeRate()
+    pub fn liquidate() -> () {
+        // .. code
     }
 
-    // borrow -> functions going down need edits
-    @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
-    pub fn borrow(caller: Address, amount: U256, collat: U256, path: ByteVec) -> () {
-        assert!(amount > 0, PoolCodes.CannotBorrowZero)
-        assert!(totalDeposits - totalBorrowed >= amount, PoolCodes.InsufficientLiquidity)
-
-        let requiredCollateral = determineCollateralAmount(amount, collateralFactor)
-        depositCollateral{caller -> collateralToken: requiredCollateral, ALPH: mapEntryDeposit!()}(caller, requiredCollateral)
-
-        let mut info = collateral[caller]
-        info.usedCollateral = info.usedCollateral + requiredCollateral
-        collateral[caller] = info
-
-        let accruedInterest = (amount * interestRate) / 10000
-        let loan = LoanInfo{
-            loanAmount: amount + accruedInterest,
-            borrower: caller,
-            lastInterestUpdate: blockTimeStamp!()
-        }
-
-        loans.insert!(caller, path, loan)
-
-        totalBorrowed = totalBorrowed + (amount + accruedInterest)
-        transferToken!(selfAddress!(), caller, poolToken, amount)
-
-        updateInterestRate()
-        updateExchangeRate()
-    }
-
-    @using(updateFields = true)
-    pub fn liquidate(caller: Address, path: ByteVec) -> (U256, U256, U256, ByteVec) {
-        assert!(loans.contains!(path), PoolCodes.NoActiveLoan)
-
-        let loanInfo = loans[path]
-        let borrower = loanInfo.borrower
-        let loanAmount = loanInfo.loanAmount + calculateAccruedInterest(loanInfo)
-
-        assert!(collateral.contains!(borrower), PoolCodes.InsufficientCollateral)
-        let mut collateralInfo = collateral[borrower]
-
-        let collateralRatio = determineCollateralRatio(loanAmount, collateralInfo.collateral, collateralFactor)
-        assert!(collateralRatio < collateralFactor, PoolCodes.InsufficientCollateral)
-
-        let requiredCollateral = determineCollateralAmount(loanAmount, 15000)
-        let liquidationReward = (requiredCollateral * liquidationBonus) / 10000
-
-        let liquidationAmount = min(requiredCollateral, collateralInfo.collateral)
-
-        // Transfer liquidation bonus to liquidator
-        transferToken!(selfAddress!(), caller, collateralToken, liquidationReward)
-
-        // Remove collateral from borrower
-        collateralInfo.collateral = collateralInfo.collateral - liquidationAmount
-
-        if (collateralInfo.collateral == 0) {
-            collateral.remove!(caller, borrower)
-        } else {
-            collateral[borrower] = collateralInfo
-        }
-
-        let b = BadDebtCollateral {
-            collateralAmount: liquidationAmount,
-            highestBid: 0,
-            topBidder: nullContractAddress!(),
-            auctionEndTime: blockTimeStamp!() + 
-        }
-
-        // Store bad debt collateral for auction
-        badDebtCollateral.insert!(caller, path, liquidationAmount)
-
-        // Remove the loan
-        loans.remove!(caller, path)
-        totalBorrowed = totalBorrowed - loanAmount
-
-        updateInterestRate()
-
-        // Start auction
-        highestBid.insert!(path, 0)
-        topBidder.insert!(path, selfAddress!()) // Default to contract address (no bids yet)
-        auctionEndTime.insert!(path, blockTimestamp!() + (3 * 86400)) // 3-day auction
-
-        return (loanAmount * 90) / 100, liquidationAmount, blockTimestamp!() + (3 * 86400), path
-    }
-
-    pub fn repay(caller: Address, path: ByteVec, amount: U256) -> (U256) {
-        assert!(loans.contains!(path), PoolCodes.NoActiveLoan)
-        assert!(amount > 0, PoolCodes.CannotDepositZero)
-
-        let loanInfo = loans[path]
-        let accruedInterest = calculateAccruedInterest(loanInfo)
-        let remainingDebt = loanInfo.loanAmount + accruedInterest - amount
-
-        assert!(amount <= loanInfo.loanAmount, PoolCodes.NoOverPayment) 
-
-        transferToken!(caller, selfAddress!(), poolToken, amount)
-
-        if (remainingDebt == 0) {
-            loans.remove!(caller, path)
-        } else {
-            loans[path].loanAmount = remainingDebt
-            loans[path].lastInterestUpdate = blockTimeStamp!()
-        }
-
-        totalBorrowed = totalBorrowed - amount
-
-        updateInterestRate()
-        updateExchangeRate()
-
-        return remainingDebt
-    }
-
-    // auction functions
-
-    @using(updateFields = true)
-    pub fn bid(caller: Address, path: ByteVec, bidAmount: U256) -> () {
-        assert!(badDebtCollateral.contains!(path), PoolCodes.NoActiveLoan)
-        assert!(blockTimestamp!() < auctionEndTime[path], PoolCodes.NoActiveLoan) // Ensure auction is still active
-        assert!(bidAmount > highestBid[path], PoolCodes.NoOverPayment) // Bid must be higher than current highest
-
-        // Refund previous highest bidder
-        if (topBidder[path] != selfAddress!()) {
-            transferToken!(selfAddress!(), topBidder[path], poolToken, highestBid[path])
-        }
-
-        // Accept new bid
-        transferToken!(caller, selfAddress!(), poolToken, bidAmount)
-        highestBid[path] = bidAmount
-        topBidder[path] = caller
-    }
-
-    @using(updateFields = true)
-    pub fn claimAuction(caller: Address, path: ByteVec) -> () {
-        assert!(blockTimestamp!() >= auctionEndTime[path], PoolCodes.NoActiveLoan) // Auction must be over
-        assert!(topBidder[path] == caller, PoolCodes.NoActiveLoan) // Only winner can claim
-
-        let collateralAmount = badDebtCollateral[path]
-        transferToken!(selfAddress!(), caller, collateralToken, collateralAmount)
-
-        // Cleanup auction state
-        highestBid.remove!(path)
-        topBidder.remove!(path)
-        auctionEndTime.remove!(path)
-        badDebtCollateral.remove!(path)
-    }
 }

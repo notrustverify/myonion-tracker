@@ -66,8 +66,6 @@ export namespace AuctionFactoryTypes {
   export type RedeemAuctionEvent = ContractEvent<{
     who: Address;
     contractId: HexString;
-    token: HexString;
-    tokenAmount: bigint;
   }>;
 
   export interface CallMethodTable {
@@ -272,7 +270,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "8b8611c5c8e63d581005f9b919f9c19c328ee023089d8c98aa29a2526157f506",
+    "cc3b14d822bfa15b24c04dd95b633442ca13c89dac57d5f938e59f9f514d0273",
     AllStructs
   )
 );
