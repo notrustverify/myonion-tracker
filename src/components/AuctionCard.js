@@ -136,11 +136,13 @@ const AuctionCard = ({
       className="bg-gradient-to-br from-purple-900/20 to-gray-900/90 rounded-xl p-5 text-white border border-purple-700/50 transition-all hover:shadow-xl hover:shadow-purple-900/20 relative"
     >
       <div className="absolute top-0 left-0 right-0 bg-purple-500/20 rounded-t-xl p-3 text-center border-b border-purple-500/20">
-        <span className="text-xs text-purple-300 block mb-1">
+        <span className="text-xs text-purple-300 flex items-center justify-center gap-2">
           {highestBidder !== loaner ? (
             <>
               {isAuctionEnded ? 'Auction ended' : 'Auction ends in'}
-              <AuctionTimer endTime={timeToEnd} className="font-bold text-lg text-purple-300" />
+              <span className="bg-purple-600/80 px-3 py-1 rounded text-sm font-semibold text-white">
+                <AuctionTimer endTime={endDate} className="font-medium" />
+              </span>
             </>
           ) : (
             <>

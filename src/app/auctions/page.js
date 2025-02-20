@@ -157,7 +157,7 @@ export default function AuctionsPage() {
       value: auctions.length 
     },
     { 
-      label: 'Total Value', 
+      label: 'Total Collateral Value', 
       value: `$${totalAuctionsValue < 1 
         ? totalAuctionsValue.toFixed(2)
         : new Intl.NumberFormat('en-US').format(Math.round(totalAuctionsValue))}` 
