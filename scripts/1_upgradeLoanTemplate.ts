@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { ForceCancel, Loan, UpdateLoanCode } from "../artifacts/ts";
+import { Auction, ForceCancel, Loan, UpdateAuctionCode, UpdateLoanCode } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -28,9 +28,19 @@ const deployScript: DeployFunction<Settings> = async (
     })
     */
 
+    /*
     await ForceCancel.execute(signer, {
       initialFields: {
           loan: "38d777236fc0553ea388b43355f01e3ffb8047b2d7c9fe07d9b6fb5aa506be00",
+      },
+      attoAlphAmount: DUST_AMOUNT
+    })
+    */
+
+    await UpdateAuctionCode.execute(signer, {
+      initialFields: {
+          auction: "b09f3c5d7d7c504ae7f1d7e0cd1419dd4d667bd6d1e93e12f81cff9659627100",
+          newCode: Auction.contract.bytecode
       },
       attoAlphAmount: DUST_AMOUNT
     })
