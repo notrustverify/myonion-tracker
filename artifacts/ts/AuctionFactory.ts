@@ -107,6 +107,14 @@ export namespace AuctionFactoryTypes {
       }>;
       result: CallContractResult<null>;
     };
+    withdrawAuctionFactoryFees: {
+      params: CallContractParams<{
+        who: Address;
+        token: HexString;
+        amount: bigint;
+      }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -160,6 +168,14 @@ export namespace AuctionFactoryTypes {
         newCode: HexString;
         immFields: HexString;
         mutFields: HexString;
+      }>;
+      result: SignExecuteScriptTxResult;
+    };
+    withdrawAuctionFactoryFees: {
+      params: SignExecuteContractMethodParams<{
+        who: Address;
+        token: HexString;
+        amount: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -254,6 +270,19 @@ class Factory extends ContractFactory<
         getContractByCodeHash
       );
     },
+    withdrawAuctionFactoryFees: async (
+      params: TestContractParamsWithoutMaps<
+        AuctionFactoryTypes.Fields,
+        { who: Address; token: HexString; amount: bigint }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "withdrawAuctionFactoryFees",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(
@@ -270,7 +299,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "cc3b14d822bfa15b24c04dd95b633442ca13c89dac57d5f938e59f9f514d0273",
+    "92a910144e9958809a33c33730ae15402e2aae773aaf165fba6240b06c09aec6",
     AllStructs
   )
 );
@@ -416,6 +445,19 @@ export class AuctionFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    withdrawAuctionFactoryFees: async (
+      params: AuctionFactoryTypes.CallMethodParams<"withdrawAuctionFactoryFees">
+    ): Promise<
+      AuctionFactoryTypes.CallMethodResult<"withdrawAuctionFactoryFees">
+    > => {
+      return callMethod(
+        AuctionFactory,
+        this,
+        "withdrawAuctionFactoryFees",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -462,6 +504,18 @@ export class AuctionFactoryInstance extends ContractInstance {
         AuctionFactory,
         this,
         "updateAuctionFactoryFields",
+        params
+      );
+    },
+    withdrawAuctionFactoryFees: async (
+      params: AuctionFactoryTypes.SignExecuteMethodParams<"withdrawAuctionFactoryFees">
+    ): Promise<
+      AuctionFactoryTypes.SignExecuteMethodResult<"withdrawAuctionFactoryFees">
+    > => {
+      return signExecuteMethod(
+        AuctionFactory,
+        this,
+        "withdrawAuctionFactoryFees",
         params
       );
     },

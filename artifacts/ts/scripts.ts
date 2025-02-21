@@ -22,6 +22,7 @@ import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json"
 import { default as ForfeitLoanScriptJson } from "../loans/ForfeitLoan.ral.json";
 import { default as InsertPairScriptJson } from "../oracle/InsertPair.ral.json";
 import { default as LiquidationLoanScriptJson } from "../loans/LiquidationLoan.ral.json";
+import { default as MintSupplyScriptJson } from "../test-contracts/MintSupply.ral.json";
 import { default as PayLoanScriptJson } from "../loans/PayLoan.ral.json";
 import { default as RedeemScriptJson } from "../auctions/Redeem.ral.json";
 import { default as RemoveCollateralScriptJson } from "../loans/RemoveCollateral.ral.json";
@@ -38,6 +39,7 @@ import { default as UpdateLoanFactoryFieldsScriptJson } from "../loans/UpdateLoa
 import { default as UpdateLoanFieldsScriptJson } from "../loans/UpdateLoanFields.ral.json";
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
+import { default as WithdrawAuctionFactoryFeesScriptJson } from "../auctions/WithdrawAuctionFactoryFees.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
 import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
@@ -124,6 +126,14 @@ export const LiquidationLoan = new ExecutableScript<{
   contract: HexString;
 }>(
   Script.fromJson(LiquidationLoanScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const MintSupply = new ExecutableScript<{
+  contract: HexString;
+  amount: bigint;
+}>(
+  Script.fromJson(MintSupplyScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -260,6 +270,16 @@ export const UpdatePair = new ExecutableScript<{
   price: bigint;
 }>(
   Script.fromJson(UpdatePairScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const WithdrawAuctionFactoryFees = new ExecutableScript<{
+  auction: HexString;
+  who: Address;
+  token: HexString;
+  amount: bigint;
+}>(
+  Script.fromJson(WithdrawAuctionFactoryFeesScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

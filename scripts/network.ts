@@ -2,6 +2,6 @@ import { NetworkId, NodeProvider, ONE_ALPH, addressFromContractId } from "@aleph
 import { LoanInstance } from "../artifacts/ts"
 
 export function getNetwork(): NetworkId {
-    const network = (process.env.NEXT_PUBLIC_NETWORK ?? 'mainnet') as NetworkId
+    const network = (process.env.NEXT_PUBLIC_NETWORK ?? 'testnet') as NetworkId
     return network
 }

@@ -56,7 +56,7 @@ Contract Auction (
         
         // init condition
         if (timeToEnd == 0) {
-            timeToEnd = blockTimeStamp!() + 10800000 // 3 hours till auction end once bid
+            timeToEnd = blockTimeStamp!() + 300000 // 3 hours till auction end once bid
         }
 
         // anti sniper
