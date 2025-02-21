@@ -1,55 +1,28 @@
 import "std/fungible_token_interface"
 
-// Structs
-struct LoanInfo {
-    principal: U256,          // Outstanding principal
-    collateralLocked: U256,   // Collateral locked for this loan
-    borrower: Address,        // Borrower address
-    lastInterestUpdate: U256  // Timestamp of last interest update
-}
+// Formulas
+// STokens = DepositedAmount / ExchnageRate
+// ExchnageRate(new) = TotalPoolAssets / TotalSTokens
+// AssetsRecieved = sTokens * ExchangeRate
 
-struct CollateralInfo {
-    totalCollateral: U256,    // Total collateral deposited
-    usedCollateral: U256      // Collateral locked for loans
-}
-
-struct BadDebtCollateral {
-    amount: U256,
-    liquidator: Address
-}
+// ALPH : ALPH Pool Loans
 
 Contract Pool (
     admin: Address,
     poolToken: ByteVec,
     poolDecimals: U256,
     poolPair: ByteVec,
-    collateralToken: ByteVec,
-    collateralDecimals: U256,
-    collateralPair: ByteVec,
-    // sPoolToken
-    symbol: ByteVec,
+    // sPoolToken and Pool values
     name: ByteVec,
+    symbol: ByteVec,
+    mut sTokenSupply: U256,
+    mut exchangeRate: U256,
+    mut totalPoolAssets: U256,
+    mut depositedAmount: U256,
     // pool specs
-    totalDeposits: U256,
-    totalBorrowed: U256,
-    sPoolSupply: U256,
-    exchangeRate: U256,         // 1000000000000000000 // 1e18, initial 1:1 ratio
-    interestRate: U256,         // 200 // 2% annual in basis points (100 = 1%)
-    baseRate: U256,             // 100 // 1% base rate
-    slope: U256,                // 400 // Interest rate slope factor
-    collateralFactor: U256,     // 15000 // 150% collateral ratio in basis points
     oracle: IDIAOracle
 ) implements IFungibleToken {
-    
-    // Mappings
-    // Loans: (Address, ByteVec) -> LoanInfo for multiple loans per user
-    mapping [Address, LoanInfo] loans
-    // Collateral: Address -> CollateralInfo
-    mapping [Address, CollateralInfo] collateral
-    // BadDebtCollateral: For liquidation tracking (not implemented here)
-    mapping [ByteVec, BadDebtCollateral] badDebtCollateral
 
-    // Error codes
     enum PoolCodes {
         CannotDepositZero = 0,
         CannotBorrowZero = 1,
@@ -59,7 +32,6 @@ Contract Pool (
         NoOverPayment = 5
     }
 
-    // IFungibleToken implementation for sPoolToken
     pub fn getSymbol() -> (ByteVec) {
         return symbol
     }
@@ -73,36 +45,7 @@ Contract Pool (
     }
 
     pub fn getTotalSupply() -> (U256) {
-        return sPoolSupply
-    }
-
-    fn min(a: U256, b: U256) -> (U256) {
-        if (a < b) { return a }
-        return b
-    }
-
-    fn utilizationRate() -> (U256) {
-        if (totalDeposits == 0) { 
-            return 0 
-        }
-        return (totalBorrowed * 10000) / totalDeposits // In basis points
-    }
-
-    @using(updateFields = true)
-    fn updateInterestRate() -> () {
-        let util = utilizationRate()
-        // Linear model: interestRate = baseRate + (util * slope) / 10000
-        interestRate = baseRate + (util * slope) / 10000
-    }
-
-    @using(updateFields = true)
-    fn updateExchangeRate() -> () {
-        let totalPoolToken = tokenBalance!(poolToken)
-        if (sPoolSupply == 0) {
-            exchangeRate = 1000000000000000000 // 1e18
-        } else {
-            exchangeRate = (totalPoolToken) / sPoolSupply
-        }
+        return // stupid large number
     }
 
     fn calculateAccruedInterest(loanInfo: LoanInfo) -> (U256) {
@@ -119,13 +62,13 @@ Contract Pool (
     ) -> (U256) {
         // fetch token price
         let loanValue = oracle.getValue(poolPair).value
-        let collateralValue = oracle.getValue(collateralPair).value
+        let collateralValue = oracle.getValue(poolPair).value
 
         if (loanValue == 0 || collateralValue == 0) {
             return 0
         }
 
-        let collateralNormalized = (collateralAmount * (10 |**| 18)) / (10 |**| collateralDecimals)
+        let collateralNormalized = (collateralAmount * (10 |**| 18)) / (10 |**| poolDecimals)
         let collateralValueUSD = (collateralNormalized * collateralValue) / (10 |**| 8) // Remove 8 decimals
 
         let loanNormalized = (tokenAmount * (10 |**| 18)) / (10 |**| poolDecimals)
@@ -142,7 +85,7 @@ Contract Pool (
         desiredRatio: U256
     ) -> (U256) {
         let loanValue = oracle.getValue(poolPair).value
-        let collateralValue = oracle.getValue(collateralPair).value
+        let collateralValue = oracle.getValue(poolPair).value
 
         if (loanValue == 0 || collateralValue == 0 || desiredRatio == 0) {
             return 0
@@ -154,23 +97,51 @@ Contract Pool (
         let requiredCollateralUSD = (loanValueUSD * desiredRatio) / 10000
 
         let collateralNormalized = (requiredCollateralUSD * (10 |**| 8)) / collateralValue
-        let requiredCollateralAmount = (collateralNormalized * (10 |**| collateralDecimals)) / (10 |**| 18)
+        let requiredCollateralAmount = (collateralNormalized * (10 |**| poolDecimals)) / (10 |**| 18)
 
         return requiredCollateralAmount
     }
 
-    pub fn deposit() -> () {
-        // .. code
+	@using
+    pub fn deposit(amount: U256) -> () {
+        let caller = callerAddress!()
+
+		transferToken!(caller, selfAddress!(), ALPH, dustAmount!() * 3)
+		transferToken!(caller, selfAddress!(), poolToken, amount)
+
+		let totalSTokens = amount / exchangeRate
+		
+		sTokenSupply = sTokenSupply + totalSTokens
+
+		transferToken!(selfAddress!(), caller, ALPH, dustAmount!())
+		transferToken!(selfAddress!(), caller, selfContractId!(), totalSTokens)
+		
+		depositedAmount = depositedAmount + amount
+		totalPoolAssets = totalPoolAssets + amount
+
+		exchangeRate = totalPoolAssets / sTokenSupply
     }
 
-    pub fn withdraw() -> () {
-        // .. code
+	@using
+    pub fn withdraw(amount: U256) -> () {
+        let caller = callerAddress!()
+        
+	    transferToken!(caller, selfAddress!(), ALPH, dustAmount!() * 3)
+		transferToken!(caller, selfAddress!(), selfContractId!(), amount)
+
+		// perform math
     }
 
-    pub fn borrow() -> () {
+	@using()
+    pub fn borrow(amount: U256) -> () {
         // .. code
+
+		// establish collateral needed with formula + token amount desired
+
+		// approve collateral
     }
 
+	@using()
     pub fn liquidate() -> () {
         // .. code
     }
