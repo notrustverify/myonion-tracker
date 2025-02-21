@@ -6,7 +6,7 @@ import LoanCard from '../../components/LoanCard'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import CreateLoanModal from '../../components/CreateLoanModal'
 import { motion } from 'framer-motion'
-import { getBackendUrl } from '../../lib/configs'
+import { getBackendUrl, getTokensList } from '../../lib/configs'
 import { HiViewGrid } from 'react-icons/hi'
 import Matter from 'matter-js'
 import LoanBubble from '../../components/LoanBubble'
@@ -240,11 +240,20 @@ export default function LoanPage() {
     },
   ]
 
+  const getTokenInfo = (tokenId) => {
+    const tokens = getTokensList()
+    return tokens.find(t => t.id === tokenId) || {
+      symbol: 'Unknown',
+      logoURI: '/tokens/unknown.png',
+      decimals: 18
+    }
+  }
+
   const getFilteredLoans = useCallback(() => {
     return loans.filter(loan => {
       const collateralRatio = tokenPrices[loan.collateralToken] && tokenPrices[loan.tokenRequested] 
-        ? ((loan.collateralAmount / Math.pow(10, 18)) * tokenPrices[loan.collateralToken]) / 
-          ((loan.tokenAmount / Math.pow(10, 18)) * tokenPrices[loan.tokenRequested]) * 100
+        ? ((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) / 
+          ((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) * 100
         : 0;
 
       switch (activeFilter.toLowerCase()) {
