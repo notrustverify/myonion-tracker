@@ -5,7 +5,7 @@ import { DeployFunction, Deployer, Network } from "@alephium/cli";
 import { Settings } from "../alephium.config";
 import { loadDeployments } from "../artifacts/ts/deployments";
 import { getNetwork } from "./network";
-import { AcceptLoan, Bid, CreateLoan } from "../artifacts/ts";
+import { AcceptLoan, Bid, CreateLoan, Redeem } from "../artifacts/ts";
 
 const dotenv = require('dotenv');
 dotenv.config()
@@ -30,12 +30,23 @@ const deployScript: DeployFunction<Settings> = async (
     })
     */
 
+    /*
     let tx = await Bid.execute(signer, {
       initialFields: {
         contract: "b88a9891213af953a06c0bdc5f4a03ee25ab4d24a3b911ff59c2320b8a54fd00",
-        id: "d51c38117b0af962f04ceffef64a70b0ea403f2845fffb1c5f125cdb8e4c0e00",
+        id: "be68ab6eee43eacb0215e8310feb902db9e2ab4beb0988f5d7d8ecaa014c7100",
         token: ALPH_TOKEN_ID,
-        amount: ONE_ALPH * 2n
+        amount: 1_100000000000000000n
+      },
+      attoAlphAmount: DUST_AMOUNT * 3n,
+      tokens: [{id: ALPH_TOKEN_ID, amount: ONE_ALPH * 3n}]
+    })
+    */
+
+    let tx = await Redeem.execute(signer, {
+      initialFields: {
+        contract: "b88a9891213af953a06c0bdc5f4a03ee25ab4d24a3b911ff59c2320b8a54fd00",
+        id: "be68ab6eee43eacb0215e8310feb902db9e2ab4beb0988f5d7d8ecaa014c7100"
       },
       attoAlphAmount: DUST_AMOUNT * 3n,
       tokens: [{id: ALPH_TOKEN_ID, amount: ONE_ALPH * 3n}]

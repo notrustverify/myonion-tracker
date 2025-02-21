@@ -7,4 +7,5 @@ export * from "./Auction";
 export * from "./AuctionFactory";
 export * from "./Loan";
 export * from "./LoanFactory";
+export * from "./TokenTest";
 export * from "./scripts";

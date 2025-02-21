@@ -147,7 +147,6 @@ Contract Loan (
         assert!(active, 3)
         assert!(startTime + duration < blockTimeStamp!(), 4)
 
-        //! make edits here
         if (!canLiquidate) {
             let totalCommission = getCommission(collateralAmount)
 

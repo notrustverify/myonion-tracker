@@ -1,19 +1,19 @@
 {
-  "version": "v3.11.2",
-  "name": "UpdateAuctionFields",
-  "bytecodeTemplate": "01010300000007{1}{2}{3}0f0c{0}0104",
+  "version": "v3.11.1",
+  "name": "WithdrawAuctionFactoryFees",
+  "bytecodeTemplate": "01010300000007{1}{2}{3}0f0c{0}0106",
   "fieldsSig": {
     "names": [
       "auction",
-      "newCode",
-      "immFields",
-      "mutFields"
+      "who",
+      "token",
+      "amount"
     ],
     "types": [
-      "Auction",
+      "AuctionFactory",
+      "Address",
       "ByteVec",
-      "ByteVec",
-      "ByteVec"
+      "U256"
     ],
     "isMutable": [
       false,
