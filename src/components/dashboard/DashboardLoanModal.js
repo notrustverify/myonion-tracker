@@ -89,15 +89,18 @@ const DashboardLoanModal = ({
   );
   const displayDebt = formatNumber(totalRepayment / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals))
 
-  const usdTokenAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.tokenRequested] ? 
+  const usdTokenAmount = !isPricesLoading && tokenPrices[loan.tokenRequested] ? 
     formatNumber((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
-  const usdCollateralAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.collateralToken] ? 
+  const usdCollateralAmount = !isPricesLoading && tokenPrices[loan.collateralToken] ? 
     formatNumber((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) : '...'
   const usdDebtAmount = !isPricesLoading && tokenPrices && tokenPrices[loan.tokenRequested] ? 
     formatNumber((totalRepayment / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) : '...'
 
-  const collateralRatio = ((loan.collateralAmount / loan.tokenAmount) * 100).toFixed(0)
-  const riskLevel = getRiskLevel(collateralRatio)
+  const collateralRatio = tokenPrices[loan.collateralToken] && tokenPrices[loan.tokenRequested] 
+    ? ((loan.collateralAmount / Math.pow(10, getTokenInfo(loan.collateralToken).decimals)) * tokenPrices[loan.collateralToken]) / 
+      ((loan.tokenAmount / Math.pow(10, getTokenInfo(loan.tokenRequested).decimals)) * tokenPrices[loan.tokenRequested]) * 100
+    : 0
+  const riskLevel = getRiskLevel(collateralRatio.toFixed(2))
   const startTime = new Date(loan.createdAt).getTime()
   const endTime = startTime + parseInt(loan.term)
   const now = new Date().getTime()
@@ -383,8 +386,8 @@ const DashboardLoanModal = ({
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
                   <span className="text-xs md:text-sm text-gray-400 block mb-1">Collateral Ratio</span>
-                  <span className={`text-base md:text-lg font-medium ${getCollateralRatioColor(collateralRatio)}`}>
-                    {collateralRatio}%
+                  <span className={`text-base md:text-lg font-medium ${getCollateralRatioColor(collateralRatio.toFixed(2))}`}>
+                    {collateralRatio.toFixed(2)}%
                   </span>
                 </div>
                 {isBorrower && loan.status === 'active' && (

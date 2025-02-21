@@ -30,33 +30,33 @@ const getStatusSize = (ratio) => {
   return 60
 }
 
-const calculateCollateralRatio = (tokenPrices, value, currency, collateralAmount, collateralCurrency) => {
-  if (!tokenPrices || !tokenPrices[currency] || !tokenPrices[collateralCurrency]) return 0
+const calculateCollateralRatio = (tokenPrices, tokenAmount, tokenRequested, collateralAmount, collateralToken) => {
+  if (!tokenPrices || !tokenPrices[tokenRequested] || !tokenPrices[collateralToken]) return 0
 
-  const collateralValue = (collateralAmount / Math.pow(10, getTokenInfo(collateralCurrency).decimals)) * tokenPrices[collateralCurrency]
-  const loanValue = (value / Math.pow(10, getTokenInfo(currency).decimals)) * tokenPrices[currency]
+  const collateralValue = (collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]
+  const loanValue = (tokenAmount / Math.pow(10, getTokenInfo(tokenRequested).decimals)) * tokenPrices[tokenRequested]
   
   return (collateralValue / loanValue * 100).toFixed(0)
 }
 
 const LoanBubble = ({ 
-  value,
-  currency,
+  tokenAmount,
+  tokenRequested,
   collateralAmount,
-  collateralCurrency,
-  term,
+  collateralToken,
+  duration,
   interest,
   lender,
   borrower,
   status,
-  liquidation,
   canLiquidate,
   id,
   containerRef,
   engine,
   tokenPrices,
   isPricesLoading,
-  ansProfile
+  ansProfile,
+  createdAt
 }) => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const bubbleRef = useRef(null)
@@ -64,7 +64,7 @@ const LoanBubble = ({
   const bodyRef = useRef(null)
   const frameRef = useRef()
   
-  const calculatedRatio = calculateCollateralRatio(tokenPrices, value, currency, collateralAmount, collateralCurrency)
+  const calculatedRatio = calculateCollateralRatio(tokenPrices, tokenAmount, tokenRequested, collateralAmount, collateralToken)
   const size = getStatusSize(calculatedRatio)
   const statusColor = getStatusColor(calculatedRatio)
 
@@ -156,14 +156,14 @@ const LoanBubble = ({
       >
         <div className="flex items-center gap-1 mb-1">
           <img 
-            src={getTokenInfo(currency).logoURI}
-            alt={getTokenInfo(currency).symbol}
+            src={getTokenInfo(tokenRequested).logoURI}
+            alt={getTokenInfo(tokenRequested).symbol}
             className="w-5 h-5 rounded-full"
           />
           <FaArrowLeft className="text-white text-xs" />
           <img 
-            src={getTokenInfo(collateralCurrency).logoURI}
-            alt={getTokenInfo(collateralCurrency).symbol}
+            src={getTokenInfo(collateralToken).logoURI}
+            alt={getTokenInfo(collateralToken).symbol}
             className="w-5 h-5 rounded-full"
           />
         </div>
@@ -178,18 +178,18 @@ const LoanBubble = ({
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           loan={{
-            value,
-            currency,
+            tokenAmount,
+            tokenRequested,
             collateralAmount,
-            collateralCurrency,
-            term,
+            collateralToken,
+            duration,
             interest,
             lender,
             borrower,
             status,
-            liquidation,
             canLiquidate,
-            id
+            id,
+            createdAt
           }}
           tokenPrices={tokenPrices}
           isPricesLoading={isPricesLoading}

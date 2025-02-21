@@ -480,7 +480,17 @@ export default function LoanPage() {
               {engine && getFilteredLoans().map((loan) => (
                 <LoanBubble 
                   key={loan.id} 
-                  {...loan} 
+                  tokenAmount={loan.tokenAmount}
+                  tokenRequested={loan.tokenRequested}
+                  collateralAmount={loan.collateralAmount}
+                  collateralToken={loan.collateralToken}
+                  duration={loan.duration}
+                  interest={loan.interest}
+                  lender={loan.lender}
+                  borrower={loan.borrower}
+                  status={loan.status}
+                  canLiquidate={loan.canLiquidate}
+                  id={loan.id}
                   containerRef={containerRef}
                   engine={engine}
                   tokenPrices={tokenPrices}
@@ -489,6 +499,7 @@ export default function LoanPage() {
                     borrower: ansProfiles[loan.borrower],
                     lender: ansProfiles[loan.lender]
                   }}
+                  createdAt={loan.createdAt}
                 />
               ))}
             </div>

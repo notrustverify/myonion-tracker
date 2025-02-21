@@ -70,7 +70,10 @@ const DashboardLoanCard = ({
   const usdCollateral = !isPricesLoading && tokenPrices[collateralToken] ? 
     formatNumber((collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]) : '...'
 
-  const collateralRatio = ((collateralAmount / tokenAmount) * 100).toFixed(0)
+  const collateralRatio = tokenPrices[collateralToken] && tokenPrices[tokenRequested] 
+    ? ((collateralAmount / Math.pow(10, getTokenInfo(collateralToken).decimals)) * tokenPrices[collateralToken]) / 
+      ((tokenAmount / Math.pow(10, getTokenInfo(tokenRequested).decimals)) * tokenPrices[tokenRequested]) * 100
+    : 0
 
   const getStatusBadge = (status) => {
     if (status === 'terminated') {
