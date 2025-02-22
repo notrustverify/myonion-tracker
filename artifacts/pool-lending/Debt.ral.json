@@ -1,0 +1,95 @@
+{
+  "version": "v3.11.1",
+  "name": "Debt",
+  "bytecode": "06060e1c402a403840654079010000000103d337076842ce0102010000000103d35409971bce0202010000000103d3a23563f8ce0002010000000103d31b3a7928ce0502010000020113d30793656756ce032b1700ce01ce042c16002c13c10758f07a301367102c2d1701ce0116012a02010201010008d3f0d839c1b4ce05450c7b1600b0",
+  "codeHash": "dc777020d97731f0a9e4a0284f0b71548f1c648adceb1260590d49d2e4bff563",
+  "fieldsSig": {
+    "names": [
+      "debtor",
+      "loanAmount",
+      "collateralAmount",
+      "timeCreated",
+      "interestRate",
+      "parentContract"
+    ],
+    "types": [
+      "Address",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "Address"
+    ],
+    "isMutable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "eventsSig": [],
+  "functions": [
+    {
+      "name": "getLoanAmount",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getCollateralAmount",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getDebtor",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "Address"
+      ]
+    },
+    {
+      "name": "getParentAddress",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "Address"
+      ]
+    },
+    {
+      "name": "calculateRepayment",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "destroyDebt",
+      "paramNames": [
+        "caller"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": []
+}
