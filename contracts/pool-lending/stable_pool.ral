@@ -56,6 +56,14 @@ Contract Pool (
         return 10000000000000000000000000000000000000000
     }
 
+    pub fn getPoolToken() -> () {
+        return poolToken
+    }
+
+    pub fn getSPoolToken() -> () {
+        return selfTokenId!()
+    }
+
     //fn calculateAccruedInterest(loanInfo: LoanInfo) -> (U256) {
     //    let timeElapsed = blockTimeStamp!() - loanInfo.lastInterestUpdate
     //    // Interest = principal * rate * time / (seconds per year * 10000)
@@ -131,6 +139,15 @@ Contract Pool (
         return totalDebt
     }
 
+    @using(checkExternalCaller = false, updateFields = true)
+    pub fn getPoolFee(amount: U256) -> (U256) {
+        let flatFee = (amount * 3) / 100            // 3% fee on borrow
+
+        fees = fees + flatFee
+
+        return flatFee
+    }
+
 	@using(checkExternalCaller = false, assetsInContract = true, preapprovedAssets = true, updateFields = true)
     pub fn deposit(amount: U256) -> () {
         let caller = callerAddress!()
@@ -179,6 +196,9 @@ Contract Pool (
         let requiredCollateral = determineCollateralAmount(amount, 15000) // 150% collateral
 
         let rate = getPoolRate()
+
+        // take fee
+        transferToken!(caller, selfAddress!(), poolToken, getPoolFee(amount))
 
         // create debt contract
         let (encodeImmutableFields, encodeMutableFields) = Debt.encodeFields!(
@@ -275,4 +295,47 @@ Contract Pool (
 
         debt.destroyDebt(selfAddress!())
     }
+
+    @using(checkExternalCaller = true, updateFields = true)
+    pub fn collectFees() -> () {
+        checkCaller!(callerAddress!() == admin, 1)
+
+        transferToken!(selfAddress!(), callerAddress!(), poolToken, amount)
+    }
+
+    @using(checkExternalCaller = true, assetsInContract = true)
+    pub fn destoryPool() -> () {
+        checkCaller!(callerAddress!() == admin, 1)
+
+        destroySelf!(admin)
+    }
 }
+
+TxScript Deposit (
+    contract: Pool,
+    amount: U256
+) {
+    let token = getPoolToken()
+    contract.deposit{callerAddress!() -> token: amount}(amount)
+}
+
+TxScript Withdraw (
+    contract: Pool,
+    amount: U256
+) {
+    let sToken = getSPoolToken()
+    contract.withdraw{callerAddress!() -> sToken: amount}(amount)
+}
+
+TxScript InstantBorrow (
+    contract: Pool
+)
+
+TxScript RepayDebt (
+    contract: Pool
+)
+
+TxScript LiquidateDebt (
+    contract: Pool
+)
+
