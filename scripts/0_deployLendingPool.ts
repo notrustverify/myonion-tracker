@@ -16,20 +16,20 @@ const deployScript: DeployFunction<Settings> = async (
 
   const result = await deployer.deployContract(Pool, {
     initialFields: {
-        admin: deployer.account.address,
-        debtTemplate: '9b87ad5f7950ed4fc5ab6531c220ca4eb7aed5109a2852d8e1f004f9836e6800',
-        poolToken: ALPH_TOKEN_ID,
-        poolDecimals: 18n,
-        poolPair: hexToString("ALPH/USD"),
-        name: hexToString("sALPH-PACA"),
-        symbol: hexToString("SALPH"),
-        sTokenSupply: 0n,
-        exchangeRate: 1_000000_000000_000000n,
-        totalPoolAssets: 0n,
-        depositedAmount: 0n,
-        totalBorrowed: 0n,
-        fees: 0n,
-        oracle: '216wgM3Xi5uBFYwwiw2T7iZoCy9vozPJ4XjToW74nQjbV'
+      admin: deployer.account.address,
+      debtTemplate: "9b87ad5f7950ed4fc5ab6531c220ca4eb7aed5109a2852d8e1f004f9836e6800",
+      poolToken: ALPH_TOKEN_ID,
+      poolDecimals: 18n,
+      poolPair: stringToHex("ALPH/USD"),
+      name: stringToHex("sALPH"),
+      symbol: stringToHex("SALPH"),
+      sTokenSupply: 0n,
+      exchangeRate: 1_000000_000000_000000n,
+      totalPoolAssets: 0n,
+      depositedAmount: 0n,
+      totalBorrowed: 0n,
+      fees: 0n,
+      oracle: "216wgM3Xi5uBFYwwiw2T7iZoCy9vozPJ4XjToW74nQjbV"
     }
   })
 
