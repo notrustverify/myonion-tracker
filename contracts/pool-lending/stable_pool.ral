@@ -56,11 +56,11 @@ Contract Pool (
         return 10000000000000000000000000000000000000000
     }
 
-    pub fn getPoolToken() -> () {
+    pub fn getPoolToken() -> (ByteVec) {
         return poolToken
     }
 
-    pub fn getSPoolToken() -> () {
+    pub fn getSPoolToken() -> (ByteVec) {
         return selfTokenId!()
     }
 
@@ -265,7 +265,8 @@ Contract Pool (
         emit RemoveDebt(caller, contract)
     }
 
-	@using(checkExternalCaller = false, assetsInContract = true, preapprovedAssets = true, updateFields = true)
+    //! the user should be repaying the unpaid debt at this point to redeem on the collateral
+	@using(checkExternalCaller = false, assetsInContract = true, preapprovedAssets = false, updateFields = true)
     pub fn liquidate(contract: ByteVec) -> () {
         let debt = Debt(subContractId!(contract))
     
@@ -281,8 +282,8 @@ Contract Pool (
         let collateralRatio = determineCollateralRatio(totalDebt, collateral)
         assert!(collateralRatio < 15000, PoolCodes.InsufficientCollateral) // Must be below 150% to liquidate
     
-        let liquidationPenalty = (collateral * 10) / 100  // 10% liquidation fee
-        let liquidationIncentive = (collateral * 5) / 100 // 5% liquidation incentive to caller
+        let liquidationPenalty = (collateral * 8) / 100  // 8% liquidation fee
+        let liquidationIncentive = (collateral * 2) / 100 // 2% liquidation incentive to caller
     
         let seizedCollateral = collateral - (liquidationPenalty + liquidationIncentive)
     
@@ -296,11 +297,13 @@ Contract Pool (
         debt.destroyDebt(selfAddress!())
     }
 
-    @using(checkExternalCaller = true, updateFields = true)
+    @using(checkExternalCaller = true, updateFields = true, assetsInContract = true)
     pub fn collectFees() -> () {
         checkCaller!(callerAddress!() == admin, 1)
 
-        transferToken!(selfAddress!(), callerAddress!(), poolToken, amount)
+        transferToken!(selfAddress!(), callerAddress!(), poolToken, fees)
+
+        fees = fees - fees
     }
 
     @using(checkExternalCaller = true, assetsInContract = true)
@@ -312,30 +315,49 @@ Contract Pool (
 }
 
 TxScript Deposit (
-    contract: Pool,
+    pool: Pool,
     amount: U256
 ) {
-    let token = getPoolToken()
-    contract.deposit{callerAddress!() -> token: amount}(amount)
+    let token = pool.getPoolToken()
+
+    pool.deposit{callerAddress!() -> token: amount}(amount)
 }
 
 TxScript Withdraw (
-    contract: Pool,
+    pool: Pool,
     amount: U256
 ) {
-    let sToken = getSPoolToken()
-    contract.withdraw{callerAddress!() -> sToken: amount}(amount)
+    let sToken = pool.getSPoolToken()
+
+    pool.withdraw{callerAddress!() -> sToken: amount}(amount)
 }
 
-TxScript InstantBorrow (
-    contract: Pool
-)
 
-TxScript RepayDebt (
-    contract: Pool
-)
+TxScript Borrow (
+    pool: Pool,
+    amount: U256
+) {
+    let collateral = pool.determineCollateralAmount(amount, 15000)
+    let token = pool.getPoolToken()
+
+    pool.borrow{callerAddress!() -> token: collateral}(amount)
+}
+
+
+TxScript Repay (
+    pool: Pool,
+    id: ByteVec
+) {
+    let amount = pool.getTotalRepayment(id)
+    let token = pool.getPoolToken()
+
+    pool.repay{callerAddress!() -> token: amount}(id)
+}
+
 
 TxScript LiquidateDebt (
-    contract: Pool
-)
-
+    pool: Pool,
+    id: ByteVec
+) {
+    pool.liquidate(id)
+}

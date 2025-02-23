@@ -1,0 +1,28 @@
+{
+  "version": "v3.11.1",
+  "name": "Deposit",
+  "bytecodeTemplate": "0101030001000e0c0d{0}01041700b41600{1}a3{1}0d0c{0}010b",
+  "fieldsSig": {
+    "names": [
+      "pool",
+      "amount"
+    ],
+    "types": [
+      "Pool",
+      "U256"
+    ],
+    "isMutable": [
+      false,
+      false
+    ]
+  },
+  "functions": [
+    {
+      "name": "main",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": []
+    }
+  ]
+}

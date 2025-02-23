@@ -20,6 +20,8 @@ import {
   AuctionFactoryInstance,
   TokenTest,
   TokenTestInstance,
+  Debt,
+  DebtInstance,
 } from ".";
 import { default as mainnetDeployments } from "../../deployments/.deployments.mainnet.json";
 import { default as testnetDeployments } from "../../deployments/.deployments.testnet.json";
@@ -33,6 +35,7 @@ export type Deployments = {
     Auction?: DeployContractExecutionResult<AuctionInstance>;
     AuctionFactory?: DeployContractExecutionResult<AuctionFactoryInstance>;
     TokenTest?: DeployContractExecutionResult<TokenTestInstance>;
+    Debt?: DeployContractExecutionResult<DebtInstance>;
   };
 };
 
@@ -90,6 +93,15 @@ function toDeployments(json: any): Deployments {
             ...json.contracts["TokenTest"],
             contractInstance: TokenTest.at(
               json.contracts["TokenTest"].contractInstance.address
+            ),
+          },
+    Debt:
+      json.contracts["Debt"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["Debt"],
+            contractInstance: Debt.at(
+              json.contracts["Debt"].contractInstance.address
             ),
           },
   };

@@ -75,6 +75,18 @@ export namespace DebtTypes {
       params: CallContractParams<{ caller: Address }>;
       result: CallContractResult<null>;
     };
+    updateDebtCode: {
+      params: CallContractParams<{ newCode: HexString }>;
+      result: CallContractResult<null>;
+    };
+    updateDebtFields: {
+      params: CallContractParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
+      result: CallContractResult<null>;
+    };
   }
   export type CallMethodParams<T extends keyof CallMethodTable> =
     CallMethodTable[T]["params"];
@@ -115,6 +127,18 @@ export namespace DebtTypes {
     };
     destroyDebt: {
       params: SignExecuteContractMethodParams<{ caller: Address }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateDebtCode: {
+      params: SignExecuteContractMethodParams<{ newCode: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
+    updateDebtFields: {
+      params: SignExecuteContractMethodParams<{
+        newCode: HexString;
+        immFields: HexString;
+        mutFields: HexString;
+      }>;
       result: SignExecuteScriptTxResult;
     };
   }
@@ -201,6 +225,27 @@ class Factory extends ContractFactory<DebtInstance, DebtTypes.Fields> {
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "destroyDebt", params, getContractByCodeHash);
     },
+    updateDebtCode: async (
+      params: TestContractParamsWithoutMaps<
+        DebtTypes.Fields,
+        { newCode: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(this, "updateDebtCode", params, getContractByCodeHash);
+    },
+    updateDebtFields: async (
+      params: TestContractParamsWithoutMaps<
+        DebtTypes.Fields,
+        { newCode: HexString; immFields: HexString; mutFields: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(
+        this,
+        "updateDebtFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   stateForTest(initFields: DebtTypes.Fields, asset?: Asset, address?: string) {
@@ -213,7 +258,7 @@ export const Debt = new Factory(
   Contract.fromJson(
     DebtContractJson,
     "",
-    "dc777020d97731f0a9e4a0284f0b71548f1c648adceb1260590d49d2e4bff563",
+    "a96cf3238c74ee885314717d7a67da2869fc5586ecb359cab41d11ec02ed9fc0",
     AllStructs
   )
 );
@@ -296,6 +341,28 @@ export class DebtInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    updateDebtCode: async (
+      params: DebtTypes.CallMethodParams<"updateDebtCode">
+    ): Promise<DebtTypes.CallMethodResult<"updateDebtCode">> => {
+      return callMethod(
+        Debt,
+        this,
+        "updateDebtCode",
+        params,
+        getContractByCodeHash
+      );
+    },
+    updateDebtFields: async (
+      params: DebtTypes.CallMethodParams<"updateDebtFields">
+    ): Promise<DebtTypes.CallMethodResult<"updateDebtFields">> => {
+      return callMethod(
+        Debt,
+        this,
+        "updateDebtFields",
+        params,
+        getContractByCodeHash
+      );
+    },
   };
 
   transact = {
@@ -328,6 +395,16 @@ export class DebtInstance extends ContractInstance {
       params: DebtTypes.SignExecuteMethodParams<"destroyDebt">
     ): Promise<DebtTypes.SignExecuteMethodResult<"destroyDebt">> => {
       return signExecuteMethod(Debt, this, "destroyDebt", params);
+    },
+    updateDebtCode: async (
+      params: DebtTypes.SignExecuteMethodParams<"updateDebtCode">
+    ): Promise<DebtTypes.SignExecuteMethodResult<"updateDebtCode">> => {
+      return signExecuteMethod(Debt, this, "updateDebtCode", params);
+    },
+    updateDebtFields: async (
+      params: DebtTypes.SignExecuteMethodParams<"updateDebtFields">
+    ): Promise<DebtTypes.SignExecuteMethodResult<"updateDebtFields">> => {
+      return signExecuteMethod(Debt, this, "updateDebtFields", params);
     },
   };
 

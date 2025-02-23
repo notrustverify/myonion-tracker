@@ -41,4 +41,40 @@ Contract Debt (
 
         destroySelf!(caller)
     }
+
+    @using(updateFields = false, checkExternalCaller = true)
+    pub fn updateDebtCode(newCode: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        // added security param -> would stop parentContract / factory updates
+        assert!(debtor == parentContract, 10)
+
+        migrate!(newCode)
+    }
+
+    @using(updateFields = true, checkExternalCaller = true)
+    pub fn updateDebtFields(newCode: ByteVec, immFields: ByteVec, mutFields: ByteVec) -> () {
+        checkCaller!(callerAddress!() == parentContract, 9)
+
+        // added security param -> would stop parentContract / factory updates
+        assert!(debtor == parentContract, 10)
+
+        migrateWithFields!(newCode, immFields, mutFields)
+    }
+}
+
+TxScript UpdateDebtCode (
+    debt: Debt,
+    newCode: ByteVec
+) {
+    debt.updateDebtCode(newCode)
+}
+
+TxScript UpdateDebtFields (
+    debt: Debt,
+    newCode: ByteVec, 
+    immFields: ByteVec, 
+    mutFields: ByteVec
+) {
+    debt.updateDebtFields(newCode, immFields, mutFields)
 }
