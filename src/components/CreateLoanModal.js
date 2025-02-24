@@ -326,7 +326,7 @@ const CreateLoanModal = ({
     if (isSubmitting) return 'Creating...'
     if (!loanAmount || !collateralAmount) return 'Enter amounts'
     if (!term) return 'Enter loan term'
-    if (!interestRate) return 'Enter interest rate'
+    if (!interestRate) return 'Enter APR'
     if (!isCollateralRatioValid()) return 'Collateral ratio must be at least 150%'
     return 'Create Loan Request'
   }
@@ -471,7 +471,7 @@ const CreateLoanModal = ({
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Interest Rate
+                      APR
                     </label>
                     <div className="relative">
                       <input

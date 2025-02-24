@@ -149,7 +149,7 @@ const LiquidationCard = ({
           </span>
         </div>
         <div className="p-3 bg-gray-800/50 rounded-lg">
-          <span className="text-xs text-gray-400 block mb-1">Interest</span>
+          <span className="text-xs text-gray-400 block mb-1">APR</span>
           <span className="font-medium text-green-400">{(interest / 100).toFixed(2)}%</span>
         </div>
       </div>

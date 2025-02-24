@@ -235,7 +235,7 @@ export default function LoanPage() {
       value: rawLoans.filter(l => l.type === 'accepted').length 
     },
     { 
-      label: 'Average Interest', 
+      label: 'Average APR', 
       value: `${((rawLoans.reduce((acc, curr) => acc + Number(curr.interest), 0) / (rawLoans.length || 1)) / 100).toFixed(2)}%` 
     },
   ]

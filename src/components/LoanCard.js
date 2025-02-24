@@ -181,7 +181,7 @@ const LoanCard = ({
               whileHover={{ backgroundColor: "rgba(31, 41, 55, 0.7)" }}
               transition={{ duration: 0.2 }}
             >
-              <span className="text-xs text-gray-400 block mb-1">Interest</span>
+              <span className="text-xs text-gray-400 block mb-1">APR</span>
               <span className="font-medium text-green-400">{(interest / 100).toFixed(2)}%</span>
             </motion.div>
           </div>
