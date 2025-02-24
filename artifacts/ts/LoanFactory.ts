@@ -70,6 +70,10 @@ export namespace LoanFactoryTypes {
     contract: HexString;
     who: Address;
   }>;
+  export type LoanCanceledEvent = ContractEvent<{
+    contract: HexString;
+    who: Address;
+  }>;
   export type LoanWithdrawEvent = ContractEvent<{
     contract: HexString;
     forfeit: boolean;
@@ -340,10 +344,11 @@ class Factory extends ContractFactory<
     NewLoan: 0,
     AcceptedLoan: 1,
     LoanRemoved: 2,
-    LoanWithdraw: 3,
-    AddCollateralLoan: 4,
-    RemoveCollateralLoan: 5,
-    LoanLiquidation: 6,
+    LoanCanceled: 3,
+    LoanWithdraw: 4,
+    AddCollateralLoan: 5,
+    RemoveCollateralLoan: 6,
+    LoanLiquidation: 7,
   };
   consts = {
     LoanCodes: { NotAdmin: BigInt("0"), TokenSizeTooSmall: BigInt("1") },
@@ -575,8 +580,8 @@ class Factory extends ContractFactory<
 export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
-    "=54-1=1+1=1-3+60a=1-1+61=1-1=2-2+36=2785-1+6=29-1+4=60+7a7e0214696e73657274206174206d617020706174683a2000=23-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=144",
-    "ee82b81e20931916573382a1114e99b08863968089402bb59068a10a0cca2e7e",
+    "=54-8=1-1+f=3+846=1+c4644=2813-1+6=29-1+4=60+7a7e0214696e73657274206174206d617020706174683a2000=23-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=144",
+    "6b03c326acca136f00da47d8e8e93f555873ea19987a91174ad773bb7ee2a6b6",
     AllStructs
   )
 );
@@ -643,6 +648,19 @@ export class LoanFactoryInstance extends ContractInstance {
     );
   }
 
+  subscribeLoanCanceledEvent(
+    options: EventSubscribeOptions<LoanFactoryTypes.LoanCanceledEvent>,
+    fromCount?: number
+  ): EventSubscription {
+    return subscribeContractEvent(
+      LoanFactory.contract,
+      this,
+      options,
+      "LoanCanceled",
+      fromCount
+    );
+  }
+
   subscribeLoanWithdrawEvent(
     options: EventSubscribeOptions<LoanFactoryTypes.LoanWithdrawEvent>,
     fromCount?: number
@@ -700,6 +718,7 @@ export class LoanFactoryInstance extends ContractInstance {
       | LoanFactoryTypes.NewLoanEvent
       | LoanFactoryTypes.AcceptedLoanEvent
       | LoanFactoryTypes.LoanRemovedEvent
+      | LoanFactoryTypes.LoanCanceledEvent
       | LoanFactoryTypes.LoanWithdrawEvent
       | LoanFactoryTypes.AddCollateralLoanEvent
       | LoanFactoryTypes.RemoveCollateralLoanEvent
