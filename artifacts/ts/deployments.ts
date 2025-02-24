@@ -18,52 +18,104 @@ import {
   AuctionInstance,
   AuctionFactory,
   AuctionFactoryInstance,
+  TokenTest,
+  TokenTestInstance,
+  Debt,
+  DebtInstance,
+  Pool,
+  PoolInstance,
 } from ".";
 import { default as mainnetDeployments } from "../../deployments/.deployments.mainnet.json";
+import { default as testnetDeployments } from "../../deployments/.deployments.testnet.json";
 
 export type Deployments = {
   deployerAddress: string;
   contracts: {
-    AlpacaFiOracle: DeployContractExecutionResult<AlpacaFiOracleInstance>;
-    Loan: DeployContractExecutionResult<LoanInstance>;
-    LoanFactory: DeployContractExecutionResult<LoanFactoryInstance>;
-    Auction: DeployContractExecutionResult<AuctionInstance>;
-    AuctionFactory: DeployContractExecutionResult<AuctionFactoryInstance>;
+    AlpacaFiOracle?: DeployContractExecutionResult<AlpacaFiOracleInstance>;
+    Loan?: DeployContractExecutionResult<LoanInstance>;
+    LoanFactory?: DeployContractExecutionResult<LoanFactoryInstance>;
+    Auction?: DeployContractExecutionResult<AuctionInstance>;
+    AuctionFactory?: DeployContractExecutionResult<AuctionFactoryInstance>;
+    TokenTest?: DeployContractExecutionResult<TokenTestInstance>;
+    Debt?: DeployContractExecutionResult<DebtInstance>;
+    Pool?: DeployContractExecutionResult<PoolInstance>;
   };
 };
 
 function toDeployments(json: any): Deployments {
   const contracts = {
-    AlpacaFiOracle: {
-      ...json.contracts["AlpacaFiOracle"],
-      contractInstance: AlpacaFiOracle.at(
-        json.contracts["AlpacaFiOracle"].contractInstance.address
-      ),
-    },
-    Loan: {
-      ...json.contracts["Loan"],
-      contractInstance: Loan.at(
-        json.contracts["Loan"].contractInstance.address
-      ),
-    },
-    LoanFactory: {
-      ...json.contracts["LoanFactory"],
-      contractInstance: LoanFactory.at(
-        json.contracts["LoanFactory"].contractInstance.address
-      ),
-    },
-    Auction: {
-      ...json.contracts["Auction"],
-      contractInstance: Auction.at(
-        json.contracts["Auction"].contractInstance.address
-      ),
-    },
-    AuctionFactory: {
-      ...json.contracts["AuctionFactory"],
-      contractInstance: AuctionFactory.at(
-        json.contracts["AuctionFactory"].contractInstance.address
-      ),
-    },
+    AlpacaFiOracle:
+      json.contracts["AlpacaFiOracle"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["AlpacaFiOracle"],
+            contractInstance: AlpacaFiOracle.at(
+              json.contracts["AlpacaFiOracle"].contractInstance.address
+            ),
+          },
+    Loan:
+      json.contracts["Loan"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["Loan"],
+            contractInstance: Loan.at(
+              json.contracts["Loan"].contractInstance.address
+            ),
+          },
+    LoanFactory:
+      json.contracts["LoanFactory"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["LoanFactory"],
+            contractInstance: LoanFactory.at(
+              json.contracts["LoanFactory"].contractInstance.address
+            ),
+          },
+    Auction:
+      json.contracts["Auction"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["Auction"],
+            contractInstance: Auction.at(
+              json.contracts["Auction"].contractInstance.address
+            ),
+          },
+    AuctionFactory:
+      json.contracts["AuctionFactory"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["AuctionFactory"],
+            contractInstance: AuctionFactory.at(
+              json.contracts["AuctionFactory"].contractInstance.address
+            ),
+          },
+    TokenTest:
+      json.contracts["TokenTest"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["TokenTest"],
+            contractInstance: TokenTest.at(
+              json.contracts["TokenTest"].contractInstance.address
+            ),
+          },
+    Debt:
+      json.contracts["Debt"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["Debt"],
+            contractInstance: Debt.at(
+              json.contracts["Debt"].contractInstance.address
+            ),
+          },
+    Pool:
+      json.contracts["Pool"] === undefined
+        ? undefined
+        : {
+            ...json.contracts["Pool"],
+            contractInstance: Pool.at(
+              json.contracts["Pool"].contractInstance.address
+            ),
+          },
   };
   return {
     ...json,
@@ -75,7 +127,12 @@ export function loadDeployments(
   networkId: NetworkId,
   deployerAddress?: string
 ): Deployments {
-  const deployments = networkId === "mainnet" ? mainnetDeployments : undefined;
+  const deployments =
+    networkId === "mainnet"
+      ? mainnetDeployments
+      : networkId === "testnet"
+      ? testnetDeployments
+      : undefined;
   if (deployments === undefined) {
     throw Error("The contract has not been deployed to the " + networkId);
   }

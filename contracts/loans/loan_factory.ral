@@ -46,6 +46,11 @@ Contract LoanFactory (
         who: Address
     )
 
+    event LoanCanceled (
+        contract: ByteVec,
+        who: Address
+    )
+
     event LoanWithdraw (
         contract: ByteVec, 
         forfeit: Bool, 
@@ -269,7 +274,7 @@ Contract LoanFactory (
         loan.cancelLoan(caller)
 
         // emit event
-        emit LoanRemoved(contractId, caller)
+        emit LoanCanceled(contractId, caller)
     }
 
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = enforced)
@@ -358,7 +363,7 @@ Contract LoanFactory (
             0
         )
 
-        let _ = loan.addCollateral{caller -> collateral: amount}(caller, amount, ratio)
+        let _ = loan.addCollateral{caller -> collateral: amount, ALPH: dustAmount!() * 2}(caller, amount, ratio)
 
         emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
@@ -503,7 +508,7 @@ TxScript AddCollateral (
 ) {
     let (token, _) = Loan(contractId).getTokenCollateral()
 
-    loanFactory.addCollateral{callerAddress!() -> token: amount}(contractId, amount)
+    loanFactory.addCollateral{callerAddress!() -> token: amount, ALPH: dustAmount!() * 2}(contractId, amount)
 }
 
 TxScript RemoveCollateral (

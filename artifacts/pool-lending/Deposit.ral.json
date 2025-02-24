@@ -1,20 +1,17 @@
 {
   "version": "v3.11.1",
-  "name": "AddCollateral",
-  "bytecodeTemplate": "010103000100150c0e{1}0101181700b47a1600{2}a313c3038d7ea4c680000e2ca2{1}{2}0e0c{0}0109",
+  "name": "Deposit",
+  "bytecodeTemplate": "010103000100130c0d{0}01041700b47a1600{1}a313c3038d7ea4c68000102ca2{1}0d0c{0}010b",
   "fieldsSig": {
     "names": [
-      "loanFactory",
-      "contractId",
+      "pool",
       "amount"
     ],
     "types": [
-      "LoanFactory",
-      "ByteVec",
+      "Pool",
       "U256"
     ],
     "isMutable": [
-      false,
       false,
       false
     ]

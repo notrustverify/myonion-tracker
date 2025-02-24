@@ -1,0 +1,127 @@
+{
+  "version": "v3.11.1",
+  "name": "Debt",
+  "bytecode": "06080e1c402a403840654079409640b7010000000103d337076842ce0102010000000103d35409971bce0202010000000103d3a23563f8ce0002010000000103d31b3a7928ce0502010000020113d30793656756ce032b1700ce01ce042c16002c13c10758f07a301367102c2d1701ce0116012a02010201010008d3f0d839c1b4ce05450c7b1600b001000101000dd37eabd6c1b4ce054513097bce00ce0545130a7b1600ba01000303000fd386628799b4ce054513097bce00ce0545130a7b160016011602bb",
+  "codeHash": "a96cf3238c74ee885314717d7a67da2869fc5586ecb359cab41d11ec02ed9fc0",
+  "fieldsSig": {
+    "names": [
+      "debtor",
+      "loanAmount",
+      "collateralAmount",
+      "timeCreated",
+      "interestRate",
+      "parentContract"
+    ],
+    "types": [
+      "Address",
+      "U256",
+      "U256",
+      "U256",
+      "U256",
+      "Address"
+    ],
+    "isMutable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "eventsSig": [],
+  "functions": [
+    {
+      "name": "getLoanAmount",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getCollateralAmount",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "getDebtor",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "Address"
+      ]
+    },
+    {
+      "name": "getParentAddress",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "Address"
+      ]
+    },
+    {
+      "name": "calculateRepayment",
+      "paramNames": [],
+      "paramTypes": [],
+      "paramIsMutable": [],
+      "returnTypes": [
+        "U256"
+      ]
+    },
+    {
+      "name": "destroyDebt",
+      "paramNames": [
+        "caller"
+      ],
+      "paramTypes": [
+        "Address"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "updateDebtCode",
+      "paramNames": [
+        "newCode"
+      ],
+      "paramTypes": [
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false
+      ],
+      "returnTypes": []
+    },
+    {
+      "name": "updateDebtFields",
+      "paramNames": [
+        "newCode",
+        "immFields",
+        "mutFields"
+      ],
+      "paramTypes": [
+        "ByteVec",
+        "ByteVec",
+        "ByteVec"
+      ],
+      "paramIsMutable": [
+        false,
+        false,
+        false
+      ],
+      "returnTypes": []
+    }
+  ],
+  "constants": [],
+  "enums": []
+}

@@ -1,20 +1,17 @@
 {
-  "version": "v3.11.1",
-  "name": "AddCollateral",
-  "bytecodeTemplate": "010103000100150c0e{1}0101181700b47a1600{2}a313c3038d7ea4c680000e2ca2{1}{2}0e0c{0}0109",
+  "version": "v3.12.0",
+  "name": "MintSupply",
+  "bytecodeTemplate": "01010300010008b417001600{1}0e0c{0}0104",
   "fieldsSig": {
     "names": [
-      "loanFactory",
-      "contractId",
+      "contract",
       "amount"
     ],
     "types": [
-      "LoanFactory",
-      "ByteVec",
+      "TokenTest",
       "U256"
     ],
     "isMutable": [
-      false,
       false,
       false
     ]
