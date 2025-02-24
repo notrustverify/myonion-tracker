@@ -158,10 +158,10 @@ const DashboardLoanModal = ({
       Number(loan.interest),
       new Date(loan.createdAt)
     );
-    console.log("totalRepayment", totalRepayment)
+    console.log("totalRepayment", totalRepayment.toFixed(0))
 
     try {
-      const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, totalRepayment)
+      const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, totalRepayment.toFixed(0))
       window.addTransactionToast('Repaying Loan', result.txId)
       onClose()
     } catch (err) {
