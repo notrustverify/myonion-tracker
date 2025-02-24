@@ -18,6 +18,7 @@ import { default as BidScriptJson } from "../auctions/Bid.ral.json";
 import { default as BorrowScriptJson } from "../pool-lending/Borrow.ral.json";
 import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
+import { default as CreateStablePoolScriptJson } from "../pool-lending/CreateStablePool.ral.json";
 import { default as DepositScriptJson } from "../pool-lending/Deposit.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
 import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json";
@@ -98,6 +99,27 @@ export const CreateLoan = new ExecutableScript<{
   canLiquidate: boolean;
 }>(
   Script.fromJson(CreateLoanScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const CreateStablePool = new ExecutableScript<{
+  poolCode: HexString;
+  admin: Address;
+  debtTemplate: HexString;
+  poolToken: HexString;
+  poolDecimals: bigint;
+  poolPair: HexString;
+  name: HexString;
+  symbol: HexString;
+  sTokenSupply: bigint;
+  exchangeRate: bigint;
+  totalPoolAssets: bigint;
+  depositedAmount: bigint;
+  totalBorrowed: bigint;
+  fees: bigint;
+  oracle: HexString;
+}>(
+  Script.fromJson(CreateStablePoolScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 

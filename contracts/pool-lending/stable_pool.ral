@@ -157,7 +157,10 @@ Contract Pool (
         transferToken!(caller, selfAddress!(), ALPH, dustAmount!() * 3)
         transferToken!(caller, selfAddress!(), poolToken, amount)
 
-        let totalSTokens = amount / exchangeRate
+        // Normalize calculations to avoid precision errors
+        let precisionFactor = 1000000000000000000 // 1e18
+        let totalSTokens = (amount * precisionFactor) / exchangeRate
+
         sTokenSupply = sTokenSupply + totalSTokens
 
         transferToken!(selfAddress!(), caller, ALPH, dustAmount!())
@@ -166,17 +169,19 @@ Contract Pool (
         depositedAmount = depositedAmount + amount
         totalPoolAssets = totalPoolAssets + amount
 
-        exchangeRate = totalPoolAssets / sTokenSupply
+        exchangeRate = (totalPoolAssets * precisionFactor) / sTokenSupply
     }
 
     @using(checkExternalCaller = false, assetsInContract = true, preapprovedAssets = true, updateFields = true)
     pub fn withdraw(amount: U256) -> () {
         let caller = callerAddress!()
-        
+
         transferToken!(caller, selfAddress!(), ALPH, dustAmount!() * 3)
         transferToken!(caller, selfAddress!(), selfContractId!(), amount)
 
-        let assetsToReceive = amount * exchangeRate
+        let precisionFactor = 1000000000000000000 // 1e18
+        let assetsToReceive = (amount * exchangeRate) / precisionFactor
+
         assert!(depositedAmount >= assetsToReceive, PoolCodes.InsufficientLiquidity)
 
         sTokenSupply = sTokenSupply - amount
@@ -185,22 +190,31 @@ Contract Pool (
 
         transferToken!(selfAddress!(), caller, ALPH, dustAmount!() * 3)
         transferToken!(selfAddress!(), caller, poolToken, assetsToReceive)
+
+        // Avoid division by zero
+        if (sTokenSupply > 0) {
+            exchangeRate = (totalPoolAssets * precisionFactor) / sTokenSupply
+        } else {
+            exchangeRate = precisionFactor // Reset to 1 ALPH per sALPH when empty
+        }
     }
 
     @using(checkExternalCaller = false, assetsInContract = true, preapprovedAssets = true, updateFields = true)
     pub fn borrow(amount: U256) -> () {
         let caller = callerAddress!()
+
         assert!(amount > 0, PoolCodes.CannotBorrowZero)
         assert!(totalPoolAssets - totalBorrowed >= amount, PoolCodes.InsufficientLiquidity)
 
+        let precisionFactor = 1000000000000000000 // 1e18
         let requiredCollateral = determineCollateralAmount(amount, 15000) // 150% collateral
-
         let rate = getPoolRate()
 
-        // take fee
-        transferToken!(caller, selfAddress!(), poolToken, getPoolFee(amount))
+        // Take fee
+        let poolFee = getPoolFee(amount)
+        transferToken!(caller, selfAddress!(), poolToken, poolFee)
 
-        // create debt contract
+        // Create debt contract
         let (encodeImmutableFields, encodeMutableFields) = Debt.encodeFields!(
             caller,
             amount,
@@ -212,14 +226,13 @@ Contract Pool (
 
         let time = blockTimeStamp!()
         let value = encodeToByteVec!(time, caller)
-        
-        // work on this bit
-	    let debtId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, poolToken: requiredCollateral}(
-		    value,                  // time + caller
-		    debtTemplate,
-		    encodeImmutableFields,
-		    encodeMutableFields
-	    )
+
+        let debtId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, poolToken: requiredCollateral}(
+            value,
+            debtTemplate,
+            encodeImmutableFields,
+            encodeMutableFields
+        )
 
         totalBorrowed = totalBorrowed + amount
 
@@ -235,18 +248,16 @@ Contract Pool (
         // Load the debt contract
         let debt = Debt(subContractId!(contract))
 
-        // Get the total repayment amount (principal + interest)
+        // Get total repayment amount (principal + interest)
         let totalRepayment = debt.calculateRepayment()
-
-        // Get collateral and parent contract
         let collateralAmount = debt.getCollateralAmount()
         let parent = debt.getParentAddress()
         let debtOwner = debt.getDebtor()
 
-        // Debt
-        assert!(callerAddress!() == debtOwner, PoolCodes.NotOwner)
+        // Ensure caller is the debtor
+        assert!(caller == debtOwner, PoolCodes.NotOwner)
 
-        // Ensure this debt belongs to the current pool
+        // Ensure debt belongs to this pool
         assert!(selfAddress!() == parent, PoolCodes.WrongDebtPool)
 
         // Transfer repayment amount to pool
@@ -259,7 +270,7 @@ Contract Pool (
         totalPoolAssets = totalPoolAssets + totalRepayment
         totalBorrowed = totalBorrowed - debt.getLoanAmount()
 
-        // Destroy the debt contract
+        // Destroy debt contract
         debt.destroyDebt(caller)
 
         emit RemoveDebt(caller, contract)
@@ -314,13 +325,58 @@ Contract Pool (
     }
 }
 
+TxScript CreateStablePool (
+    poolCode: ByteVec,
+    admin: Address,
+    debtTemplate: ByteVec,
+    poolToken: ByteVec,
+    poolDecimals: U256,
+    poolPair: ByteVec,
+    // sPoolToken and Pool values
+    name: ByteVec,
+    symbol: ByteVec,
+    sTokenSupply: U256,
+    exchangeRate: U256,
+    totalPoolAssets: U256,
+    depositedAmount: U256,
+    totalBorrowed: U256,
+    fees: U256,
+    // pool specs
+    oracle: IDIAOracle
+) {
+    let (encodedImmFields, encodedMutFields) = Pool.encodeFields!(
+        admin,
+        debtTemplate,
+        poolToken,
+        poolDecimals,
+        poolPair,
+        // sPoolToken and Pool values
+        name,
+        symbol,
+        sTokenSupply,
+        exchangeRate,
+        totalPoolAssets,
+        depositedAmount,
+        totalBorrowed,
+        fees,
+        // pool specs
+        oracle
+    )
+    let contractId = createContractWithToken!{callerAddress!() -> ALPH : minimalContractDeposit!()}(
+        poolCode, 
+        encodedImmFields, 
+        encodedMutFields,
+        10000000000000000000000000000000000000000
+    )
+}
+
 TxScript Deposit (
     pool: Pool,
     amount: U256
 ) {
     let token = pool.getPoolToken()
 
-    pool.deposit{callerAddress!() -> token: amount}(amount)
+    pool.deposit{callerAddress!() -> token: amount, ALPH: dustAmount!() * 4}(amount)
 }
 
 TxScript Withdraw (
@@ -329,7 +385,7 @@ TxScript Withdraw (
 ) {
     let sToken = pool.getSPoolToken()
 
-    pool.withdraw{callerAddress!() -> sToken: amount}(amount)
+    pool.withdraw{callerAddress!() -> sToken: amount, ALPH: dustAmount!() * 4}(amount)
 }
 
 
@@ -340,7 +396,7 @@ TxScript Borrow (
     let collateral = pool.determineCollateralAmount(amount, 15000)
     let token = pool.getPoolToken()
 
-    pool.borrow{callerAddress!() -> token: collateral}(amount)
+    pool.borrow{callerAddress!() -> token: collateral, ALPH: dustAmount!() * 4}(amount)
 }
 
 
@@ -351,7 +407,7 @@ TxScript Repay (
     let amount = pool.getTotalRepayment(id)
     let token = pool.getPoolToken()
 
-    pool.repay{callerAddress!() -> token: amount}(id)
+    pool.repay{callerAddress!() -> token: amount, ALPH: dustAmount!() * 4}(id)
 }
 
 

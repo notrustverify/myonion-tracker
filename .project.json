@@ -1,5 +1,5 @@
 {
-  "fullNodeVersion": "v3.12.1",
+  "fullNodeVersion": "v3.11.1",
   "compilerOptionsUsed": {
     "ignoreUnusedConstantsWarnings": true,
     "ignoreUnusedVariablesWarnings": true,
@@ -49,7 +49,7 @@
     },
     "Borrow": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -62,6 +62,12 @@
     "CreateLoan": {
       "sourceFile": "loans/loan_factory.ral",
       "sourceCodeHash": "c3f3e0c2aa105bc7ae08a6436afb8225ca243a0c48aec2a4c60af19893c229d9",
+      "bytecodeDebugPatch": "",
+      "codeHashDebug": ""
+    },
+    "CreateStablePool": {
+      "sourceFile": "pool-lending/stable_pool.ral",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -79,7 +85,7 @@
     },
     "Deposit": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -108,13 +114,13 @@
       "codeHashDebug": ""
     },
     "IFungibleToken": {
-      "sourceFile": "../../../../../tmp/bunx-1000-@alephium/cli@latest/node_modules/@alephium/web3/std/fungible_token_interface.ral",
+      "sourceFile": "../node_modules/@alephium/web3/std/fungible_token_interface.ral",
       "sourceCodeHash": "62910bf11e1eeb6cb2fd468626ff606a9b06306b2b81590c3b10f6deb5966bde",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "INFT": {
-      "sourceFile": "../../../../../tmp/bunx-1000-@alephium/cli@latest/node_modules/@alephium/web3/std/nft_interface.ral",
+      "sourceFile": "../node_modules/@alephium/web3/std/nft_interface.ral",
       "sourceCodeHash": "92956f4e61c198f011b48dbda2ed76193ffc79ac9c39f60bf1763a34e02f2c41",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
@@ -127,7 +133,7 @@
     },
     "LiquidateDebt": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -175,9 +181,9 @@
     },
     "Pool": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
-      "codeHashDebug": "77e3352ed4ec085524940326e5211f9a8ead2f1e1a82edef0fd033e73b043951"
+      "codeHashDebug": "0a9ace41598c44188bf5ed4afe1528e5c21da991df7c76f8ed742bad80f73110"
     },
     "Redeem": {
       "sourceFile": "auctions/auction_factory.ral",
@@ -199,7 +205,7 @@
     },
     "Repay": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
@@ -295,7 +301,7 @@
     },
     "Withdraw": {
       "sourceFile": "pool-lending/stable_pool.ral",
-      "sourceCodeHash": "59a14af333136e581dd9d5b0c834fd47504e84c02fde500988cf1b3caa328f61",
+      "sourceCodeHash": "fe9ff487a01a74e0738628e02773e12ce52a74ebfa791ba45925e3dbf5f30abe",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },

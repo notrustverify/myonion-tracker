@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "Deposit",
-  "bytecodeTemplate": "0101030001000e0c0d{0}01041700b41600{1}a3{1}0d0c{0}010b",
+  "bytecodeTemplate": "010103000100130c0d{0}01041700b47a1600{1}a313c3038d7ea4c68000102ca2{1}0d0c{0}010b",
   "fieldsSig": {
     "names": [
       "pool",
