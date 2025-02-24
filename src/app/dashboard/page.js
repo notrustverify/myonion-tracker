@@ -5,7 +5,7 @@ import { Navbar } from '../../components/navbar';
 import { Footer } from '../../components/footer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PiHandCoins, PiWarningCircleBold } from "react-icons/pi";
-import { FaChartLine, FaHistory, FaGavel, FaPlus, FaMinus, FaHandshake, FaCoins } from 'react-icons/fa';
+import { FaChartLine, FaHistory, FaGavel, FaPlus, FaMinus, FaHandshake, FaCoins, FaTimes } from 'react-icons/fa';
 import { TbGavel } from "react-icons/tb";
 import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
@@ -84,6 +84,8 @@ const ActivityLog = ({ address }) => {
         return <TbGavel className="text-violet-400" />;
       case 'auction_bid':
         return <FaGavel className="text-indigo-400" />;
+      case 'loan_canceled':
+        return <FaTimes className="text-red-400" />;
       default:
         return <FaHistory className="text-gray-400" />;
     }
@@ -146,7 +148,7 @@ const ActivityLog = ({ address }) => {
                     <div className="flex items-center gap-2">
                       <span className="text-gray-400">Accepted by</span>
                       <span className="font-medium bg-gray-700/50 px-2 py-1 rounded-lg">
-                        {`${log.lender.slice(0, 6)}...${log.lender.slice(-4)}`}
+                        {log.to ? `${log.to.slice(0, 6)}...${log.to.slice(-4)}` : 'Unknown'}
                       </span>
                     </div>
                   </div>
@@ -212,6 +214,12 @@ const ActivityLog = ({ address }) => {
                         <span className="text-gray-400">{bidToken.symbol}</span>
                       </div>
                     </div>
+                  </div>
+                );
+              case 'loan_canceled':
+                return (
+                  <div className="bg-red-500/10 text-red-400 p-2.5 rounded-xl border border-red-500/20">
+                    Loan request canceled by borrower
                   </div>
                 );
               default:

@@ -476,7 +476,7 @@ const LoanModal = ({
                   </span>
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
-                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Interest</span>
+                  <span className="text-xs md:text-sm text-gray-400 block mb-1">APR</span>
                   <span className="text-base md:text-lg font-medium text-green-400">
                     {(loan.interest / 100).toFixed(2)}%
                   </span>
