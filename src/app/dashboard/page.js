@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Navbar } from '../../components/navbar';
 import { Footer } from '../../components/footer';
-import { motion } from 'framer-motion';
-import { PiHandCoins } from "react-icons/pi";
-import { FaChartLine, FaHistory, FaGavel } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { PiHandCoins, PiWarningCircleBold } from "react-icons/pi";
+import { FaChartLine, FaHistory, FaGavel, FaPlus, FaMinus, FaHandshake, FaCoins } from 'react-icons/fa';
+import { TbGavel } from "react-icons/tb";
 import { useWallet } from '@alephium/web3-react';
 import CreateLoanModal from '../../components/CreateLoanModal';
 import axios from 'axios';
@@ -13,6 +14,7 @@ import { getTokensList, getBackendUrl, calculateLoanRepayment, getNodeProvider, 
 import DashboardLoanCard from '../../components/dashboard/DashboardLoanCard';
 import { ANS } from '@alph-name-service/ans-sdk';
 import { RedeemAuctionService } from '../../services/loan.services'
+import { formatDistanceToNow } from 'date-fns';
 
 const getTokenInfo = (tokenId) => {
   const tokens = getTokensList();
@@ -28,6 +30,252 @@ const formatNumber = (value) => {
     maximumFractionDigits: 2,
     minimumFractionDigits: 2
   }).format(value);
+};
+
+const formatTimestamp = (timestamp) => {
+  try {
+    return formatDistanceToNow(new Date(timestamp), { addSuffix: true });
+  } catch (error) {
+    console.error('Invalid timestamp:', timestamp);
+    return 'Unknown time';
+  }
+};
+
+const ActivityLog = ({ address }) => {
+  const [logs, setLogs] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const backendUrl = getBackendUrl();
+
+  useEffect(() => {
+    if (!address) return;
+
+    const fetchLogs = async () => {
+      try {
+        const response = await axios.get(`${backendUrl}/api/logs-by-address/${address}`);
+        setLogs(response.data);
+      } catch (error) {
+        console.error('Error fetching logs:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchLogs();
+    const interval = setInterval(fetchLogs, 30000);
+
+    return () => clearInterval(interval);
+  }, [address, backendUrl]);
+
+  const getLogIcon = (type) => {
+    switch (type) {
+      case 'loan_created':
+        return <PiHandCoins className="text-green-400" />;
+      case 'collateral_added':
+        return <FaPlus className="text-blue-400" />;
+      case 'collateral_removed':
+        return <FaMinus className="text-orange-400" />;
+      case 'loan_accepted':
+        return <FaHandshake className="text-purple-400" />;
+      case 'loan_repaid':
+        return <FaCoins className="text-yellow-400" />;
+      case 'liquidation':
+        return <PiWarningCircleBold className="text-red-400" />;
+      case 'auction_created':
+        return <TbGavel className="text-violet-400" />;
+      case 'auction_bid':
+        return <FaGavel className="text-indigo-400" />;
+      default:
+        return <FaHistory className="text-gray-400" />;
+    }
+  };
+
+  const getLogMessage = (log) => {
+    return (
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 text-sm">
+          <div className="px-2 py-1 rounded-lg bg-gray-700/50 text-xs font-medium text-violet-400 uppercase tracking-wide">
+            {log.type.replace(/_/g, ' ')}
+          </div>
+        </div>
+        <div className="text-gray-300">
+          {(() => {
+            switch (log.type) {
+              case 'loan_created':
+                const requestedToken = getTokenInfo(log.tokenRequested);
+                const collateralToken = getTokenInfo(log.collateralToken);
+                const requestedAmount = Number(log.tokenAmount) / Math.pow(10, requestedToken.decimals);
+                return (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                      <img 
+                        src={requestedToken.logoURI} 
+                        alt={requestedToken.symbol} 
+                        className="w-8 h-8 rounded-full"
+                      />
+                      <div className="flex flex-col">
+                        <span className="text-xs text-gray-400">Requested Amount</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium text-lg">{formatNumber(requestedAmount)}</span>
+                          <span className="text-gray-400">{requestedToken.symbol}</span>
+                        </div>
+                      </div>
+                    </div>
+                    {log.collateralAmount && (
+                      <div className="flex items-center gap-3 bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                        <img 
+                          src={collateralToken.logoURI} 
+                          alt={collateralToken.symbol} 
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div className="flex flex-col">
+                          <span className="text-xs text-gray-400">Collateral</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-lg">
+                              {formatNumber(Number(log.collateralAmount) / Math.pow(10, collateralToken.decimals))}
+                            </span>
+                            <span className="text-gray-400">{collateralToken.symbol}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              case 'loan_accepted':
+                return (
+                  <div className="bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-400">Accepted by</span>
+                      <span className="font-medium bg-gray-700/50 px-2 py-1 rounded-lg">
+                        {`${log.lender.slice(0, 6)}...${log.lender.slice(-4)}`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              case 'loan_repaid':
+                const repaidToken = getTokenInfo(log.collateralToken);
+                const repaidAmount = Number(log.collateralAmount) / Math.pow(10, repaidToken.decimals);
+                return (
+                  <div className="flex items-center gap-3 bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                    <img 
+                      src={repaidToken.logoURI} 
+                      alt={repaidToken.symbol} 
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-400">Repaid Amount</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-lg">{formatNumber(repaidAmount)}</span>
+                        <span className="text-gray-400">{repaidToken.symbol}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'liquidation':
+                return (
+                  <div className="bg-red-500/10 text-red-400 p-2.5 rounded-xl border border-red-500/20">
+                    Loan liquidated due to insufficient collateral
+                  </div>
+                );
+              case 'auction_created':
+                const auctionToken = getTokenInfo(log.collateralToken);
+                const auctionAmount = Number(log.collateralAmount) / Math.pow(10, auctionToken.decimals);
+                return (
+                  <div className="flex items-center gap-3 bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                    <img 
+                      src={auctionToken.logoURI} 
+                      alt={auctionToken.symbol} 
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-400">Auction Amount</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-lg">{formatNumber(auctionAmount)}</span>
+                        <span className="text-gray-400">{auctionToken.symbol}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              case 'auction_bid':
+                const bidToken = getTokenInfo(log.collateralToken);
+                const bidAmount = Number(log.collateralAmount) / Math.pow(10, bidToken.decimals);
+                return (
+                  <div className="flex items-center gap-3 bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                    <img 
+                      src={bidToken.logoURI} 
+                      alt={bidToken.symbol} 
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-gray-400">Bid Amount</span>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-lg">{formatNumber(bidAmount)}</span>
+                        <span className="text-gray-400">{bidToken.symbol}</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              default:
+                return (
+                  <div className="bg-gray-800/30 p-2.5 rounded-xl border border-gray-700/30">
+                    {log.message || 'Unknown action'}
+                  </div>
+                );
+            }
+          })()}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 h-[600px] flex flex-col">
+      <div className="p-4 border-b border-gray-700/50">
+        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+          <FaHistory className="text-violet-400" />
+          Activity Log
+        </h3>
+      </div>
+      
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full overflow-y-auto px-4 py-2 custom-scrollbar">
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-400" />
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              No activity found
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <AnimatePresence>
+                {logs.map((log, index) => (
+                  <motion.div
+                    key={log.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-start gap-4 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30"
+                  >
+                    <div className="p-2 rounded-lg bg-gray-700/50 shrink-0">
+                      {getLogIcon(log.type)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-gray-300">{getLogMessage(log)}</div>
+                      <p className="text-sm text-gray-500 mt-2">
+                        {formatTimestamp(log.createdAt)}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default function Dashboard() {
@@ -470,110 +718,63 @@ export default function Dashboard() {
           </div>
         </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6 }}
-          className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50"
-        >
-          <div className="p-4 border-b border-gray-700/50">
-            <h2 className="text-lg font-bold text-white flex items-center gap-2">
-              <FaGavel className="w-4 h-4" />
-              Won Auctions to Claim
-            </h2>
-          </div>
-
-          <div className="p-4">
-            {isAuctionsLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
-              </div>
-            ) : wonAuctions.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {wonAuctions.map((auction) => (
-                  <motion.div
-                    key={auction.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-800/30 rounded-2xl p-4 border border-gray-700/30"
-                  >
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex items-center gap-2">
-                        <img 
-                          src={getTokenInfo(auction.collateralToken).logoURI}
-                          alt={getTokenInfo(auction.collateralToken).symbol}
-                          className="w-8 h-8 rounded-full"
-                        />
-                        <div>
-                          <span className="text-sm text-gray-400">Collateral Won</span>
-                          <div className="flex items-center gap-1">
-                            <span className="font-medium">
-                              {formatNumber(auction.collateralAmount / Math.pow(10, getTokenInfo(auction.collateralToken).decimals))}
-                            </span>
-                            <span className="text-gray-400">{getTokenInfo(auction.collateralToken).symbol}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 h-[600px] flex flex-col">
+            <div className="p-4 border-b border-gray-700/50">
+              <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                <FaGavel className="text-violet-400" />
+                Won Auctions to Claim
+              </h3>
+            </div>
+            <div className="p-4 flex-1 flex items-center justify-center">
+              {isAuctionsLoading ? (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-400" />
+              ) : wonAuctions.length === 0 ? (
+                <div className="text-gray-400 text-center">
+                  No auctions to claim
+                </div>
+              ) : (
+                <div className="w-full">
+                  <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
+                    <AnimatePresence>
+                      {wonAuctions.map((auction, index) => (
+                        <motion.div
+                          key={auction.id}
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ delay: index * 0.1 }}
+                          className="flex items-center gap-4 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30"
+                        >
+                          <div className="p-2 rounded-lg bg-gray-700/50">
+                            <img 
+                              src={getTokenInfo(auction.collateralToken).logoURI}
+                              alt={getTokenInfo(auction.collateralToken).symbol}
+                              className="w-8 h-8 rounded-full"
+                            />
                           </div>
-                        </div>
-                      </div>
-                      <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/20">
-                        Ready to Claim
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between items-center text-sm mb-4">
-                      <div>
-                        <span className="text-gray-400">Winning Bid</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-medium">
-                            {formatNumber(auction.bidAmount / Math.pow(10, getTokenInfo(auction.bidToken).decimals))}
-                          </span>
-                          <span className="text-gray-400">{getTokenInfo(auction.bidToken).symbol}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-gray-400">Auction Ended</span>
-                        <div className="font-medium">
-                          {new Date(auction.endDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                    {claimError[auction.id] && (
-                      <p className="text-red-400 text-sm mb-4">{claimError[auction.id]}</p>
-                    )}
-
-                    <button
-                      onClick={() => handleClaimAuction(auction.id)}
-                      disabled={isClaimLoading[auction.id]}
-                      className="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
-                        hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
-                        border border-green-500/20 hover:border-green-500/30 
-                        transition-all duration-300 ease-out
-                        text-green-400 hover:text-green-300 font-medium 
-                        shadow-lg shadow-green-900/20 hover:shadow-green-900/30
-                        disabled:opacity-50 disabled:cursor-not-allowed
-                        flex items-center justify-center gap-2"
-                    >
-                      {isClaimLoading[auction.id] ? (
-                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
-                      ) : (
-                        <>
-                          <span>Claim Auction</span>
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                              d="M5 13l4 4L19 7" />
-                          </svg>
-                        </>
-                      )}
-                    </button>
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <p className="text-sm text-gray-400">No auctions to claim</p>
-              </div>
-            )}
+                          <div className="flex-1">
+                            <p className="text-gray-300">
+                              {getTokenInfo(auction.collateralToken).symbol}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {formatNumber(auction.collateralAmount / Math.pow(10, getTokenInfo(auction.collateralToken).decimals))}
+                            </p>
+                          </div>
+                          <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/20">
+                            Ready to Claim
+                          </div>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </motion.div>
+
+          <ActivityLog address={wallet?.account?.address} />
+        </div>
       </motion.main>
 
       <Footer />

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { FaTwitter, FaGithub, FaDiscord } from 'react-icons/fa';
+import { FaTwitter, FaGithub, FaDiscord, FaTelegram } from 'react-icons/fa';
 
 const LegalModal = ({ isOpen, onClose, type }) => {
   if (!isOpen) return null;
@@ -110,6 +110,8 @@ export function Footer() {
   const quickLinks = [
     { name: 'Home', path: '/' },
     { name: 'Loan', path: '/loan' },
+    { name: 'Liquidation', path: '/liquidation' },
+    { name: 'Auctions', path: '/auctions' },
   ];
 
   const openModal = (type) => {
@@ -176,6 +178,15 @@ export function Footer() {
                   rel="noopener noreferrer"
                 >
                   <FaGithub className="w-6 h-6" />
+                </motion.a>
+                <motion.a
+                  whileHover={{ y: -3 }}
+                  href="https://t.me/+PfIw-0e6pAtkOTYx"
+                  className="text-gray-400 hover:text-green-400 transition-colors duration-200"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FaTelegram className="w-6 h-6" />
                 </motion.a>
               </div>
             </div>

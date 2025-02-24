@@ -160,7 +160,7 @@ const DashboardLoanCard = ({
             <div className="flex justify-between items-center mb-2">
               <span className="text-xs text-gray-400">Collateral</span>
               <span className={`text-xs font-medium ${getCollateralRatioColor(collateralRatio)}`}>
-                {collateralRatio}% Ratio
+                {collateralRatio.toFixed(2)}% Ratio
               </span>
             </div>
             <div className="flex items-center gap-3">
