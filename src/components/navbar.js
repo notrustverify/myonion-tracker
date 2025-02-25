@@ -126,6 +126,9 @@ export function Navbar() {
             <Link href="/auctions" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
               Auctions
             </Link>
+            <Link href="/activity" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
+              Activity
+            </Link>
             {wallet?.account?.address && (
               <Link href="/dashboard" className="text-gray-300 hover:text-green-400 transition-colors duration-200">
                 Dashboard
@@ -305,6 +308,13 @@ export function Navbar() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Auctions
+                </Link>
+                <Link 
+                  href="/activity" 
+                  className="text-gray-300 hover:text-green-400 transition-colors duration-200 py-2"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  Activity
                 </Link>
                 {wallet?.account?.address && (
                   <Link 
