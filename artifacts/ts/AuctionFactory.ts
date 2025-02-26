@@ -42,6 +42,7 @@ export namespace AuctionFactoryTypes {
   export type Fields = {
     admin: Address;
     auctionTemplate: HexString;
+    loanFactory: HexString;
     auctionNumber: bigint;
     fee: bigint;
   };
@@ -69,6 +70,10 @@ export namespace AuctionFactoryTypes {
   }>;
 
   export interface CallMethodTable {
+    getLoanFactoryId: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<HexString>;
+    };
     createAuction: {
       params: CallContractParams<{
         collateral: HexString;
@@ -95,6 +100,10 @@ export namespace AuctionFactoryTypes {
       params: CallContractParams<{ newFee: bigint }>;
       result: CallContractResult<null>;
     };
+    editLoanFactory: {
+      params: CallContractParams<{ factoryId: HexString }>;
+      result: CallContractResult<null>;
+    };
     updateAuctionFactoryCode: {
       params: CallContractParams<{ newCode: HexString }>;
       result: CallContractResult<null>;
@@ -104,14 +113,6 @@ export namespace AuctionFactoryTypes {
         newCode: HexString;
         immFields: HexString;
         mutFields: HexString;
-      }>;
-      result: CallContractResult<null>;
-    };
-    withdrawAuctionFactoryFees: {
-      params: CallContractParams<{
-        who: Address;
-        token: HexString;
-        amount: bigint;
       }>;
       result: CallContractResult<null>;
     };
@@ -133,6 +134,10 @@ export namespace AuctionFactoryTypes {
   };
 
   export interface SignExecuteMethodTable {
+    getLoanFactoryId: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
     createAuction: {
       params: SignExecuteContractMethodParams<{
         collateral: HexString;
@@ -159,6 +164,10 @@ export namespace AuctionFactoryTypes {
       params: SignExecuteContractMethodParams<{ newFee: bigint }>;
       result: SignExecuteScriptTxResult;
     };
+    editLoanFactory: {
+      params: SignExecuteContractMethodParams<{ factoryId: HexString }>;
+      result: SignExecuteScriptTxResult;
+    };
     updateAuctionFactoryCode: {
       params: SignExecuteContractMethodParams<{ newCode: HexString }>;
       result: SignExecuteScriptTxResult;
@@ -168,14 +177,6 @@ export namespace AuctionFactoryTypes {
         newCode: HexString;
         immFields: HexString;
         mutFields: HexString;
-      }>;
-      result: SignExecuteScriptTxResult;
-    };
-    withdrawAuctionFactoryFees: {
-      params: SignExecuteContractMethodParams<{
-        who: Address;
-        token: HexString;
-        amount: bigint;
       }>;
       result: SignExecuteScriptTxResult;
     };
@@ -206,6 +207,19 @@ class Factory extends ContractFactory<
   }
 
   tests = {
+    getLoanFactoryId: async (
+      params: Omit<
+        TestContractParamsWithoutMaps<AuctionFactoryTypes.Fields, never>,
+        "testArgs"
+      >
+    ): Promise<TestContractResultWithoutMaps<HexString>> => {
+      return testMethod(
+        this,
+        "getLoanFactoryId",
+        params,
+        getContractByCodeHash
+      );
+    },
     createAuction: async (
       params: TestContractParamsWithoutMaps<
         AuctionFactoryTypes.Fields,
@@ -244,6 +258,14 @@ class Factory extends ContractFactory<
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "editRate", params, getContractByCodeHash);
     },
+    editLoanFactory: async (
+      params: TestContractParamsWithoutMaps<
+        AuctionFactoryTypes.Fields,
+        { factoryId: HexString }
+      >
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(this, "editLoanFactory", params, getContractByCodeHash);
+    },
     updateAuctionFactoryCode: async (
       params: TestContractParamsWithoutMaps<
         AuctionFactoryTypes.Fields,
@@ -270,19 +292,6 @@ class Factory extends ContractFactory<
         getContractByCodeHash
       );
     },
-    withdrawAuctionFactoryFees: async (
-      params: TestContractParamsWithoutMaps<
-        AuctionFactoryTypes.Fields,
-        { who: Address; token: HexString; amount: bigint }
-      >
-    ): Promise<TestContractResultWithoutMaps<null>> => {
-      return testMethod(
-        this,
-        "withdrawAuctionFactoryFees",
-        params,
-        getContractByCodeHash
-      );
-    },
   };
 
   stateForTest(
@@ -299,7 +308,7 @@ export const AuctionFactory = new Factory(
   Contract.fromJson(
     AuctionFactoryContractJson,
     "",
-    "92a910144e9958809a33c33730ae15402e2aae773aaf165fba6240b06c09aec6",
+    "c6233af7df42d52e3e1babfe7fceaa4a54d08b4351f1f2bba19207709629ab68",
     AllStructs
   )
 );
@@ -375,6 +384,17 @@ export class AuctionFactoryInstance extends ContractInstance {
   }
 
   view = {
+    getLoanFactoryId: async (
+      params?: AuctionFactoryTypes.CallMethodParams<"getLoanFactoryId">
+    ): Promise<AuctionFactoryTypes.CallMethodResult<"getLoanFactoryId">> => {
+      return callMethod(
+        AuctionFactory,
+        this,
+        "getLoanFactoryId",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
     createAuction: async (
       params: AuctionFactoryTypes.CallMethodParams<"createAuction">
     ): Promise<AuctionFactoryTypes.CallMethodResult<"createAuction">> => {
@@ -419,6 +439,17 @@ export class AuctionFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
+    editLoanFactory: async (
+      params: AuctionFactoryTypes.CallMethodParams<"editLoanFactory">
+    ): Promise<AuctionFactoryTypes.CallMethodResult<"editLoanFactory">> => {
+      return callMethod(
+        AuctionFactory,
+        this,
+        "editLoanFactory",
+        params,
+        getContractByCodeHash
+      );
+    },
     updateAuctionFactoryCode: async (
       params: AuctionFactoryTypes.CallMethodParams<"updateAuctionFactoryCode">
     ): Promise<
@@ -445,22 +476,21 @@ export class AuctionFactoryInstance extends ContractInstance {
         getContractByCodeHash
       );
     },
-    withdrawAuctionFactoryFees: async (
-      params: AuctionFactoryTypes.CallMethodParams<"withdrawAuctionFactoryFees">
-    ): Promise<
-      AuctionFactoryTypes.CallMethodResult<"withdrawAuctionFactoryFees">
-    > => {
-      return callMethod(
-        AuctionFactory,
-        this,
-        "withdrawAuctionFactoryFees",
-        params,
-        getContractByCodeHash
-      );
-    },
   };
 
   transact = {
+    getLoanFactoryId: async (
+      params: AuctionFactoryTypes.SignExecuteMethodParams<"getLoanFactoryId">
+    ): Promise<
+      AuctionFactoryTypes.SignExecuteMethodResult<"getLoanFactoryId">
+    > => {
+      return signExecuteMethod(
+        AuctionFactory,
+        this,
+        "getLoanFactoryId",
+        params
+      );
+    },
     createAuction: async (
       params: AuctionFactoryTypes.SignExecuteMethodParams<"createAuction">
     ): Promise<
@@ -482,6 +512,13 @@ export class AuctionFactoryInstance extends ContractInstance {
       params: AuctionFactoryTypes.SignExecuteMethodParams<"editRate">
     ): Promise<AuctionFactoryTypes.SignExecuteMethodResult<"editRate">> => {
       return signExecuteMethod(AuctionFactory, this, "editRate", params);
+    },
+    editLoanFactory: async (
+      params: AuctionFactoryTypes.SignExecuteMethodParams<"editLoanFactory">
+    ): Promise<
+      AuctionFactoryTypes.SignExecuteMethodResult<"editLoanFactory">
+    > => {
+      return signExecuteMethod(AuctionFactory, this, "editLoanFactory", params);
     },
     updateAuctionFactoryCode: async (
       params: AuctionFactoryTypes.SignExecuteMethodParams<"updateAuctionFactoryCode">
@@ -507,17 +544,24 @@ export class AuctionFactoryInstance extends ContractInstance {
         params
       );
     },
-    withdrawAuctionFactoryFees: async (
-      params: AuctionFactoryTypes.SignExecuteMethodParams<"withdrawAuctionFactoryFees">
-    ): Promise<
-      AuctionFactoryTypes.SignExecuteMethodResult<"withdrawAuctionFactoryFees">
-    > => {
-      return signExecuteMethod(
-        AuctionFactory,
-        this,
-        "withdrawAuctionFactoryFees",
-        params
-      );
-    },
   };
+
+  async multicall<Calls extends AuctionFactoryTypes.MultiCallParams>(
+    calls: Calls
+  ): Promise<AuctionFactoryTypes.MultiCallResults<Calls>>;
+  async multicall<Callss extends AuctionFactoryTypes.MultiCallParams[]>(
+    callss: Narrow<Callss>
+  ): Promise<AuctionFactoryTypes.MulticallReturnType<Callss>>;
+  async multicall<
+    Callss extends
+      | AuctionFactoryTypes.MultiCallParams
+      | AuctionFactoryTypes.MultiCallParams[]
+  >(callss: Callss): Promise<unknown> {
+    return await multicallMethods(
+      AuctionFactory,
+      this,
+      callss,
+      getContractByCodeHash
+    );
+  }
 }

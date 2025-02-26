@@ -1,0 +1,78 @@
+Contract Fee (
+    mut admin: Address,
+    parentContract: Address,
+    asset: ByteVec,
+    mut fees: U256,
+    mut hasGas: Bool
+) { 
+    @using(checkExternalCaller = true, assetsInContract = true, updateFields = true, preapprovedAssets = true)
+    pub fn withdrawAsset(caller: Address, who: Address, amount: U256) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+        
+        assert!(caller == admin, 1)
+
+        if (hasGas) {
+            // for the next transaction
+            transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
+            transferToken!(selfAddress!(), who, ALPH, dustAmount!())
+            transferToken!(selfAddress!(), who, asset, amount)
+
+            fees = fees - amount
+        } else {
+            transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
+            hasGas = true
+        }
+    }
+
+    @using(checkExternalCaller = false, assetsInContract = true, updateFields = true, preapprovedAssets = true)
+    pub fn depositInCollector(caller: Address, token: ByteVec, amount: U256) -> () {
+        assert!(token == asset, 7)
+
+        transferToken!(caller, selfAddress!(), token, amount)
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
+        fees = fees + amount
+    }
+
+    @using(checkExternalCaller = true, assetsInContract = true, updateFields = false)
+    pub fn destroyFee(caller: Address) -> () {
+        checkCaller!(callerAddress!() == parentContract, 0)
+        
+        assert!(caller == admin, 1)
+
+        destroySelf!(admin)
+    }
+
+    @using(checkExternalCaller = true, assetsInContract = false, updateFields = true)
+    pub fn editAdmin(newAdmin: Address) -> () {
+        checkCaller!(admin == callerAddress!(), 0)
+
+        admin = newAdmin
+    }
+
+    // only for template -> should not be called from factory (cannot be called now) :)
+    @using(checkExternalCaller = true, assetsInContract = true, updateFields = false)
+    pub fn forceDestroy() -> () {
+        checkCaller!(admin == callerAddress!(), 0)
+
+        assert!(admin == parentContract, 1)
+
+        destroySelf!(admin)
+    }
+}
+
+// add destory and edit admin
+TxScript ForceDestroyFee (
+    fee: Fee
+) {
+    fee.forceDestroy()
+}
+
+TxScript EditAdminFee (
+    fee: Fee,
+    newAdmin: Address
+) {
+    fee.editAdmin(newAdmin)
+}

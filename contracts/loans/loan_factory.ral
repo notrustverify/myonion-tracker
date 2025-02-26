@@ -18,6 +18,7 @@ Contract LoanFactory (
     admin: Address,
     loanTemplate: ByteVec,
     auctionHouse: ByteVec,
+    feeTemplate: ByteVec,
     mut activeLoans: U256,
     mut rate: U256,
     oracle: IDIAOracle,
@@ -51,9 +52,14 @@ Contract LoanFactory (
         who: Address
     )
 
-    event LoanWithdraw (
-        contract: ByteVec, 
-        forfeit: Bool, 
+    event LoanLiqWith (
+        contract: ByteVec,
+        liquidation: Bool,
+        who: Address
+    )
+
+    event LoanPayed (
+        contract: ByteVec,
         who: Address
     )
 
@@ -139,6 +145,14 @@ Contract LoanFactory (
         }
 
         return 0, false
+    }
+
+    // fee collector
+    @using(checkExternalCaller = false, preapprovedAssets = false)
+    pub fn depositFeeCollector(token: ByteVec) -> (ByteVec) {
+        let collector = subContractId!(token)
+
+        return collector
     }
 
     pub fn getRequiredTokens(contractId: ByteVec, withInterest: Bool) -> (ByteVec, U256) {
@@ -271,6 +285,9 @@ Contract LoanFactory (
 
         let caller = callerAddress!()
 
+        let owner = loan.getBorrower()
+        assert!(caller == owner, 0)
+
         loan.cancelLoan(caller)
 
         // emit event
@@ -283,13 +300,16 @@ Contract LoanFactory (
 
         let caller = callerAddress!()
 
+        let owner = loan.getBorrower()
+        assert!(caller == owner, 0)
+
         let (token, amount) = loan.getTokenRequested()
         let totalAmount = loan.getInterest()
 
         loan.payLoan{caller -> token: totalAmount, ALPH: dustAmount!() * 2}(caller)
 
         // emit event
-        emit LoanWithdraw(contractId, false, caller)
+        emit LoanPayed(contractId, caller)
     }
     
     @using(checkExternalCaller = false, preapprovedAssets = false, assetsInContract = enforced)
@@ -301,15 +321,16 @@ Contract LoanFactory (
         let (collateral, collateralAmount) = loan.getTokenCollateral()
         let (token, amount) = loan.getTokenRequested()
 
-        let move = loan.acceptForfeit()
+        // whether or not a auction will be made for the funds
+        let liquidation = loan.canLoanLiquidate()
 
-        // emit event
-        if (move == false) {
-            emit LoanWithdraw(contractId, true, caller)
-        }
-        else {
-            emit LoanLiquidation(contractId, token, amount)
-        }
+        loan.forfeit()
+
+        emit LoanLiqWith(
+            contractId,
+            liquidation,
+            caller
+        )
     }
 
     @using(checkExternalCaller = false, updateFields = false)
@@ -334,7 +355,7 @@ Contract LoanFactory (
             15000
         )
 
-        assert!(condition == true, 8)
+        assert!(condition == false, 8)
 
         loan.activateLiquidation(ratio)
 
@@ -346,6 +367,9 @@ Contract LoanFactory (
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
+
+        let owner = loan.getBorrower()
+        assert!(caller == owner, 0)
 
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
@@ -363,16 +387,19 @@ Contract LoanFactory (
             0
         )
 
-        let _ = loan.addCollateral{caller -> collateral: amount, ALPH: dustAmount!() * 2}(caller, amount, ratio)
+        let _ = loan.addCollateral{caller -> collateral: amount, ALPH: dustAmount!()}(caller, amount, ratio)
 
         emit AddCollateralLoan(contractId, caller, collateral, collateralAmount + amount)
     }
 
-    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = false, assetsInContract = enforced)
+    @using(checkExternalCaller = false, updateFields = false, preapprovedAssets = true, assetsInContract = enforced)
     pub fn removeCollateral(contractId: ByteVec, amount: U256) -> () {
         let loan = Loan(contractId)
 
         let caller = callerAddress!()
+
+        let owner = loan.getBorrower()
+        assert!(caller == owner, 0)
 
         let (token, tokenAmount) = loan.getTokenRequested()
         let (collateral, collateralAmount) = loan.getTokenCollateral()
@@ -392,7 +419,7 @@ Contract LoanFactory (
 
         assert!(ratio > 15000, 1) // prevent falling into liquidation
 
-        let _ = loan.removeCollateral(caller, amount, ratio)
+        let _ = loan.removeCollateral{callerAddress!() -> ALPH: dustAmount!()}(caller, amount, ratio)
 
         emit RemoveCollateralLoan(contractId, caller, collateral, collateralAmount - amount)
     }
@@ -404,6 +431,7 @@ Contract LoanFactory (
         rate = newRate
     }
 
+    // need to add fee contracts here
     @using(checkExternalCaller = true, preapprovedAssets = true, updateFields = false)
     pub fn tokenMapping(token: ByteVec, add: Bool, pairtoken: ByteVec, decimals: U256, alephiumOracle: Bool) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
@@ -416,17 +444,39 @@ Contract LoanFactory (
             }
 
             tokenPairs.insert!(callerAddress!(), token, b)
+
+            // add fee contract for token
+            let (encodeImmutableFields, encodeMutableFields) = Fee.encodeFields!(
+                admin,
+                selfAddress!(),
+                token,
+                0,
+                false
+            )
+            
+            let feeId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!()}(
+                token,
+                feeTemplate,
+                encodeImmutableFields,
+                encodeMutableFields
+            )
         }
         else {
             tokenPairs.remove!(callerAddress!(), token)
+
+            let fee = Fee(subContractId!(token))
+
+            fee.destroyFee(callerAddress!())
         }
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false, assetsInContract = true)
+    @using(checkExternalCaller = true, preapprovedAssets = true, updateFields = false, assetsInContract = enforced)
     pub fn withdrawLoanFactoryFees(who: Address, token: ByteVec, amount: U256) -> () {
         checkCaller!(callerAddress!() == admin, LoanCodes.NotAdmin)
 
-        transferToken!(selfAddress!(), who, token, amount)
+        let feeContract = Fee(subContractId!(token))
+
+        feeContract.withdrawAsset{callerAddress!() -> ALPH: dustAmount!()}(callerAddress!(), who, amount)
 
         // emit event
     }
@@ -508,7 +558,7 @@ TxScript AddCollateral (
 ) {
     let (token, _) = Loan(contractId).getTokenCollateral()
 
-    loanFactory.addCollateral{callerAddress!() -> token: amount, ALPH: dustAmount!() * 2}(contractId, amount)
+    loanFactory.addCollateral{callerAddress!() -> token: amount, ALPH: dustAmount!()}(contractId, amount)
 }
 
 TxScript RemoveCollateral (
@@ -518,7 +568,7 @@ TxScript RemoveCollateral (
 ) {
     let (token, _) = Loan(contractId).getTokenCollateral()
 
-    loanFactory.removeCollateral(contractId, amount)
+    loanFactory.removeCollateral{callerAddress!() -> ALPH: dustAmount!()}(contractId, amount)
 }
 
 TxScript LiquidationLoan (
@@ -543,7 +593,7 @@ TxScript WithdrawLoanFactoryFees (
     token: ByteVec,
     amount: U256
 ) {
-    loanFactory.withdrawLoanFactoryFees(who, token, amount)
+    loanFactory.withdrawLoanFactoryFees{callerAddress!() -> ALPH: dustAmount!()}(who, token, amount)
 }
 
 TxScript TokenMapping (
@@ -554,7 +604,7 @@ TxScript TokenMapping (
     decimals: U256,
     alephiumOracle: Bool
 ) {
-    loanFactory.tokenMapping{callerAddress!() -> ALPH: mapEntryDeposit!()}(token, add, pairtoken, decimals, alephiumOracle)
+    loanFactory.tokenMapping{callerAddress!() -> ALPH: mapEntryDeposit!() + minimalContractDeposit!()}(token, add, pairtoken, decimals, alephiumOracle)
 }
 
 TxScript UpdateLoanFactoryCode (
@@ -572,5 +622,3 @@ TxScript UpdateLoanFactoryFields (
 ) {
     loanFactory.updateLoanFactoryFields(newCode, immFields, mutFields)
 }
-
-

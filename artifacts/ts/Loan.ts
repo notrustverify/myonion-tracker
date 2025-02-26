@@ -72,6 +72,10 @@ export namespace LoanTypes {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<boolean>;
     };
+    getBorrower: {
+      params: Omit<CallContractParams<{}>, "args">;
+      result: CallContractResult<Address>;
+    };
     isLoanComplete: {
       params: Omit<CallContractParams<{}>, "args">;
       result: CallContractResult<boolean>;
@@ -100,9 +104,9 @@ export namespace LoanTypes {
       params: CallContractParams<{ caller: Address }>;
       result: CallContractResult<null>;
     };
-    acceptForfeit: {
+    forfeit: {
       params: Omit<CallContractParams<{}>, "args">;
-      result: CallContractResult<boolean>;
+      result: CallContractResult<null>;
     };
     addCollateral: {
       params: CallContractParams<{
@@ -166,6 +170,10 @@ export namespace LoanTypes {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
+    getBorrower: {
+      params: Omit<SignExecuteContractMethodParams<{}>, "args">;
+      result: SignExecuteScriptTxResult;
+    };
     isLoanComplete: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
@@ -197,7 +205,7 @@ export namespace LoanTypes {
       params: SignExecuteContractMethodParams<{ caller: Address }>;
       result: SignExecuteScriptTxResult;
     };
-    acceptForfeit: {
+    forfeit: {
       params: Omit<SignExecuteContractMethodParams<{}>, "args">;
       result: SignExecuteScriptTxResult;
     };
@@ -301,6 +309,14 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
         getContractByCodeHash
       );
     },
+    getBorrower: async (
+      params: Omit<
+        TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
+        "testArgs"
+      >
+    ): Promise<TestContractResultWithoutMaps<Address>> => {
+      return testMethod(this, "getBorrower", params, getContractByCodeHash);
+    },
     isLoanComplete: async (
       params: Omit<
         TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
@@ -354,13 +370,13 @@ class Factory extends ContractFactory<LoanInstance, LoanTypes.Fields> {
     ): Promise<TestContractResultWithoutMaps<null>> => {
       return testMethod(this, "payLoan", params, getContractByCodeHash);
     },
-    acceptForfeit: async (
+    forfeit: async (
       params: Omit<
         TestContractParamsWithoutMaps<LoanTypes.Fields, never>,
         "testArgs"
       >
-    ): Promise<TestContractResultWithoutMaps<boolean>> => {
-      return testMethod(this, "acceptForfeit", params, getContractByCodeHash);
+    ): Promise<TestContractResultWithoutMaps<null>> => {
+      return testMethod(this, "forfeit", params, getContractByCodeHash);
     },
     addCollateral: async (
       params: TestContractParamsWithoutMaps<
@@ -429,7 +445,7 @@ export const Loan = new Factory(
   Contract.fromJson(
     LoanContractJson,
     "",
-    "fc001ed267de02374c6e638e5227f5a511130b8f0d9bb6701d27b002d96d4c10",
+    "3efd7397fddac9e23750a8b6c7645e5a08b29ca59303022be89ccaaf4afae06d",
     AllStructs
   )
 );
@@ -475,6 +491,17 @@ export class LoanInstance extends ContractInstance {
         Loan,
         this,
         "canLoanLiquidate",
+        params === undefined ? {} : params,
+        getContractByCodeHash
+      );
+    },
+    getBorrower: async (
+      params?: LoanTypes.CallMethodParams<"getBorrower">
+    ): Promise<LoanTypes.CallMethodResult<"getBorrower">> => {
+      return callMethod(
+        Loan,
+        this,
+        "getBorrower",
         params === undefined ? {} : params,
         getContractByCodeHash
       );
@@ -550,13 +577,13 @@ export class LoanInstance extends ContractInstance {
     ): Promise<LoanTypes.CallMethodResult<"payLoan">> => {
       return callMethod(Loan, this, "payLoan", params, getContractByCodeHash);
     },
-    acceptForfeit: async (
-      params?: LoanTypes.CallMethodParams<"acceptForfeit">
-    ): Promise<LoanTypes.CallMethodResult<"acceptForfeit">> => {
+    forfeit: async (
+      params?: LoanTypes.CallMethodParams<"forfeit">
+    ): Promise<LoanTypes.CallMethodResult<"forfeit">> => {
       return callMethod(
         Loan,
         this,
-        "acceptForfeit",
+        "forfeit",
         params === undefined ? {} : params,
         getContractByCodeHash
       );
@@ -634,6 +661,11 @@ export class LoanInstance extends ContractInstance {
     ): Promise<LoanTypes.SignExecuteMethodResult<"canLoanLiquidate">> => {
       return signExecuteMethod(Loan, this, "canLoanLiquidate", params);
     },
+    getBorrower: async (
+      params: LoanTypes.SignExecuteMethodParams<"getBorrower">
+    ): Promise<LoanTypes.SignExecuteMethodResult<"getBorrower">> => {
+      return signExecuteMethod(Loan, this, "getBorrower", params);
+    },
     isLoanComplete: async (
       params: LoanTypes.SignExecuteMethodParams<"isLoanComplete">
     ): Promise<LoanTypes.SignExecuteMethodResult<"isLoanComplete">> => {
@@ -669,10 +701,10 @@ export class LoanInstance extends ContractInstance {
     ): Promise<LoanTypes.SignExecuteMethodResult<"payLoan">> => {
       return signExecuteMethod(Loan, this, "payLoan", params);
     },
-    acceptForfeit: async (
-      params: LoanTypes.SignExecuteMethodParams<"acceptForfeit">
-    ): Promise<LoanTypes.SignExecuteMethodResult<"acceptForfeit">> => {
-      return signExecuteMethod(Loan, this, "acceptForfeit", params);
+    forfeit: async (
+      params: LoanTypes.SignExecuteMethodParams<"forfeit">
+    ): Promise<LoanTypes.SignExecuteMethodResult<"forfeit">> => {
+      return signExecuteMethod(Loan, this, "forfeit", params);
     },
     addCollateral: async (
       params: LoanTypes.SignExecuteMethodParams<"addCollateral">
