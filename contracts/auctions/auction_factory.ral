@@ -1,6 +1,7 @@
 Contract AuctionFactory (
     admin: Address,
     auctionTemplate: ByteVec,
+    mut loanFactory: ByteVec,
     mut auctionNumber: U256,
     mut fee: U256
 ) {
@@ -28,10 +29,13 @@ Contract AuctionFactory (
 		NotAdmin = 0
     }
 
+    pub fn getLoanFactoryId() -> (ByteVec) {
+        return loanFactory
+    }
+
     @using(checkExternalCaller = false, preapprovedAssets = true, assetsInContract = true, updateFields = true)
     pub fn createAuction(collateral: ByteVec, collateralAmount: U256, tokenRequested: ByteVec, tokenAmount: U256, loaner: Address) -> () {
 
-        // might wanna edit this @larkben; caller logic
         let caller = callerAddress!()
 
         let (encodeImmutableFields, encodeMutableFields) = Auction.encodeFields!(
@@ -49,7 +53,6 @@ Contract AuctionFactory (
         let time = blockTimeStamp!()
         let value = encodeToByteVec!(time, caller, auctionNumber)
         
-        // work on this bit
 	    let auctionId = copyCreateSubContract!{callerAddress!() -> ALPH: minimalContractDeposit!() * 2, collateral: collateralAmount}(
 		    value,
 		    auctionTemplate,
@@ -109,6 +112,14 @@ Contract AuctionFactory (
         fee = newFee
     }
 
+    // admin functions
+    @using(checkExternalCaller = true, updateFields = true)
+    pub fn editLoanFactory(factoryId: ByteVec) -> () {
+        checkCaller!(callerAddress!() == admin, 0)
+
+        loanFactory = factoryId
+    }
+
     @using(updateFields = false, checkExternalCaller = true)
     pub fn updateAuctionFactoryCode(newCode: ByteVec) -> () {
         checkCaller!(callerAddress!() == admin, 0)
@@ -122,13 +133,22 @@ Contract AuctionFactory (
 
         migrateWithFields!(newCode, immFields, mutFields)
     }
+}
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, updateFields = false, assetsInContract = true)
-    pub fn withdrawAuctionFactoryFees(who: Address, token: ByteVec, amount: U256) -> () {
-        checkCaller!(callerAddress!() == admin, 0)
+// admin functions
 
-        transferToken!(selfAddress!(), who, token, amount)
-    }
+TxScript EditLoanFactory (
+    contract: AuctionFactory,
+    factoryId: ByteVec
+) {
+    contract.editLoanFactory(factoryId)
+}
+
+TxScript EditAuctionRate (
+    contract: AuctionFactory,
+    newFee: U256
+) {
+    contract.editRate(newFee)
 }
 
 TxScript Bid (
@@ -162,13 +182,3 @@ TxScript UpdateAuctionFactoryFields (
 ) {
     auctionFactory.updateAuctionFactoryFields(newCode, immFields, mutFields)
 }
-
-TxScript WithdrawAuctionFactoryFees (
-    auction: AuctionFactory,
-    who: Address,
-    token: ByteVec,
-    amount: U256
-) {
-    auction.withdrawAuctionFactoryFees(who, token, amount)
-}
-

@@ -37,6 +37,10 @@ Contract Loan (
         return canLiquidate
     }
 
+    pub fn getBorrower() -> (Address) {
+        return borrower
+    }
+
     // update ratio function needs to be added
 
     pub fn isLoanComplete() -> (Bool) {
@@ -133,15 +137,21 @@ Contract Loan (
         transferToken!(borrower, lender, ALPH, dustAmount!())
         transferToken!(borrower, lender, tokenRequested, totalPayment - totalCommission)
 
-        transferToken!(borrower, parentContract, ALPH, dustAmount!())
-        transferToken!(borrower, parentContract, tokenRequested, totalCommission)
+        let parent = LoanFactory(addressToContractId!(parentContract))
+        let collector = parent.depositFeeCollector(tokenRequested)
+
+        Fee(collector).depositInCollector{selfAddress!() -> tokenRequested: totalCommission, ALPH: dustAmount!()}(
+            selfAddress!(), 
+            tokenRequested, 
+            totalCommission
+        )
 
         // destroy the contract
         destroySelf!(borrower)
     }
 
     @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = false)
-    pub fn acceptForfeit() -> (Bool) {
+    pub fn forfeit() -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
         assert!(active, 3)
@@ -150,13 +160,17 @@ Contract Loan (
         if (!canLiquidate) {
             let totalCommission = getCommission(collateralAmount)
 
-            transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-            transferToken!(selfAddress!(), parentContract, collateralToken, totalCommission)
+            let parent = LoanFactory(addressToContractId!(parentContract))
+            let collector = parent.depositFeeCollector(collateralToken)
 
-            // Claim collateral and remove contract
+            Fee(collector).depositInCollector{selfAddress!() -> collateralToken: totalCommission, ALPH: dustAmount!()}(
+                selfAddress!(), 
+                collateralToken, 
+                totalCommission
+            )
+
+            // claim collateral and remove contract
             destroySelf!(lender)
-
-            return false
         } else {
             let auction = AuctionFactory(auctionContract)
 
@@ -171,8 +185,6 @@ Contract Loan (
 
             // should just return 0.1 alphs
             destroySelf!(borrower)  // liquidation notification
-
-            return true
         }
     }
 
@@ -198,7 +210,7 @@ Contract Loan (
         return collateralAmount
     }
 
-    @using(checkExternalCaller = true, preapprovedAssets = false, assetsInContract = true, updateFields = true)
+    @using(checkExternalCaller = true, preapprovedAssets = true, assetsInContract = true, updateFields = true)
     pub fn removeCollateral(caller: Address, collateralRemoved: U256, newRatio: U256) -> (U256) {
         checkCaller!(callerAddress!() == parentContract, 0)
 
@@ -208,7 +220,8 @@ Contract Loan (
         // cannot remove if the loan is active
         assert!(active == false, 7)
 
-        // transfer additional collateral to offset liquidation
+        transferToken!(caller, selfAddress!(), ALPH, dustAmount!())
+
         transferToken!(selfAddress!(), borrower, ALPH, dustAmount!())
         transferToken!(selfAddress!(), borrower, collateralToken, collateralRemoved)
         collateralAmount = collateralAmount - collateralRemoved
@@ -223,7 +236,6 @@ Contract Loan (
     pub fn activateLiquidation(collateralLevel: U256) -> () {
         checkCaller!(callerAddress!() == parentContract, 0)
 
-        // Call the auction contract here @larkben
         let auction = AuctionFactory(auctionContract)
 
         // Gonna wanna take the APS to 0.3 alphs to alleviate these changes @larkben

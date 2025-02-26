@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "AddCollateral",
-  "bytecodeTemplate": "010103000100150c0e{1}0101181700b47a1600{2}a313c3038d7ea4c680000e2ca2{1}{2}0e0c{0}0109",
+  "bytecodeTemplate": "010103000100130c0e{1}0101181700b47a1600{2}a313c3038d7ea4c68000a2{1}{2}0e0c{0}010a",
   "fieldsSig": {
     "names": [
       "loanFactory",

@@ -44,6 +44,7 @@ export namespace LoanFactoryTypes {
     admin: Address;
     loanTemplate: HexString;
     auctionHouse: HexString;
+    feeTemplate: HexString;
     activeLoans: bigint;
     rate: bigint;
     oracle: HexString;
@@ -74,9 +75,13 @@ export namespace LoanFactoryTypes {
     contract: HexString;
     who: Address;
   }>;
-  export type LoanWithdrawEvent = ContractEvent<{
+  export type LoanLiqWithEvent = ContractEvent<{
     contract: HexString;
-    forfeit: boolean;
+    liquidation: boolean;
+    who: Address;
+  }>;
+  export type LoanPayedEvent = ContractEvent<{
+    contract: HexString;
     who: Address;
   }>;
   export type AddCollateralLoanEvent = ContractEvent<{
@@ -109,6 +114,10 @@ export namespace LoanFactoryTypes {
         threshhold: bigint;
       }>;
       result: CallContractResult<[bigint, boolean]>;
+    };
+    depositFeeCollector: {
+      params: CallContractParams<{ token: HexString }>;
+      result: CallContractResult<HexString>;
     };
     getRequiredTokens: {
       params: CallContractParams<{
@@ -223,6 +232,10 @@ export namespace LoanFactoryTypes {
         collateralOracle: boolean;
         threshhold: bigint;
       }>;
+      result: SignExecuteScriptTxResult;
+    };
+    depositFeeCollector: {
+      params: SignExecuteContractMethodParams<{ token: HexString }>;
       result: SignExecuteScriptTxResult;
     };
     getRequiredTokens: {
@@ -345,10 +358,11 @@ class Factory extends ContractFactory<
     AcceptedLoan: 1,
     LoanRemoved: 2,
     LoanCanceled: 3,
-    LoanWithdraw: 4,
-    AddCollateralLoan: 5,
-    RemoveCollateralLoan: 6,
-    LoanLiquidation: 7,
+    LoanLiqWith: 4,
+    LoanPayed: 5,
+    AddCollateralLoan: 6,
+    RemoveCollateralLoan: 7,
+    LoanLiquidation: 8,
   };
   consts = {
     LoanCodes: { NotAdmin: BigInt("0"), TokenSizeTooSmall: BigInt("1") },
@@ -379,6 +393,20 @@ class Factory extends ContractFactory<
       return testMethod(
         this,
         "determineCollateralRatio",
+        params,
+        getContractByCodeHash
+      );
+    },
+    depositFeeCollector: async (
+      params: TestContractParams<
+        LoanFactoryTypes.Fields,
+        { token: HexString },
+        LoanFactoryTypes.Maps
+      >
+    ): Promise<TestContractResult<HexString, LoanFactoryTypes.Maps>> => {
+      return testMethod(
+        this,
+        "depositFeeCollector",
         params,
         getContractByCodeHash
       );
@@ -580,8 +608,8 @@ class Factory extends ContractFactory<
 export const LoanFactory = new Factory(
   Contract.fromJson(
     LoanFactoryContractJson,
-    "=54-8=1-1+f=3+846=1+c4644=2813-1+6=29-1+4=60+7a7e0214696e73657274206174206d617020706174683a2000=23-1+a=36+7a7e021472656d6f7665206174206d617020706174683a2000=144",
-    "6b03c326acca136f00da47d8e8e93f555873ea19987a91174ad773bb7ee2a6b6",
+    "=58+78=2+a=1-3=2+b=1-1=2-2+d0=2966-2+42=31-1+8=60+7a7e0214696e73657274206174206d617020706174683a2000=85-1+2=36+7a7e021472656d6f7665206174206d617020706174683a2000=206",
+    "84c17d5de25a13b384784c765b843bba40b595d0ab6b0e9840d48a572975e8f1",
     AllStructs
   )
 );
@@ -661,15 +689,28 @@ export class LoanFactoryInstance extends ContractInstance {
     );
   }
 
-  subscribeLoanWithdrawEvent(
-    options: EventSubscribeOptions<LoanFactoryTypes.LoanWithdrawEvent>,
+  subscribeLoanLiqWithEvent(
+    options: EventSubscribeOptions<LoanFactoryTypes.LoanLiqWithEvent>,
     fromCount?: number
   ): EventSubscription {
     return subscribeContractEvent(
       LoanFactory.contract,
       this,
       options,
-      "LoanWithdraw",
+      "LoanLiqWith",
+      fromCount
+    );
+  }
+
+  subscribeLoanPayedEvent(
+    options: EventSubscribeOptions<LoanFactoryTypes.LoanPayedEvent>,
+    fromCount?: number
+  ): EventSubscription {
+    return subscribeContractEvent(
+      LoanFactory.contract,
+      this,
+      options,
+      "LoanPayed",
       fromCount
     );
   }
@@ -719,7 +760,8 @@ export class LoanFactoryInstance extends ContractInstance {
       | LoanFactoryTypes.AcceptedLoanEvent
       | LoanFactoryTypes.LoanRemovedEvent
       | LoanFactoryTypes.LoanCanceledEvent
-      | LoanFactoryTypes.LoanWithdrawEvent
+      | LoanFactoryTypes.LoanLiqWithEvent
+      | LoanFactoryTypes.LoanPayedEvent
       | LoanFactoryTypes.AddCollateralLoanEvent
       | LoanFactoryTypes.RemoveCollateralLoanEvent
       | LoanFactoryTypes.LoanLiquidationEvent
@@ -744,6 +786,17 @@ export class LoanFactoryInstance extends ContractInstance {
         LoanFactory,
         this,
         "determineCollateralRatio",
+        params,
+        getContractByCodeHash
+      );
+    },
+    depositFeeCollector: async (
+      params: LoanFactoryTypes.CallMethodParams<"depositFeeCollector">
+    ): Promise<LoanFactoryTypes.CallMethodResult<"depositFeeCollector">> => {
+      return callMethod(
+        LoanFactory,
+        this,
+        "depositFeeCollector",
         params,
         getContractByCodeHash
       );
@@ -929,6 +982,18 @@ export class LoanFactoryInstance extends ContractInstance {
         LoanFactory,
         this,
         "determineCollateralRatio",
+        params
+      );
+    },
+    depositFeeCollector: async (
+      params: LoanFactoryTypes.SignExecuteMethodParams<"depositFeeCollector">
+    ): Promise<
+      LoanFactoryTypes.SignExecuteMethodResult<"depositFeeCollector">
+    > => {
+      return signExecuteMethod(
+        LoanFactory,
+        this,
+        "depositFeeCollector",
         params
       );
     },

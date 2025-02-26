@@ -12,7 +12,7 @@ Contract Auction (
     mut timeToEnd: U256          // set at 0
 ) {
     enum AuctionCodes {
-        InvalidAmount = 0
+        InvalidAmount = 8
         InvalidCaller = 1
         AuctionNotDone = 2
         CopyNotUpgradable = 3
@@ -56,7 +56,7 @@ Contract Auction (
         
         // init condition
         if (timeToEnd == 0) {
-            timeToEnd = blockTimeStamp!() + 300000 // 3 hours till auction end once bid
+            timeToEnd = blockTimeStamp!() + 10800000 // 3 hours till auction end once bid
         }
 
         // anti sniper
@@ -75,8 +75,15 @@ Contract Auction (
             // instant redeem
             let feeTotal = calculateFee(collateralAmount)
 
-            transferToken!(selfAddress!(), parentContract, ALPH, dustAmount!())
-            transferToken!(selfAddress!(), parentContract, collateralToken, feeTotal)
+            let factory = AuctionFactory(addressToContractId!(parentContract))
+            let parent = LoanFactory(factory.getLoanFactoryId())
+            let collector = parent.depositFeeCollector(collateralToken)
+
+            Fee(collector).depositInCollector{selfAddress!() -> collateralToken: feeTotal, ALPH: dustAmount!()}(
+                selfAddress!(), 
+                collateralToken, 
+                feeTotal
+            )
 
             destroySelf!(highestBidder)
         }
@@ -87,20 +94,25 @@ Contract Auction (
 
         // get auctionplace fees for liquidations
         let collateralFee = calculateFee(collateralAmount)
-        let tokenFee = calculateFee(tokenAmount)
 
         // transfer assets to loaner
         transferToken!(selfAddress!(), loaner, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), loaner, tokenRequested, tokenAmount - tokenFee)
+        transferToken!(selfAddress!(), loaner, tokenRequested, tokenAmount)
 
         // transfer collateral to highest bidder
         transferToken!(selfAddress!(), highestBidder, ALPH, dustAmount!())
         transferToken!(selfAddress!(), highestBidder, collateralToken, collateralAmount - collateralFee)
 
         // auction house / protocol fees
-        transferToken!(selfAddress!(), loaner, ALPH, dustAmount!())
-        transferToken!(selfAddress!(), parentContract, collateralToken, collateralFee)
-        transferToken!(selfAddress!(), parentContract, tokenRequested, tokenFee)
+        let factory = AuctionFactory(addressToContractId!(parentContract))
+        let parent = LoanFactory(factory.getLoanFactoryId())
+        let collector = parent.depositFeeCollector(collateralToken)
+
+        Fee(collector).depositInCollector{selfAddress!() -> collateralToken: collateralFee, ALPH: dustAmount!()}(
+            selfAddress!(), 
+            collateralToken, 
+            collateralFee
+        )
 
         destroySelf!(highestBidder)
     }
