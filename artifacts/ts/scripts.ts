@@ -20,8 +20,12 @@ import { default as CancelLoanScriptJson } from "../loans/CancelLoan.ral.json";
 import { default as CreateLoanScriptJson } from "../loans/CreateLoan.ral.json";
 import { default as CreateStablePoolScriptJson } from "../pool-lending/CreateStablePool.ral.json";
 import { default as DepositScriptJson } from "../pool-lending/Deposit.ral.json";
+import { default as EditAdminFeeScriptJson } from "../fees/EditAdminFee.ral.json";
+import { default as EditAuctionRateScriptJson } from "../auctions/EditAuctionRate.ral.json";
+import { default as EditLoanFactoryScriptJson } from "../auctions/EditLoanFactory.ral.json";
 import { default as EditLoanRateScriptJson } from "../loans/EditLoanRate.ral.json";
 import { default as ForceCancelScriptJson } from "../loans/ForceCancel.ral.json";
+import { default as ForceDestroyFeeScriptJson } from "../fees/ForceDestroyFee.ral.json";
 import { default as ForfeitLoanScriptJson } from "../loans/ForfeitLoan.ral.json";
 import { default as InsertPairScriptJson } from "../oracle/InsertPair.ral.json";
 import { default as LiquidateDebtScriptJson } from "../pool-lending/LiquidateDebt.ral.json";
@@ -47,7 +51,6 @@ import { default as UpdateLoanFieldsScriptJson } from "../loans/UpdateLoanFields
 import { default as UpdateOracleCodeScriptJson } from "../oracle/UpdateOracleCode.ral.json";
 import { default as UpdatePairScriptJson } from "../oracle/UpdatePair.ral.json";
 import { default as WithdrawScriptJson } from "../pool-lending/Withdraw.ral.json";
-import { default as WithdrawAuctionFactoryFeesScriptJson } from "../auctions/WithdrawAuctionFactoryFees.ral.json";
 import { default as WithdrawLoanFactoryFeesScriptJson } from "../loans/WithdrawLoanFactoryFees.ral.json";
 import { DIAOracleValue, OracleData, PairInfo, AllStructs } from "./types";
 
@@ -128,6 +131,30 @@ export const Deposit = new ExecutableScript<{
   amount: bigint;
 }>(Script.fromJson(DepositScriptJson, "", AllStructs), getContractByCodeHash);
 
+export const EditAdminFee = new ExecutableScript<{
+  fee: HexString;
+  newAdmin: Address;
+}>(
+  Script.fromJson(EditAdminFeeScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const EditAuctionRate = new ExecutableScript<{
+  contract: HexString;
+  newFee: bigint;
+}>(
+  Script.fromJson(EditAuctionRateScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const EditLoanFactory = new ExecutableScript<{
+  contract: HexString;
+  factoryId: HexString;
+}>(
+  Script.fromJson(EditLoanFactoryScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
 export const EditLoanRate = new ExecutableScript<{
   loanFactory: HexString;
   newRate: bigint;
@@ -138,6 +165,11 @@ export const EditLoanRate = new ExecutableScript<{
 
 export const ForceCancel = new ExecutableScript<{ loan: HexString }>(
   Script.fromJson(ForceCancelScriptJson, "", AllStructs),
+  getContractByCodeHash
+);
+
+export const ForceDestroyFee = new ExecutableScript<{ fee: HexString }>(
+  Script.fromJson(ForceDestroyFeeScriptJson, "", AllStructs),
   getContractByCodeHash
 );
 
@@ -347,16 +379,6 @@ export const Withdraw = new ExecutableScript<{
   pool: HexString;
   amount: bigint;
 }>(Script.fromJson(WithdrawScriptJson, "", AllStructs), getContractByCodeHash);
-
-export const WithdrawAuctionFactoryFees = new ExecutableScript<{
-  auction: HexString;
-  who: Address;
-  token: HexString;
-  amount: bigint;
-}>(
-  Script.fromJson(WithdrawAuctionFactoryFeesScriptJson, "", AllStructs),
-  getContractByCodeHash
-);
 
 export const WithdrawLoanFactoryFees = new ExecutableScript<{
   loanFactory: HexString;

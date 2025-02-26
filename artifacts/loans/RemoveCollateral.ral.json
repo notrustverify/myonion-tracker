@@ -1,7 +1,7 @@
 {
   "version": "v3.11.1",
   "name": "RemoveCollateral",
-  "bytecodeTemplate": "0101030001000c0c0e{1}0101181700{1}{2}0e0c{0}010a",
+  "bytecodeTemplate": "0101030001000f0c0e{1}0101181700b413c3038d7ea4c68000a2{1}{2}0e0c{0}010b",
   "fieldsSig": {
     "names": [
       "loanFactory",

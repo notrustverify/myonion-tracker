@@ -6,6 +6,7 @@ export * from "./AlpacaFiOracle";
 export * from "./Auction";
 export * from "./AuctionFactory";
 export * from "./Debt";
+export * from "./Fee";
 export * from "./Loan";
 export * from "./LoanFactory";
 export * from "./Pool";

@@ -9,10 +9,11 @@ const deployLoan: DeployFunction<Settings> = async (
 ): Promise<void> => {
   const result = await deployer.deployContract(AuctionFactory, {
     initialFields: {
-        admin: deployer.account.address,
-        auctionTemplate: 'b09f3c5d7d7c504ae7f1d7e0cd1419dd4d667bd6d1e93e12f81cff9659627100',
-        auctionNumber: 0n,
-        fee: 300n
+      admin: deployer.account.address,
+      auctionTemplate: 'b09f3c5d7d7c504ae7f1d7e0cd1419dd4d667bd6d1e93e12f81cff9659627100',
+      loanFactory: '',
+      auctionNumber: 0n,
+      fee: 300n,
     }
   })
 
