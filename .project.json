@@ -1,5 +1,5 @@
 {
-  "fullNodeVersion": "v3.11.1",
+  "fullNodeVersion": "v3.11.2",
   "compilerOptionsUsed": {
     "ignoreUnusedConstantsWarnings": true,
     "ignoreUnusedVariablesWarnings": true,
@@ -144,13 +144,13 @@
       "codeHashDebug": ""
     },
     "IFungibleToken": {
-      "sourceFile": "../node_modules/@alephium/web3/std/fungible_token_interface.ral",
+      "sourceFile": "../../../../../../private/tmp/bunx-501-@alephium/cli@latest/node_modules/@alephium/web3/std/fungible_token_interface.ral",
       "sourceCodeHash": "62910bf11e1eeb6cb2fd468626ff606a9b06306b2b81590c3b10f6deb5966bde",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
     },
     "INFT": {
-      "sourceFile": "../node_modules/@alephium/web3/std/nft_interface.ral",
+      "sourceFile": "../../../../../../private/tmp/bunx-501-@alephium/cli@latest/node_modules/@alephium/web3/std/nft_interface.ral",
       "sourceCodeHash": "92956f4e61c198f011b48dbda2ed76193ffc79ac9c39f60bf1763a34e02f2c41",
       "bytecodeDebugPatch": "",
       "codeHashDebug": ""
