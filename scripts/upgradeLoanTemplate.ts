@@ -18,15 +18,14 @@ const deployScript: DeployFunction<Settings> = async (
     network: Network<Settings>
   ): Promise<void> => {
     const upgradeNetwork = getNetwork()
-    /*
+
     await UpdateLoanCode.execute(signer, {
       initialFields: {
-          loan: "38d777236fc0553ea388b43355f01e3ffb8047b2d7c9fe07d9b6fb5aa506be00",
+          loan: "2e592369cd28f91517375b9cfdb57591b44696158cfe4f1280f69c979dd6d900",
           newCode: Loan.contract.bytecode
       },
       attoAlphAmount: DUST_AMOUNT
     })
-    */
 
     /*
     await ForceCancel.execute(signer, {
@@ -37,6 +36,7 @@ const deployScript: DeployFunction<Settings> = async (
     })
     */
 
+    /*
     await UpdateAuctionCode.execute(signer, {
       initialFields: {
           auction: "b09f3c5d7d7c504ae7f1d7e0cd1419dd4d667bd6d1e93e12f81cff9659627100",
@@ -44,6 +44,7 @@ const deployScript: DeployFunction<Settings> = async (
       },
       attoAlphAmount: DUST_AMOUNT
     })
+    */
   }
   
   export default deployScript
