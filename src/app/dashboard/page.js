@@ -377,7 +377,7 @@ export default function Dashboard() {
             const totalRepayment = calculateLoanRepayment(
               Number(loan.tokenAmount),
               Number(loan.interest),
-              new Date(loan.createdAt)
+              new Date(loan.acceptedAt)
             );
             debts[loan.id] = totalRepayment;
           } catch (error) {
@@ -400,6 +400,7 @@ export default function Dashboard() {
         id: loan.id,
         type: loan.borrower === wallet.account.address ? 'created' : 'borrowed',
         canLiquidate: loan.canLiquidate,
+        acceptedAt: loan.acceptedAt ? loan.acceptedAt : null,
         createdAt: loan.createdAt,
         currentDebt: debts[loan.id] || loan.tokenAmount
       });

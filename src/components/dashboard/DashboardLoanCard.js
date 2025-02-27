@@ -51,6 +51,7 @@ const DashboardLoanCard = ({
   type,
   canLiquidate,
   createdAt,
+  acceptedAt,
   id,
   tokenPrices,
   isPricesLoading,
@@ -102,8 +103,8 @@ const DashboardLoanCard = ({
 
   const checkLoanStatus = () => {
     if (status === 'pending') return 'pending'
-    const createdAtTimestamp = new Date(createdAt).getTime()
-    const endDate = createdAtTimestamp + duration
+    const acceptedAtTimestamp = new Date(acceptedAt).getTime()
+    const endDate = acceptedAtTimestamp + duration
     if (Date.now() > endDate) return 'terminated'
     return 'active'
   }
@@ -183,10 +184,31 @@ const DashboardLoanCard = ({
               whileHover={{ backgroundColor: "rgba(31, 41, 55, 0.7)" }}
               transition={{ duration: 0.2 }}
             >
-              <span className="text-xs text-gray-400 block mb-1">Time Left</span>
-              <span className="font-medium">
-                <Timer createdAt={createdAt} duration={duration} />
-              </span>
+              {acceptedAt === createdAt ? (
+                <>
+                  <span className="text-xs text-gray-400 block mb-1">Duration</span>
+                  <span className="font-medium">
+                    {(() => {
+                      const minutes = duration / (60 * 1000);
+                      const hours = minutes / 60;
+                      const days = hours / 24;
+                      const months = days / 30;
+                      
+                      if (months >= 1) return `${Math.floor(months)} month${Math.floor(months) !== 1 ? 's' : ''}`;
+                      if (days >= 1) return `${Math.floor(days)} day${Math.floor(days) !== 1 ? 's' : ''}`;
+                      if (hours >= 1) return `${Math.floor(hours)} hour${Math.floor(hours) !== 1 ? 's' : ''}`;
+                      return `${Math.floor(minutes)} minute${Math.floor(minutes) !== 1 ? 's' : ''}`;
+                    })()}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className="text-xs text-gray-400 block mb-1">Time Left</span>
+                  <span className="font-medium">
+                    <Timer createdAt={acceptedAt} duration={duration} />
+                  </span>
+                </>
+              )}
             </motion.div>
             <motion.div 
               className="p-3 bg-gray-800/50 rounded-lg"
@@ -256,7 +278,8 @@ const DashboardLoanCard = ({
               status,
               type,
               canLiquidate,
-              createdAt
+              createdAt,
+              acceptedAt
             }}
             tokenPrices={tokenPrices}
             isPricesLoading={isPricesLoading}

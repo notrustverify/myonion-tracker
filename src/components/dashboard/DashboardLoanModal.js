@@ -212,6 +212,7 @@ const DashboardLoanModal = ({
     setIsLoading(true)
     setError(null)
     try {
+      console.log("Forfeiting loan", loan.id, config.loanFactoryContractId)
       const result = await ForfeitLoanService(
         signer,
         config.loanFactoryContractId,
@@ -374,10 +375,31 @@ const DashboardLoanModal = ({
 
               <div className={`grid ${isBorrower && loan.status === 'active' ? 'grid-cols-2 md:grid-cols-4' : 'grid-cols-3'} gap-3 md:gap-4`}>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
-                  <span className="text-xs md:text-sm text-gray-400 block mb-1">Time Left</span>
-                  <span className="text-base md:text-lg font-medium text-white">
-                    <Timer createdAt={loan.createdAt} duration={loan.duration} />
-                  </span>
+                  {loan.acceptedAt === loan.createdAt ? (
+                    <>
+                      <span className="text-xs md:text-sm text-gray-400 block mb-1">Duration</span>
+                      <span className="text-base md:text-lg font-medium text-white">
+                        {(() => {
+                          const minutes = loan.duration / (60 * 1000);
+                          const hours = minutes / 60;
+                          const days = hours / 24;
+                          const months = days / 30;
+                          
+                          if (months >= 1) return `${Math.floor(months)} month${Math.floor(months) !== 1 ? 's' : ''}`;
+                          if (days >= 1) return `${Math.floor(days)} day${Math.floor(days) !== 1 ? 's' : ''}`;
+                          if (hours >= 1) return `${Math.floor(hours)} hour${Math.floor(hours) !== 1 ? 's' : ''}`;
+                          return `${Math.floor(minutes)} minute${Math.floor(minutes) !== 1 ? 's' : ''}`;
+                        })()}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs md:text-sm text-gray-400 block mb-1">Time Left</span>
+                      <span className="text-base md:text-lg font-medium text-white">
+                        <Timer createdAt={loan.acceptedAt} duration={loan.duration} />
+                      </span>
+                    </>
+                  )}
                 </div>
                 <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-3 md:p-4">
                   <span className="text-xs md:text-sm text-gray-400 block mb-1">APR</span>
