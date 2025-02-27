@@ -103,6 +103,7 @@ export default function LoanPage() {
         borrower: loan.borrower,
         status: loan.active ? 'active' : 'pending',
         canLiquidate: loan.canLiquidate,
+        acceptedAt: loan.acceptedAt ? loan.acceptedAt : null,
         createdAt: loan.createdAt
       }))
       setLoans(transformedLoans)
@@ -509,6 +510,7 @@ export default function LoanPage() {
                     lender: ansProfiles[loan.lender]
                   }}
                   createdAt={loan.createdAt}
+                  acceptedAt={loan.acceptedAt}
                 />
               ))}
             </div>
