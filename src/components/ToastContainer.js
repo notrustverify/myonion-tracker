@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { X, AlertTriangle, CheckCircle, ExternalLink, Copy, Check, Loader2 } from 'lucide-react';
 import { waitTxConfirmed } from '../lib/utils'
-import { getNodeProvider } from '../lib/configs'
+import { getNodeProvider, getBackendUrl } from '../lib/configs'
 
 const Toast = ({ id, title, description, type, onClose, txId }) => {
   const [isVisible, setIsVisible] = useState(true);
@@ -148,12 +148,38 @@ const ToastContainer = () => {
 
   const addTransactionToast = useCallback(async (title, txId) => {
     const toastId = addToast(title, 'Transaction submitted', txId);
-    try {
-      const nodeProvider = getNodeProvider();
-      await waitTxConfirmed(nodeProvider, txId);
-      updateToast(toastId, { type: 'success', description: 'Transaction confirmed' });
-    } catch (error) {
-      updateToast(toastId, { type: 'error', description: 'Transaction failed' });
+    
+    if (title === "New Loan Request") {
+      try {
+        const backendUrl = getBackendUrl();
+        const response = await fetch(`${backendUrl}/api/transactions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            txId, 
+            type: 'loan_created' 
+          }),
+        });
+        
+        const result = await response.text();
+        if (result === 'confirmed') {
+          updateToast(toastId, { type: 'success', description: 'Transaction confirmed' });
+        } else {
+          updateToast(toastId, { type: 'error', description: 'Transaction failed' });
+        }
+      } catch (error) {
+        updateToast(toastId, { type: 'error', description: 'Transaction failed' });
+      }
+    } else {
+      try {
+        const nodeProvider = getNodeProvider();
+        await waitTxConfirmed(nodeProvider, txId);
+        updateToast(toastId, { type: 'success', description: 'Transaction confirmed' });
+      } catch (error) {
+        updateToast(toastId, { type: 'error', description: 'Transaction failed' });
+      }
     }
   }, [addToast, updateToast]);
 

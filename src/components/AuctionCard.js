@@ -241,7 +241,7 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        ) : (isAuctionEnded || highestBidder === loaner) && highestBidder !== account?.address ? (
+        ) : (!isAuctionEnded || highestBidder === loaner) ? (
           <div className="mb-4">
             <div className="relative">
               <input
@@ -300,13 +300,13 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        ) : !isAuctionEnded && highestBidder === account?.address ? (
+        ) : isAuctionEnded ? (
           <div className="mb-4">
-            <p className="text-gray-400 text-sm">You are the highest bidder</p>
+            <p className="text-gray-400 text-sm">This auction has ended</p>
           </div>
         ) : (
           <div className="mb-4">
-            <p className="text-gray-400 text-sm">This auction has ended</p>
+            <p className="text-gray-400 text-sm">You are the highest bidder</p>
           </div>
         )}
       </div>
