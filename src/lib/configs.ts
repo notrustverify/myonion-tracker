@@ -123,12 +123,12 @@ export function getTokensList(): TokenInfo[] {
       isOracle: true
     },
     {
-      id: "7ff5e72636f640eb2c28056df3b6879e4c86933505abebf566518ad396335700",
-      name: "Tether USD (BSC via AlphBridge)",
-      symbol: "USDTbsc",
-      decimals: 18,
-      description: "USDT Bridged to Alephium from BSC via Alephium Bridge",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTbsc.png",
+      id: "556d9582463fe44fbd108aedc9f409f69086dc78d994b88ea6c9e65f8bf98e00",
+      name: "Tether USD (Ethereum via AlphBridge)",
+      symbol: "USDTeth",
+      decimals: 6,
+      description: "USDT Bridged to Alephium from Ethereum via Alephium Bridge",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTeth.png",
       isOracle: true
     },
     /*
@@ -149,12 +149,13 @@ export function getTokensList(): TokenInfo[] {
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/DAI.png"
     },
     {
-      id: "556d9582463fe44fbd108aedc9f409f69086dc78d994b88ea6c9e65f8bf98e00",
-      name: "Tether USD (Ethereum via AlphBridge)",
-      symbol: "USDTeth",
-      decimals: 6,
-      description: "USDT Bridged to Alephium from Ethereum via Alephium Bridge",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTeth.png",
+      id: "7ff5e72636f640eb2c28056df3b6879e4c86933505abebf566518ad396335700",
+      name: "Tether USD (BSC via AlphBridge)",
+      symbol: "USDTbsc",
+      decimals: 18,
+      description: "USDT Bridged to Alephium from BSC via Alephium Bridge",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTbsc.png",
+      isOracle: true
     },*/
     {
       id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
