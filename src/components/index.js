@@ -164,6 +164,10 @@ export function Hero() {
                       <span className="text-green-400 mr-2">3.</span>
                       Maintain a collateral ratio above 150% to keep your position healthy.
                     </li>
+                    <li className="flex items-start">
+                      <span className="text-green-400 mr-2">4.</span>
+                      When repaying your loan, a 7% fee is applied to the repayment amount.
+                    </li>
                   </ul>
 
                   <h4 className="text-xl font-semibold text-green-400 mt-6 mb-3">Liquidation Process</h4>
