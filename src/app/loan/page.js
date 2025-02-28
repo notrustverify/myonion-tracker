@@ -233,7 +233,7 @@ export default function LoanPage() {
     },
     { 
       label: 'Active Loans', 
-      value: rawLoans.filter(l => l.type === 'accepted').length 
+      value: rawLoans.filter(l => l.active).length 
     },
     { 
       label: 'Average APR', 

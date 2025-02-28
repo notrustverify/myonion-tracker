@@ -232,10 +232,12 @@ export default function StatsPage() {
   }, [logs, filter, searchTerm]);
 
   const totalPages = Math.ceil(filteredLogs.length / itemsPerPage);
-  const paginatedLogs = filteredLogs.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  const paginatedLogs = useMemo(() => {
+    return filteredLogs.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredLogs, currentPage, itemsPerPage]);
 
   const logTypeStats = useMemo(() => {
     const stats = {};
@@ -284,14 +286,6 @@ export default function StatsPage() {
         transition={{ duration: 0.5 }}
         className="container mx-auto px-4 py-8"
       >
-        <motion.h1 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="text-4xl font-bold mb-8 text-center bg-gradient-to-r from-green-400 to-emerald-500 bg-clip-text text-transparent"
-        >
-          Platform Statistics
-        </motion.h1>
-
         <motion.div 
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -469,7 +463,7 @@ export default function StatsPage() {
             </div>
           </div>
           
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-gray-800 [&::-webkit-scrollbar-thumb]:bg-emerald-800 hover:[&::-webkit-scrollbar-thumb]:bg-emerald-700">
             {isLoading ? (
               <div className="flex justify-center items-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
@@ -487,7 +481,7 @@ export default function StatsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-700/30">
-                  <AnimatePresence>
+                  <AnimatePresence mode="wait">
                     {paginatedLogs.map((log, index) => {
                       const requestedToken = getTokenInfo(log.tokenRequested);
                       const tokenAmount = log.tokenAmount ? 
@@ -496,11 +490,14 @@ export default function StatsPage() {
                       
                       return (
                         <motion.tr 
-                          key={log._id}
+                          key={`${currentPage}-${log._id}`}
                           initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -10 }}
-                          transition={{ delay: index * 0.05 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ 
+                            duration: 0.3,
+                            delay: index * 0.05 
+                          }}
                           className="bg-gray-800/30 hover:bg-gray-700/30"
                         >
                           <td className="px-6 py-4 whitespace-nowrap">
