@@ -166,7 +166,7 @@ export function Hero() {
                     </li>
                     <li className="flex items-start">
                       <span className="text-green-400 mr-2">4.</span>
-                      When repaying your loan, a 7% fee is applied to the repayment amount.
+                      When repaying your loan, a 7% fee is applied to the repayment amount to reward lenders on short loans.
                     </li>
                   </ul>
 
