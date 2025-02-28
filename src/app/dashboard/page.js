@@ -430,6 +430,7 @@ export default function Dashboard() {
     if (!wallet?.account?.address) return;
     
     try {
+      setIsAuctionsLoading(true);
       const response = await axios.get(`${backendUrl}/api/auctions/bidder/${wallet.account.address}`);
       const wonAuctions = response.data.filter(auction => {
         const isAuctionEnded = new Date(auction.endDate) <= new Date();
@@ -735,48 +736,104 @@ export default function Dashboard() {
                 Won Auctions to Claim
               </h3>
             </div>
-            <div className="p-4 flex-1 flex items-center justify-center">
+            <div className="p-4 flex-1 overflow-hidden">
               {isAuctionsLoading ? (
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-400" />
+                <div className="h-full flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-violet-400" />
+                </div>
               ) : wonAuctions.length === 0 ? (
-                <div className="text-gray-400 text-center">
+                <div className="h-full flex items-center justify-center text-gray-400 text-center">
                   No auctions to claim
                 </div>
               ) : (
-                <div className="w-full">
-                  <div className="space-y-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-                    <AnimatePresence>
-                      {wonAuctions.map((auction, index) => (
+                <div className="space-y-4 max-h-[520px] overflow-y-auto custom-scrollbar">
+                  <AnimatePresence>
+                    {wonAuctions.map((auction, index) => {
+                      const collateralToken = getTokenInfo(auction.collateralToken);
+                      const collateralDecimals = collateralToken.decimals;
+                      const collateralAmount = Number(auction.collateralAmount) / Math.pow(10, collateralDecimals);
+                      const usdValue = (tokenPrices[auction.collateralToken] || 0) * collateralAmount;
+                      
+                      return (
                         <motion.div
                           key={auction.id}
-                          initial={{ opacity: 0, x: -20 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
                           transition={{ delay: index * 0.1 }}
-                          className="flex items-center gap-4 p-3 rounded-xl bg-gray-800/30 border border-gray-700/30"
+                          className="p-4 rounded-xl bg-gray-800/30 border border-gray-700/30"
                         >
-                          <div className="p-2 rounded-lg bg-gray-700/50">
-                            <img 
-                              src={getTokenInfo(auction.collateralToken).logoURI}
-                              alt={getTokenInfo(auction.collateralToken).symbol}
-                              className="w-8 h-8 rounded-full"
-                            />
+                          <div className="flex items-center gap-4 mb-3">
+                            <div className="p-2 rounded-lg bg-gray-700/50">
+                              <img 
+                                src={collateralToken.logoURI}
+                                alt={collateralToken.symbol}
+                                className="w-10 h-10 rounded-full"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-lg text-white">
+                                  {formatNumber(collateralAmount)}
+                                </span>
+                                <span className="text-gray-400">{collateralToken.symbol}</span>
+                              </div>
+                              <p className="text-sm text-gray-500">
+                                ≈ ${formatNumber(usdValue)}
+                              </p>
+                            </div>
+                            <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/20">
+                              Ready to Claim
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="text-gray-300">
-                              {getTokenInfo(auction.collateralToken).symbol}
-                            </p>
-                            <p className="text-sm text-gray-500">
-                              {formatNumber(auction.collateralAmount / Math.pow(10, getTokenInfo(auction.collateralToken).decimals))}
-                            </p>
+                          
+                          <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                            <div className="bg-gray-800/50 p-2 rounded-lg">
+                              <span className="text-gray-400">Auction ended</span>
+                              <p className="text-white">{formatTimestamp(auction.endDate)}</p>
+                            </div>
+                            <div className="bg-gray-800/50 p-2 rounded-lg">
+                              <span className="text-gray-400">Your bid</span>
+                              <p className="text-white">
+                                {formatNumber(Number(auction.bidAmount) / Math.pow(10, getTokenInfo(auction.bidToken).decimals))} 
+                                {getTokenInfo(auction.bidToken).symbol}
+                              </p>
+                            </div>
                           </div>
-                          <div className="px-3 py-1 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/20">
-                            Ready to Claim
-                          </div>
+                          
+                          {claimError[auction.id] && (
+                            <div className="mb-3 p-2 bg-red-500/10 text-red-400 rounded-lg text-sm">
+                              {claimError[auction.id]}
+                            </div>
+                          )}
+                          
+                          <button
+                            onClick={() => handleClaimAuction(auction.id)}
+                            disabled={isClaimLoading[auction.id]}
+                            className="w-full px-4 py-2 rounded-xl bg-gradient-to-r from-green-500/20 via-green-500/30 to-green-400/20 
+                              hover:from-green-500/30 hover:via-green-500/40 hover:to-green-400/30
+                              border border-green-500/20 hover:border-green-500/30 
+                              transition-all duration-300 ease-out
+                              text-green-400 hover:text-green-300 font-medium 
+                              disabled:opacity-50 disabled:cursor-not-allowed
+                              flex items-center justify-center gap-2"
+                          >
+                            {isClaimLoading[auction.id] ? (
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-green-500"></div>
+                            ) : (
+                              <>
+                                <span>Claim Auction</span>
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+                                    d="M5 13l4 4L19 7" />
+                                </svg>
+                              </>
+                            )}
+                          </button>
                         </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
+                      );
+                    })}
+                  </AnimatePresence>
                 </div>
               )}
             </div>

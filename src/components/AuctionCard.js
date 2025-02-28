@@ -102,7 +102,10 @@ const AuctionCard = ({
 
   const isValidBid = bidsAmount && !isNaN(bidsAmount) && parseFloat(bidsAmount) >= minBidInTokens
 
-  const isAuctionEnded = new Date(timeToEnd).getTime() <= new Date().getTime()
+  const isAuctionEnded = new Date(endDate).getTime() <= new Date().getTime()
+  const isHighestBidder = account?.address === highestBidder
+  const isLoaner = account?.address === loaner
+  const hasNoBids = highestBidder === loaner
 
   const handleRedeem = async () => {
     if (!signer) {
@@ -137,16 +140,18 @@ const AuctionCard = ({
     >
       <div className="absolute top-0 left-0 right-0 bg-purple-500/20 rounded-t-xl p-3 text-center border-b border-purple-500/20">
         <span className="text-xs text-purple-300 flex items-center justify-center gap-2">
-          {highestBidder !== loaner ? (
+          {hasNoBids ? (
             <>
-              {isAuctionEnded ? 'Auction ended' : 'Auction ends in'}
-              <span className="bg-purple-600/80 px-3 py-1 rounded text-sm font-semibold text-white">
-                <AuctionTimer endTime={endDate} className="font-medium" />
-              </span>
+              Place a bid to start the auction
             </>
           ) : (
             <>
-              Place a bid to start the auction
+              {isAuctionEnded ? 'Auction ended' : 'Auction ends in'}
+              {!isAuctionEnded && (
+                <span className="bg-purple-600/80 px-3 py-1 rounded text-sm font-semibold text-white">
+                  <AuctionTimer endTime={endDate} className="font-medium" />
+                </span>
+              )}
             </>
           )}
         </span>
@@ -174,9 +179,9 @@ const AuctionCard = ({
         <div className="mb-6 p-3 bg-gray-800/50 rounded-lg">
           <div className="flex justify-between items-center mb-2">
             <span className="text-xs text-gray-400">
-              {highestBidder !== loaner ? 'Current Bid' : 'Starting Bid'}
+              {hasNoBids ? 'Starting Bid' : 'Current Bid'}
             </span>
-            {highestBidder !== loaner && (
+            {!isAuctionEnded && !hasNoBids && (
               <span className="text-xs text-purple-300">
                 Min: {formatNumber(minBidInTokens)} {tokenInfo.symbol}
               </span>
@@ -207,13 +212,13 @@ const AuctionCard = ({
             <div className="flex flex-col gap-1 text-right">
               <span className="text-xs text-gray-400">Highest Bidder</span>
               <span className="text-sm font-medium text-purple-300">
-                {highestBidder !== loaner ? ansProfile?.highestBidder?.name || shortenAddress(highestBidder) : 'No bids yet'}
+                {hasNoBids ? 'No bids yet' : ansProfile?.highestBidder?.name || shortenAddress(highestBidder)}
               </span>
             </div>
           </div>
         </div>
 
-        {isAuctionEnded && highestBidder === account?.address ? (
+        {isAuctionEnded && (isHighestBidder || isLoaner) && (
           <div className="mb-4">
             {error && <p className="text-red-400 text-sm mb-4">{error}</p>}
             <button
@@ -241,7 +246,9 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        ) : (!isAuctionEnded || highestBidder === loaner) ? (
+        )}
+        
+        {!isAuctionEnded && !isHighestBidder && (
           <div className="mb-4">
             <div className="relative">
               <input
@@ -300,13 +307,17 @@ const AuctionCard = ({
               )}
             </button>
           </div>
-        ) : isAuctionEnded ? (
-          <div className="mb-4">
-            <p className="text-gray-400 text-sm">This auction has ended</p>
+        )}
+        
+        {!isAuctionEnded && isHighestBidder && !hasNoBids && (
+          <div className="mb-4 p-3 bg-purple-500/10 rounded-lg border border-purple-500/20 text-center">
+            <p className="text-purple-300 text-sm">You are currently the highest bidder</p>
           </div>
-        ) : (
-          <div className="mb-4">
-            <p className="text-gray-400 text-sm">You are the highest bidder</p>
+        )}
+        
+        {isAuctionEnded && !isHighestBidder && !isLoaner && (
+          <div className="mb-4 p-3 bg-gray-800/50 rounded-lg text-center">
+            <p className="text-gray-400 text-sm">This auction has ended</p>
           </div>
         )}
       </div>
