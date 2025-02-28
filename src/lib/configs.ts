@@ -114,22 +114,24 @@ export function getTokensList(): TokenInfo[] {
       isOracle: true
     },
     {
-      id: "1a281053ba8601a658368594da034c2e99a0fb951b86498d05e76aedfe666800",
-      name: "AYIN",
-      symbol: "AYIN",
-      decimals: 18,
-      description: "$AYIN is a DEX token, that incentivises users through fees and other mechanisms to participate in trading on Alephium",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/AYIN.png",
-      isOracle: true
-    },
-    /*{
       id: "722954d9067c5a5ad532746a024f2a9d7a18ed9b90e27d0a3a504962160b5600",
       name: "USD Coin (Ethereum via AlphBridge)",
       symbol: "USDCeth",
       decimals: 6,
       description: "USDC Bridged to Alephium from Ethereum via Alephium Bridge",
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDCeth.png",
+      isOracle: true
     },
+    {
+      id: "556d9582463fe44fbd108aedc9f409f69086dc78d994b88ea6c9e65f8bf98e00",
+      name: "Tether USD (Ethereum via AlphBridge)",
+      symbol: "USDTeth",
+      decimals: 6,
+      description: "USDT Bridged to Alephium from Ethereum via Alephium Bridge",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTeth.png",
+      isOracle: true
+    },
+    /*
     {
       id: "75e1e9f91468616a371fe416430819bf5386a3e6a258864c574271a404ec8900",
       name: "USD Coin (BSC via AlphBridge)",
@@ -147,20 +149,13 @@ export function getTokensList(): TokenInfo[] {
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/DAI.png"
     },
     {
-      id: "556d9582463fe44fbd108aedc9f409f69086dc78d994b88ea6c9e65f8bf98e00",
-      name: "Tether USD (Ethereum via AlphBridge)",
-      symbol: "USDTeth",
-      decimals: 6,
-      description: "USDT Bridged to Alephium from Ethereum via Alephium Bridge",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTeth.png",
-    },
-    {
       id: "7ff5e72636f640eb2c28056df3b6879e4c86933505abebf566518ad396335700",
       name: "Tether USD (BSC via AlphBridge)",
       symbol: "USDTbsc",
       decimals: 18,
       description: "USDT Bridged to Alephium from BSC via Alephium Bridge",
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/USDTbsc.png",
+      isOracle: true
     },*/
     {
       id: "9b3070a93fd5127d8c39561870432fdbc79f598ca8dbf2a3398fc100dfd45f00",
@@ -170,6 +165,15 @@ export function getTokensList(): TokenInfo[] {
       description: "AlphBanX is a decentralized lending platform that allows you to borrow AlphBanX Dollars using ALPH as collateral. Choose your own interest rate and bet on liquidations - earning yield from borrowing fees and from liquidated loans.",
       logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ABX.png",
       isOracle: false
+    },
+    {
+      id: "1a281053ba8601a658368594da034c2e99a0fb951b86498d05e76aedfe666800",
+      name: "AYIN",
+      symbol: "AYIN",
+      decimals: 18,
+      description: "$AYIN is a DEX token, that incentivises users through fees and other mechanisms to participate in trading on Alephium",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/AYIN.png",
+      isOracle: true
     },
     {
       id: "cad22f7c98f13fe249c25199c61190a9fb4341f8af9b1c17fcff4cd4b2c3d200",
@@ -190,12 +194,21 @@ export function getTokensList(): TokenInfo[] {
       isOracle: false
     },
     {
-      id: "c1a33b163fc45db6b8466ee78d20c61072b6aac07baa37ffbf33a3dec9f17800",
-      name: "Wrapped BNB (AlphBridge)",
-      symbol: "WBNB",
+      id: "bcb548631e52e79fd617e0e62180d6d79ad259652093590a874acbeb8b65ac00",
+      name: "RalphBuilder",
+      symbol: "BUILD",
       decimals: 18,
-      description: "BNB Bridged to Alephium from Alephium Bridge",
-      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/WBNB.png",
+      description: "Fuel of the RalphBuilder ecosystem",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/BUILD.png",
+      isOracle: false
+    },
+    {
+      id: "a7af44d2756d69dedf4ea4cf8e6415f1188b80e99f217d0b73e270b9c0408300",
+      name: "MyOnion.fun",
+      symbol: "ONION",
+      decimals: 18,
+      description: "My onions - where the only thing getting diced is weak hands.",
+      logoURI: "https://raw.githubusercontent.com/alephium/token-list/master/logos/ONION.png",
       isOracle: false
     },
   ]
