@@ -26,6 +26,8 @@ Auctions serve as the pathway to lenders and managing risk over the long term.
 | $EX | AlpacaFi |
 | $APAD | AlpacaFi |
 | $ABX | AlpacaFi |
+| $BUILD | AlpacaFi |
+| $ONION | AlpacaFi |
 | $ALPH | DIA |
 | $AYIN | DIA |
 | $USDT | DIA |
