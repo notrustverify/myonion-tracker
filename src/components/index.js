@@ -66,7 +66,7 @@ export function Hero() {
               className="mt-8 flex justify-center"
             >
               <Link
-                href="https://docs.alpacafi.org"
+                href="https://alphpacas.gitbook.io/alphpacas/alpacafi/what-is-alpacafi"
                 className="px-8 py-3 rounded-xl font-semibold bg-gray-700/50 hover:bg-gray-700 text-white border border-gray-700/50 hover:border-violet-400/30 transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98]"
               >
                 Documentation
@@ -163,6 +163,10 @@ export function Hero() {
                     <li className="flex items-start">
                       <span className="text-green-400 mr-2">3.</span>
                       Maintain a collateral ratio above 150% to keep your position healthy.
+                    </li>
+                    <li className="flex items-start">
+                      <span className="text-green-400 mr-2">4.</span>
+                      When repaying your loan, a 7% fee is applied to the repayment amount to reward lenders on short loans.
                     </li>
                   </ul>
 

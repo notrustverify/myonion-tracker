@@ -179,12 +179,21 @@ export function Footer() {
                 </motion.a>
                 <motion.a
                   whileHover={{ y: -3 }}
-                  href="https://t.me/+PfIw-0e6pAtkOTYx"
+                  href="https://t.me/alphpacas"
                   className="text-gray-400 hover:text-green-400 transition-colors duration-200"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   <FaTelegram className="w-6 h-6" />
+                </motion.a>
+                <motion.a
+                  whileHover={{ y: -3 }}
+                  href="https://discord.gg/qTgHeQk2p2"
+                  className="text-gray-400 hover:text-green-400 transition-colors duration-200"
+                  target="_blank"
+                  rel="noopener noreferrer" 
+                >
+                  <FaDiscord className="w-6 h-6" />
                 </motion.a>
               </div>
             </div>
