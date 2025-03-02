@@ -16,6 +16,7 @@ import AddCollateralModal from './AddCollateralModal'
 import RemoveCollateralModal from './RemoveCollateralModal'
 import RepayLoanModal from './RepayLoanModal'
 import Timer from '../Timer'
+import ShareLoanButton from './ShareLoanButton'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
@@ -159,7 +160,6 @@ const DashboardLoanModal = ({
       new Date(loan.createdAt)
     );
     const finalTotalRepayment = totalRepayment.toFixed(0)
-    console.log("totalRepayment", finalTotalRepayment)
 
     try {
       const result = await PayLoanService(signer, config.loanFactoryContractId, loan.id, loan.tokenRequested, finalTotalRepayment)
@@ -212,7 +212,6 @@ const DashboardLoanModal = ({
     setIsLoading(true)
     setError(null)
     try {
-      console.log("Forfeiting loan", loan.id, config.loanFactoryContractId)
       const result = await ForfeitLoanService(
         signer,
         config.loanFactoryContractId,
@@ -260,14 +259,45 @@ const DashboardLoanModal = ({
             <div className="border-b border-gray-700/50 p-4 md:p-6">
               <div className="flex justify-between items-center">
                 <h3 className="text-xl md:text-2xl font-semibold text-white">Manage Loan</h3>
-                <button 
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
-                >
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-2">
+                  <ShareLoanButton 
+                    loanId={loan.id}
+                    loanData={{
+                      ...loan,
+                      active: loan.status === 'active',
+                      endDate: loan.endDate ? new Date(loan.endDate).toISOString() : null
+                    }}
+                    requestedTokenInfo={getTokenInfo(loan.tokenRequested)}
+                    collateralTokenInfo={getTokenInfo(loan.collateralToken)}
+                    displayLoanAmount={displayTokenAmount}
+                    displayCollateralAmount={displayCollateralAmount}
+                    loanValueUSD={usdTokenAmount}
+                    collateralValueUSD={usdCollateralAmount}
+                    collateralRatio={collateralRatio}
+                    riskLevel={riskLevel}
+                    formatDuration={(duration) => {
+                      const minutes = duration / (60 * 1000);
+                      const hours = minutes / 60;
+                      const days = hours / 24;
+                      const months = days / 30;
+                      
+                      if (months >= 1) return `${Math.floor(months)} month${Math.floor(months) !== 1 ? 's' : ''}`;
+                      if (days >= 1) return `${Math.floor(days)} day${Math.floor(days) !== 1 ? 's' : ''}`;
+                      if (hours >= 1) return `${Math.floor(hours)} hour${Math.floor(hours) !== 1 ? 's' : ''}`;
+                      return `${Math.floor(minutes)} minute${Math.floor(minutes) !== 1 ? 's' : ''}`;
+                    }}
+                    shortenAddress={shortenAddress}
+                    ansProfile={ansProfile}
+                  />
+                  <button 
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-gray-700/30 p-2"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
 

@@ -17,7 +17,6 @@ const Terminal = () => {
   const [isVisible, setIsVisible] = useState(false);
   const terminalRef = useRef(null);
   
-  // Mémoriser les valeurs qui ne devraient pas changer
   const backendUrl = useMemo(() => getBackendUrl(), []);
   const tokensList = useMemo(() => getTokensList(), []);
   const nodeUrl = useMemo(() => getDefaultNodeUrl(), []);
@@ -47,7 +46,6 @@ const Terminal = () => {
   useEffect(() => {
     if (!isVisible) return;
 
-    // Fetch node info
     fetch(`${nodeUrl}/blockflow/chain-info/?fromGroup=0&toGroup=0`)
       .then(res => res.json())
       .then(data => setBlockHeight(data.currentHeight))
@@ -58,7 +56,6 @@ const Terminal = () => {
       .then(data => setHashrate(data.hashrate))
       .catch(error => console.error('Error fetching hashrate:', error));
 
-    // Fetch loans stats
     fetch(`${backendUrl}/api/loans`)
       .then(res => res.json())
       .then(data => {
@@ -69,45 +66,65 @@ const Terminal = () => {
           ? activeLoans.reduce((sum, loan) => sum + (Number(loan.interest) / 10000), 0) / activeLoans.length * 100
           : 0;
 
-        let totalCollateralRatio = 0;
-        let tvlUSD = 0;
+        const tokenPrices = {};
+        let fetchCount = 0;
+        const totalFetches = tokensList.length;
 
-        // Fetch token prices and update stats progressively
+        const calculateStats = () => {
+          let totalCollateralRatio = 0;
+          let tvlUSD = 0;
+
+          activeLoans.forEach(loan => {
+            const collateralInfo = tokensList.find(t => t.id === loan.collateralToken);
+            const tokenInfo = tokensList.find(t => t.id === loan.tokenRequested);
+            
+            if (collateralInfo && tokenPrices[loan.collateralToken]) {
+              const collateralValueUSD = (loan.collateralAmount / Math.pow(10, collateralInfo.decimals)) * tokenPrices[loan.collateralToken];
+              tvlUSD += collateralValueUSD;
+              
+              if (tokenInfo && tokenPrices[loan.tokenRequested]) {
+                const loanValueUSD = (loan.tokenAmount / Math.pow(10, tokenInfo.decimals)) * tokenPrices[loan.tokenRequested];
+                if (loanValueUSD > 0) {
+                  totalCollateralRatio += (collateralValueUSD / loanValueUSD) * 100;
+                }
+              }
+            }
+          });
+
+          setStats({
+            activeLoans: activeLoans.length,
+            totalLoans,
+            avgApr,
+            avgCollateralRatio: activeLoans.length > 0 ? totalCollateralRatio / activeLoans.length : 0,
+            tvlUSD
+          });
+        };
+
         tokensList.forEach(token => {
           fetch(`${backendUrl}/api/market-data?assetId=${token.id}`)
             .then(res => res.json())
             .then(priceData => {
-              activeLoans.forEach(loan => {
-                if (loan.tokenRequested === token.id || loan.collateralToken === token.id) {
-                  const tokenInfo = tokensList.find(t => t.id === loan.tokenRequested);
-                  const collateralInfo = tokensList.find(t => t.id === loan.collateralToken);
-                  
-                  if (tokenInfo && collateralInfo && priceData.priceUSD) {
-                    const collateralValueUSD = (loan.collateralAmount / Math.pow(10, collateralInfo.decimals)) * priceData.priceUSD;
-                    const loanValueUSD = (loan.tokenAmount / Math.pow(10, tokenInfo.decimals)) * priceData.priceUSD;
-                    
-                    if (loanValueUSD > 0) {
-                      totalCollateralRatio += (collateralValueUSD / loanValueUSD) * 100;
-                    }
-                    tvlUSD += collateralValueUSD;
-
-                    setStats({
-                      activeLoans: activeLoans.length,
-                      totalLoans,
-                      avgApr,
-                      avgCollateralRatio: activeLoans.length > 0 ? totalCollateralRatio / activeLoans.length : 0,
-                      tvlUSD
-                    });
-                  }
-                }
-              });
+              if (priceData.priceUSD) {
+                tokenPrices[token.id] = priceData.priceUSD;
+              }
+              
+              fetchCount++;
+              if (fetchCount === totalFetches) {
+                calculateStats();
+              }
             })
-            .catch(error => console.error('Error fetching token price:', error));
+            .catch(error => {
+              console.error('Error fetching token price:', error);
+              fetchCount++;
+              if (fetchCount === totalFetches) {
+                calculateStats();
+              }
+            });
         });
       })
       .catch(error => console.error('Error fetching loans:', error));
 
-  }, [isVisible]); // Seule dépendance nécessaire
+  }, [isVisible, backendUrl, nodeUrl, tokensList]);
 
   const formattedBlockHeight = blockHeight ? new Intl.NumberFormat('fr-FR').format(blockHeight) : '...';
   const formattedHashrate = hashrate ? `${(parseFloat(hashrate) / 1_000_000_000).toFixed(2)} PH/s` : '...';
