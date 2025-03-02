@@ -362,7 +362,9 @@ const LoanModal = ({
                     loanData={{
                       ...loan,
                       active: loan.status === 'active',
-                      endDate: loan.endDate ? new Date(loan.endDate).toISOString() : null
+                      endDate: loan.status === 'active' 
+                        ? new Date(new Date(loan.acceptedAt).getTime() + parseInt(loan.duration)).toISOString()
+                        : null
                     }}
                     requestedTokenInfo={getTokenInfo(loan.tokenRequested)}
                     collateralTokenInfo={getTokenInfo(loan.collateralToken)}
