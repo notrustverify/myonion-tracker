@@ -16,7 +16,7 @@ import AddCollateralModal from './AddCollateralModal'
 import RemoveCollateralModal from './RemoveCollateralModal'
 import RepayLoanModal from './RepayLoanModal'
 import Timer from '../Timer'
-import ShareLoanButton from './ShareLoanButton'
+import ShareLoanButton from '../../components/ShareLoanButton'
 
 const getCollateralRatioColor = (ratio) => {
   const numericRatio = parseInt(ratio)
