@@ -213,7 +213,7 @@ const formatTelegramMessage = async (event: any): Promise<string> => {
     }
     
     // Add contract info and footer
-    message += `\n📝 *Contract:* ${shortenAddress(event.fields.contract)}`;
+    message += `\n📝 *Contract:* ${shortenAddress(addressFromContractId(event.fields.contract))}`;
     
     // Add links
     message += `\n\n🔗 *Links:*`;
