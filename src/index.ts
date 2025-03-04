@@ -18,51 +18,90 @@ const apiUrl = process.env.API_URL;
 
 let isRateLimited = false;
 let rateLimitTimeout = 0;
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_DELAY_MS = 5000; // 5 seconds initial delay
 
 const startEventFetching = async () => {
-  web3.setCurrentNodeProvider(
-    process.env.NEXT_PUBLIC_NODE_URL ?? "https://node.mainnet.alephium.org",
-    undefined,
-    undefined
-  );
-  const deployment = loadDeployments( process.env.NEXT_PUBLIC_NETWORK as NetworkId ?? 'mainnet'); // TODO use getNetwork()
+  try {
+    reconnectAttempts = 0; // Reset reconnect attempts on successful start
+    
+    web3.setCurrentNodeProvider(
+      process.env.NEXT_PUBLIC_NODE_URL ?? "https://node.mainnet.alephium.org",
+      undefined,
+      undefined
+    );
+    const deployment = loadDeployments( process.env.NEXT_PUBLIC_NETWORK as NetworkId ?? 'mainnet'); // TODO use getNetwork()
 
-  if(!deployment.contracts?.LoanFactory) {
-      throw new Error('LoanFactory contract not found');
-  }
+    if(!deployment.contracts?.LoanFactory) {
+        throw new Error('LoanFactory contract not found');
+    }
 
-  const loanFactoryContract = LoanFactory.at(deployment.contracts.LoanFactory.contractInstance.address);
+    const loanFactoryContract = LoanFactory.at(deployment.contracts.LoanFactory.contractInstance.address);
 
-  const eventsCount = await loanFactoryContract.getContractEventsCurrentCount();
-  console.log(eventsCount);
-  loanFactoryContract.subscribeAllEvents({
-      pollingInterval: 16000,
-      messageCallback: function (message: LoanFactoryTypes.NewLoanEvent | LoanFactoryTypes.AcceptedLoanEvent | LoanFactoryTypes.LoanRemovedEvent | LoanFactoryTypes.LoanCanceledEvent | LoanFactoryTypes.LoanLiqWithEvent | LoanFactoryTypes.LoanPayedEvent | LoanFactoryTypes.AddCollateralLoanEvent | LoanFactoryTypes.RemoveCollateralLoanEvent | LoanFactoryTypes.LoanLiquidationEvent): Promise<void> {
-            // Format and send Telegram message
-            formatTelegramMessage(message).then(telegramMessage => {
-              if (bot && chatId) {
-                // Check if we're rate limited
-                if (isRateLimited) {
-                  console.log(`Rate limited, waiting ${rateLimitTimeout}s before sending message`);
-                  setTimeout(() => {
+    const eventsCount = await loanFactoryContract.getContractEventsCurrentCount();
+    console.log(`Starting event subscription from count: ${eventsCount}`);
+    
+    loanFactoryContract.subscribeAllEvents({
+        pollingInterval: 16000,
+        messageCallback: function (message: LoanFactoryTypes.NewLoanEvent | LoanFactoryTypes.AcceptedLoanEvent | LoanFactoryTypes.LoanRemovedEvent | LoanFactoryTypes.LoanCanceledEvent | LoanFactoryTypes.LoanLiqWithEvent | LoanFactoryTypes.LoanPayedEvent | LoanFactoryTypes.AddCollateralLoanEvent | LoanFactoryTypes.RemoveCollateralLoanEvent | LoanFactoryTypes.LoanLiquidationEvent): Promise<void> {
+              // Format and send Telegram message
+              formatTelegramMessage(message).then(telegramMessage => {
+                if (bot && chatId) {
+                  // Check if we're rate limited
+                  if (isRateLimited) {
+                    console.log(`Rate limited, waiting ${rateLimitTimeout}s before sending message`);
+                    setTimeout(() => {
+                      sendTelegramMessage(chatId, telegramMessage);
+                    }, rateLimitTimeout * 1000);
+                  } else {
                     sendTelegramMessage(chatId, telegramMessage);
-                  }, rateLimitTimeout * 1000);
-                } else {
-                  sendTelegramMessage(chatId, telegramMessage);
+                  }
                 }
-              }
-            });
-          
-          return Promise.resolve();
-      },
-      errorCallback: function (error: any, subscription: Subscription<LoanFactoryTypes.NewLoanEvent | LoanFactoryTypes.AcceptedLoanEvent | LoanFactoryTypes.LoanRemovedEvent | LoanFactoryTypes.LoanCanceledEvent | LoanFactoryTypes.LoanLiqWithEvent | LoanFactoryTypes.LoanPayedEvent | LoanFactoryTypes.AddCollateralLoanEvent | LoanFactoryTypes.RemoveCollateralLoanEvent | LoanFactoryTypes.LoanLiquidationEvent>): Promise<void> | void {
-          console.error(`Error from contract factory:`, error);
-          subscription.unsubscribe();
-          return Promise.resolve();
-      }
-  }, eventsCount)
+              });
+            
+            return Promise.resolve();
+        },
+        errorCallback: function (error: any, subscription: Subscription<LoanFactoryTypes.NewLoanEvent | LoanFactoryTypes.AcceptedLoanEvent | LoanFactoryTypes.LoanRemovedEvent | LoanFactoryTypes.LoanCanceledEvent | LoanFactoryTypes.LoanLiqWithEvent | LoanFactoryTypes.LoanPayedEvent | LoanFactoryTypes.AddCollateralLoanEvent | LoanFactoryTypes.RemoveCollateralLoanEvent | LoanFactoryTypes.LoanLiquidationEvent>): Promise<void> | void {
+            console.error(`Error from contract factory:`, error);
+            subscription.unsubscribe();
+            // Attempt to reconnect after an error
+            handleReconnection();
+            return Promise.resolve();
+        }
+    }, eventsCount)
+  } catch (error) {
+    console.error('Error in startEventFetching:', error);
+    // Attempt to reconnect after an exception
+    handleReconnection();
+  }
+}
 
-
+// Function to handle reconnection with exponential backoff
+const handleReconnection = () => {
+  reconnectAttempts++;
+  
+  // Calculate delay with exponential backoff (5s, 10s, 20s, 40s, etc.)
+  const delay = RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts - 1);
+  const cappedDelay = Math.min(delay, 300000); // Cap at 5 minutes
+  
+  if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+    console.log(`Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${cappedDelay/1000} seconds...`);
+    
+    // Send notification about reconnection attempt
+    if (bot && chatId) {
+      const reconnectMessage = `⚠️ *AlpacaFi Bot Alert*\n\nConnection to blockchain lost. Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} scheduled in ${cappedDelay/1000} seconds.`;
+      sendTelegramMessage(chatId, reconnectMessage);
+    }
+    
+    setTimeout(() => {
+      startEventFetching();
+    }, cappedDelay);
+  } else {
+    console.error(`Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Shutting down the bot.`);
+    // Exit immediately without sending a final message
+    process.exit(1);
+  }
 }
 
 // Initialize the bot
@@ -228,8 +267,6 @@ function shortenAddress(address: string): string {
   const shortened = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   return `[${shortened}](https://explorer.alephium.org/addresses/${address})`;
 }
-
-
 
 function formatInterestRate(interest: bigint): string {
   // Convert the interest rate to a human-readable percentage
