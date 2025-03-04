@@ -215,9 +215,6 @@ const formatTelegramMessage = async (event: any): Promise<string> => {
     // Add contract info and footer
     message += `\n📝 *Contract:* ${shortenAddress(event.fields.contract)}`;
     
-    // Add timestamp footer
-    message += `\n\n🕒 *Time:* ${now}`;
-    
     // Add links
     message += `\n\n🔗 *Links:*`;
     message += `\n• [View on AlpacaFi](https://www.alpacafi.app/loan/${event.fields.contract})`;
