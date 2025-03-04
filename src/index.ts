@@ -218,7 +218,6 @@ const formatTelegramMessage = async (event: any): Promise<string> => {
     // Add links
     message += `\n\n🔗 *Links:*`;
     message += `\n• [View on AlpacaFi](https://www.alpacafi.app/loan/${event.fields.contract})`;
-    message += `\n• [Explorer](https://explorer.alephium.org/addresses/${addressFromContractId(event.fields.contract)})`;
     
     return message;
   } catch (error: any) {
