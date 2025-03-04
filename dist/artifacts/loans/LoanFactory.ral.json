@@ -1,0 +1,496 @@
+{
+    "version": "v3.11.1",
+    "name": "LoanFactory",
+    "bytecode": "0811416c417f41b041d042834320434f43a543e14463450945b045c5464646724686469e0000071a0240af140a5f5f6d61705f5f305f5f160044cbc5031c140a5f5f6d61705f5f305f5f160344cbc51a4c409e0c17070c170816024c110c0d0d140a5f5f6d61705f5f305f5f160044cb01000d0ece04d4a0e6c23117141713161317074a110c0d0d140a5f5f6d61705f5f305f5f160044cb01000d0fce0501001712171117101611170716054c110c0d0d140a5f5f6d61705f5f305f5f160344cb01000d0ece04d4a0e6c23117191718161817084a110c0d0d140a5f5f6d61705f5f305f5f160344cb01000d0fce0501001717171617151616170816070c2f16080c2f1b4c030c04020c0d0d140a5f5f6d61705f5f305f5f160344cb010117090c0d0d140a5f5f6d61705f5f305f5f160044cb0101170a1604130a1312842c130a1609842d170b160b16082c130a1308842d170c1601130a1312842c130a160a842d170d160d16072c130a1308842d170e160c1367102c160e2d170f160f1606334c04160f03024a03160f04020c0402010001020106d3ea5746c51600cb1701160102010002060217d374d67f01160017020c0e160201001704170316014c090c0d16020105170516031605024a031603160402000002030010160016012c1367102d170216001602330d7b16001343e8340d7b0103070f00405ad3c0e131f0b417071601a00100030d0d0d140a5f5f6d61705f5f305f5f160044cb010017080d0d0d140a5f5f6d61705f5f305f5f160244cb01001709160016011608160216031609137a980000170b170a16064c05160b031c0e7b16071600160116021604a0011605b21606ce02130a64ca16030c04160a130564170d170c16077ad10f2ca216021603a3ce01160c160daf170ea0000d2aa10005160e1600160116021603160416051607760103010b00404ad3ab87b3d416001701b417020c0e16010100170417030c0e16010101170617050d0d0d140a5f5f6d61705f5f305f5f160344cb010017070d0d0d140a5f5f6d61705f5f305f5f160544cb01001708160316041607160516061608137a980000170a17090c0d16010102031c4c05160a031c13087b16027a16031604a313c3038d7ea4c68000a2160216090e0c1601010706160016025f010001040018d389ef220a16001701b417020c0d16010103170316021603450c7b16020d0c1601010808160016025f0101010700402cd3738950ae16001701b417020c0d16010103170316021603450c7b0c0e16010100170517040c0d16010105170616027a16041606a313c3038d7ea4c680000e2ca216020d0c1601010a0a160016025f01020108001fd35637085316001701b417020c0e16010101170417030c0e16010100170617050c0d1601010217070c0c1601010b09160016071602600100010b00403cd3c1af036716001701b417020c0e16010100170417030c0e16010101170617050d0d0d140a5f5f6d61705f5f305f5f160344cb010017070d0d0d140a5f5f6d61705f5f305f5f160544cb01001708160316041607160516061608137a980000170a1709160a041c13087b16090d0c1601010e1208160016031604600103020c004050d3365f00ae16001702b417030c0d16020103170416031604450c7b0c0e16020100170617050c0e16020101170817070d0d0d140a5f5f6d61705f5f305f5f160544cb010017090d0d0d140a5f5f6d61705f5f305f5f160744cb0100170a1605160616091607160816012a160a0c000018170b16037a16071601a313c3038d7ea4c68000a216031601160b0f0d1602010c181206160016031607160816012a610101020c004051d3242a61d316001702b417030c0d16020103170416031604450c7b0c0e16020100170617050c0e16020101170817070d0d0d140a5f5f6d61705f5f305f5f160544cb010017090d0d0d140a5f5f6d61705f5f305f5f160744cb0100170a1605160616091607160816012b160a0c000018170b160b137a98330d7bb413c3038d7ea4c68000a216031601160b0f0d1602010d181207160016031607160816012b61010001010008d366b0cd96b4ce00450c7b1600a1010103050c00403ed37dd015fdb4ce00450c7b16014c4026160216031604170717061705b4d1a2140a5f5f6d61705f5f305f5f16004416051607b11606d20301b21600130264ce000c0413036417091708b4d1a21600ce0316081609c1170a4a10b40d0c140a5f5f6d61705f5f305f5f160044cb01031600cb170bb40d0c160b0102010103040013d3f5344303b4ce00450c7b1601cb1703b413c3038d7ea4c68000a2b4160016020f0c16030100010001010008d311423544b4ce00450c7b1600ba01000303000ad333c6b8dcb4ce00450c7b160016011602bb",
+    "codeHash": "68faec415f6f236ab00ec4b8a4cd31f50271f3a6ae1fe5507967d5fcd2d4f4ce",
+    "fieldsSig": {
+        "names": [
+            "admin",
+            "loanTemplate",
+            "auctionHouse",
+            "feeTemplate",
+            "activeLoans",
+            "rate",
+            "oracle",
+            "alpaca"
+        ],
+        "types": [
+            "Address",
+            "ByteVec",
+            "ByteVec",
+            "ByteVec",
+            "U256",
+            "U256",
+            "IDIAOracle",
+            "ByteVec"
+        ],
+        "isMutable": [
+            false,
+            false,
+            false,
+            false,
+            true,
+            true,
+            false,
+            false
+        ]
+    },
+    "eventsSig": [
+        {
+            "name": "NewLoan",
+            "fieldNames": [
+                "contract",
+                "tokenRequested",
+                "tokenAmount",
+                "collateralToken",
+                "collateralAmount",
+                "interest",
+                "duration",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "ByteVec",
+                "U256",
+                "ByteVec",
+                "U256",
+                "U256",
+                "U256",
+                "Address"
+            ]
+        },
+        {
+            "name": "AcceptedLoan",
+            "fieldNames": [
+                "contract",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address"
+            ]
+        },
+        {
+            "name": "LoanRemoved",
+            "fieldNames": [
+                "contract",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address"
+            ]
+        },
+        {
+            "name": "LoanCanceled",
+            "fieldNames": [
+                "contract",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address"
+            ]
+        },
+        {
+            "name": "LoanLiqWith",
+            "fieldNames": [
+                "contract",
+                "liquidation",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Bool",
+                "Address"
+            ]
+        },
+        {
+            "name": "LoanPayed",
+            "fieldNames": [
+                "contract",
+                "who"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address"
+            ]
+        },
+        {
+            "name": "AddCollateralLoan",
+            "fieldNames": [
+                "contract",
+                "who",
+                "token",
+                "amount"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address",
+                "ByteVec",
+                "U256"
+            ]
+        },
+        {
+            "name": "RemoveCollateralLoan",
+            "fieldNames": [
+                "contract",
+                "who",
+                "token",
+                "amount"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "Address",
+                "ByteVec",
+                "U256"
+            ]
+        },
+        {
+            "name": "LoanLiquidation",
+            "fieldNames": [
+                "contract",
+                "token",
+                "startingBid"
+            ],
+            "fieldTypes": [
+                "ByteVec",
+                "ByteVec",
+                "U256"
+            ]
+        }
+    ],
+    "functions": [
+        {
+            "name": "determineCollateralRatio",
+            "paramNames": [
+                "tokenRequested",
+                "tokenAmount",
+                "tokenOracle",
+                "collateralToken",
+                "collateralAmount",
+                "collateralOracle",
+                "threshhold"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "U256",
+                "Bool",
+                "ByteVec",
+                "U256",
+                "Bool",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "returnTypes": [
+                "U256",
+                "Bool"
+            ]
+        },
+        {
+            "name": "depositFeeCollector",
+            "paramNames": [
+                "token"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": [
+                "ByteVec"
+            ]
+        },
+        {
+            "name": "getRequiredTokens",
+            "paramNames": [
+                "contractId",
+                "withInterest"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "Bool"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": [
+                "ByteVec",
+                "U256"
+            ]
+        },
+        {
+            "name": "checkTokenAmount",
+            "paramNames": [
+                "priceIn",
+                "commissionRateIn"
+            ],
+            "paramTypes": [
+                "U256",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "createLoan",
+            "paramNames": [
+                "tokenRequested",
+                "tokenAmount",
+                "collateralToken",
+                "collateralAmount",
+                "interest",
+                "duration",
+                "canLiquidate"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "U256",
+                "ByteVec",
+                "U256",
+                "U256",
+                "U256",
+                "Bool"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "accept",
+            "paramNames": [
+                "contractId"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "cancel",
+            "paramNames": [
+                "contractId"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "pay",
+            "paramNames": [
+                "contractId"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "forfeit",
+            "paramNames": [
+                "contractId"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "liquidation",
+            "paramNames": [
+                "contractId"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "addCollateral",
+            "paramNames": [
+                "contractId",
+                "amount"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "removeCollateral",
+            "paramNames": [
+                "contractId",
+                "amount"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "editRate",
+            "paramNames": [
+                "newRate"
+            ],
+            "paramTypes": [
+                "U256"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "tokenMapping",
+            "paramNames": [
+                "token",
+                "add",
+                "pairtoken",
+                "decimals",
+                "alephiumOracle"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "Bool",
+                "ByteVec",
+                "U256",
+                "Bool"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "withdrawLoanFactoryFees",
+            "paramNames": [
+                "who",
+                "token",
+                "amount"
+            ],
+            "paramTypes": [
+                "Address",
+                "ByteVec",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "updateLoanFactoryCode",
+            "paramNames": [
+                "newCode"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "updateLoanFactoryFields",
+            "paramNames": [
+                "newCode",
+                "immFields",
+                "mutFields"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "ByteVec",
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        }
+    ],
+    "constants": [],
+    "enums": [
+        {
+            "name": "LoanCodes",
+            "fields": [
+                {
+                    "name": "NotAdmin",
+                    "value": {
+                        "type": "U256",
+                        "value": "0"
+                    }
+                },
+                {
+                    "name": "TokenSizeTooSmall",
+                    "value": {
+                        "type": "U256",
+                        "value": "1"
+                    }
+                }
+            ]
+        }
+    ],
+    "mapsSig": {
+        "names": [
+            "tokenPairs"
+        ],
+        "types": [
+            "Map[ByteVec,PairInfo]"
+        ]
+    }
+}

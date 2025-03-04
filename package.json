@@ -11,7 +11,9 @@
     "test": "npx @alephium/cli compile; jest -i --config ./jest-config.json",
     "devnet:deploy": "npx --yes @alephium/cli@latest deploy -n devnet",
     "testnet:deploy": "npx --yes @alephium/cli@latest deploy -n testnet",
-    "mainnet:deploy": "npx --yes @alephium/cli@latest deploy -n mainnet"
+    "mainnet:deploy": "npx --yes @alephium/cli@latest deploy -n mainnet",
+    "bot:build": "tsc --project tsconfig.bot.json",
+    "bot:start": "node dist/src/index.js"
   },
   "dependencies": {
     "@alephium/cli": "^1.11.1",
@@ -30,24 +32,30 @@
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "date-fns": "^4.1.0",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.4.7",
     "framer-motion": "^11.11.11",
     "html2canvas": "^1.4.1",
+    "humanize-duration": "^3.32.1",
     "lucide-react": "^0.284.0",
     "matter-js": "^0.20.0",
     "next": "^14.2.20",
+    "node-telegram-bot-api": "^0.66.0",
     "pino-pretty": "^13.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-icons": "^5.3.0",
     "swr": "^2.2.5",
     "tailwind-merge": "^1.14.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "typescript": "^5.8.2"
   },
   "devDependencies": {
     "@types/bs58": "^4.0.4",
+    "@types/express": "^5.0.0",
+    "@types/humanize-duration": "^3.27.4",
     "@types/jest": "^29.5.14",
     "@types/node": "22.5.4",
+    "@types/node-telegram-bot-api": "^0.64.7",
     "autoprefixer": "^10",
     "eslint": "^8",
     "eslint-config-next": "13.5.4",

@@ -1,0 +1,28 @@
+{
+    "version": "v3.12.0",
+    "name": "MintSupply",
+    "bytecodeTemplate": "01010300010008b417001600{1}0e0c{0}0104",
+    "fieldsSig": {
+        "names": [
+            "contract",
+            "amount"
+        ],
+        "types": [
+            "TokenTest",
+            "U256"
+        ],
+        "isMutable": [
+            false,
+            false
+        ]
+    },
+    "functions": [
+        {
+            "name": "main",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": []
+        }
+    ]
+}

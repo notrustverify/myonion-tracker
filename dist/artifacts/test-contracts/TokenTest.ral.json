@@ -1,0 +1,84 @@
+{
+    "version": "v3.12.0",
+    "name": "TokenTest",
+    "bytecode": "040509121b4024403d010000000102ce0102010000000102ce0002010000000102131202010000000102a0000201020202000ad3d42a497ba00016012aa100b21600b11601aa",
+    "codeHash": "7a92239d40bacc903144594d67621dad48faf5e2bc938bfeb087df697115e3eb",
+    "fieldsSig": {
+        "names": [
+            "name",
+            "symbol",
+            "supply",
+            "__stdInterfaceId"
+        ],
+        "types": [
+            "ByteVec",
+            "ByteVec",
+            "U256",
+            "ByteVec"
+        ],
+        "isMutable": [
+            false,
+            false,
+            true,
+            false
+        ]
+    },
+    "eventsSig": [],
+    "functions": [
+        {
+            "name": "getSymbol",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": [
+                "ByteVec"
+            ]
+        },
+        {
+            "name": "getName",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": [
+                "ByteVec"
+            ]
+        },
+        {
+            "name": "getDecimals",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": [
+                "U256"
+            ]
+        },
+        {
+            "name": "getTotalSupply",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": [
+                "U256"
+            ]
+        },
+        {
+            "name": "mintSupply",
+            "paramNames": [
+                "caller",
+                "amount"
+            ],
+            "paramTypes": [
+                "Address",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": []
+        }
+    ],
+    "constants": [],
+    "enums": [],
+    "stdInterfaceId": "0001"
+}

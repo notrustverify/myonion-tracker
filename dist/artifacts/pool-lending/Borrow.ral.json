@@ -1,0 +1,28 @@
+{
+    "version": "v3.11.1",
+    "name": "Borrow",
+    "bytecodeTemplate": "0101030002001a{1}137a980e0d{0}010817000c0d{0}01041701b47a16011600a313c3038d7ea4c68000102ca2{1}0d0c{0}010d",
+    "fieldsSig": {
+        "names": [
+            "pool",
+            "amount"
+        ],
+        "types": [
+            "Pool",
+            "U256"
+        ],
+        "isMutable": [
+            false,
+            false
+        ]
+    },
+    "functions": [
+        {
+            "name": "main",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": []
+        }
+    ]
+}

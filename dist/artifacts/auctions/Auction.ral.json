@@ -1,0 +1,167 @@
+{
+    "version": "v3.11.1",
+    "name": "Auction",
+    "bytecode": "0905402340a2417a418f41a8010001020110d3bbb2d6b4ce040c334c091600ce042c1367102d17011601024a020c020101020203403bd368fcb5f31601a0003313087b1600a001460d7ba0020c304c09b2a00113c3038d7ea4c68000a7b2a001ce01a000aa1600b213c3038d7ea4c68000a71600b2ce011601aa1600a1011601a100a0020c2f4c04561380a4cb802aa102a002562b138002bf20314c04a00213800493e02aa102ce011601a0020201020109004075d3f1331eca1600a00145a0020c2f1a4c4027ce0300001701ce007a494d470d13216217020c0d160201001703ce020d0d160301011704b27ace021601a313c3038d7ea4c68000a2b2ce0216010f0c16040101a001b0a00256310e7ba0020c30107bce0300001705b2ce0513c3038d7ea4c68000a7b2ce05ce01a000aab2a00113c3038d7ea4c68000a7b2a001ce02ce0316052baace007a494d470d13216217060c0d160601001707ce020d0d160701011708b27ace021605a313c3038d7ea4c68000a2b2ce0216050f0c16080101a001b0010001010008d3bef924face00ce05450f7b1600ba01000303000ad373b81a12ce00ce05450f7b160016011602bb",
+    "codeHash": "3d00c28fcfedd3e2f725f55f641718582e1abe883659112526ede3fa21b9c999",
+    "fieldsSig": {
+        "names": [
+            "parentContract",
+            "tokenRequested",
+            "tokenAmount",
+            "collateralToken",
+            "collateralAmount",
+            "fee",
+            "loaner",
+            "highestBidder",
+            "timeToEnd"
+        ],
+        "types": [
+            "Address",
+            "ByteVec",
+            "U256",
+            "ByteVec",
+            "U256",
+            "U256",
+            "Address",
+            "Address",
+            "U256"
+        ],
+        "isMutable": [
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            true
+        ]
+    },
+    "eventsSig": [],
+    "functions": [
+        {
+            "name": "calculateFee",
+            "paramNames": [
+                "amount"
+            ],
+            "paramTypes": [
+                "U256"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": [
+                "U256"
+            ]
+        },
+        {
+            "name": "bid",
+            "paramNames": [
+                "caller",
+                "amount"
+            ],
+            "paramTypes": [
+                "Address",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": [
+                "ByteVec",
+                "U256",
+                "U256"
+            ]
+        },
+        {
+            "name": "redeem",
+            "paramNames": [
+                "caller"
+            ],
+            "paramTypes": [
+                "Address"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "upgradeAuctionCode",
+            "paramNames": [
+                "newCode"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "upgradeAuctionFields",
+            "paramNames": [
+                "newCode",
+                "immFields",
+                "mutFields"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "ByteVec",
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        }
+    ],
+    "constants": [],
+    "enums": [
+        {
+            "name": "AuctionCodes",
+            "fields": [
+                {
+                    "name": "InvalidAmount",
+                    "value": {
+                        "type": "U256",
+                        "value": "8"
+                    }
+                },
+                {
+                    "name": "InvalidCaller",
+                    "value": {
+                        "type": "U256",
+                        "value": "1"
+                    }
+                },
+                {
+                    "name": "AuctionNotDone",
+                    "value": {
+                        "type": "U256",
+                        "value": "2"
+                    }
+                },
+                {
+                    "name": "CopyNotUpgradable",
+                    "value": {
+                        "type": "U256",
+                        "value": "3"
+                    }
+                },
+                {
+                    "name": "AuctionNotBidOn",
+                    "value": {
+                        "type": "U256",
+                        "value": "4"
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -33,3 +33,84 @@ Auctions serve as the pathway to lenders and managing risk over the long term.
 | $USDT | DIA |
 | $USDC | DIA |
 
+# AlpacaFi Telegram Bot
+
+A Telegram bot that monitors AlpacaFi events on the Alephium blockchain and sends notifications to a Telegram chat.
+
+## Features
+
+- Monitors loan creation, acceptance, repayment, and liquidation events
+- Formats messages with clear, readable information
+- Includes clickable links to the Alephium explorer
+- Handles rate limiting from Telegram API
+- Runs in Docker for easy deployment
+
+## Setup
+
+### Prerequisites
+
+- Docker and Docker Compose installed
+- A Telegram bot token (get one from [@BotFather](https://t.me/botfather))
+- The chat ID where you want to send notifications
+
+### Configuration
+
+1. Copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+2. Edit the `.env` file and add your Telegram bot token and chat ID:
+
+```
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+CHAT_ID=your_telegram_chat_id_here
+```
+
+### Running with Docker
+
+Build and start the bot:
+
+```bash
+docker-compose up -d
+```
+
+View logs:
+
+```bash
+docker-compose logs -f
+```
+
+Stop the bot:
+
+```bash
+docker-compose down
+```
+
+## Development
+
+### Local Setup
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Build the TypeScript code:
+
+```bash
+npm run build
+```
+
+3. Run the bot:
+
+```bash
+npm start
+```
+
+## License
+
+MIT
+

@@ -1,0 +1,125 @@
+{
+    "version": "v3.11.1",
+    "name": "AlpacaFiOracle",
+    "bytecode": "02064048408140a740e440f8410d01000102031fd34ff46fef140a5f5f6d61705f5f305f5f160044cbc5031c0c7b0c0d0d140a5f5f6d61705f5f305f5f160044cb1701160101000c0d0d160101010d0d0d1601010002010304070017d3ee45eb7fb4ce00450c7b160116021603170617051704b4d1a2140a5f5f6d61705f5f305f5f16004416041606b11605d2030101000101000ed370455d3eb4ce00450c7bb40d0c140a5f5f6d61705f5f305f5f160044cb0103010002020018d3c8f2bbb1b4a000450d7b140a5f5f6d61705f5f305f5f160044cbc5031c0e7b16010c0e0c140a5f5f6d61705f5f305f5f160044cb0102010001010008d316b01c78b4ce00450c7b1600ba010001010008d30b62a4e6b4ce00450c7b1600a100",
+    "codeHash": "101866bbeb7571baa17c67d2957f16b67c8144f4c676cc9d0194afa2fb16acea",
+    "fieldsSig": {
+        "names": [
+            "admin",
+            "updateBot"
+        ],
+        "types": [
+            "Address",
+            "Address"
+        ],
+        "isMutable": [
+            false,
+            true
+        ]
+    },
+    "eventsSig": [],
+    "functions": [
+        {
+            "name": "getValue",
+            "paramNames": [
+                "pair"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": [
+                "OracleData"
+            ]
+        },
+        {
+            "name": "insertPair",
+            "paramNames": [
+                "pair",
+                "token",
+                "price",
+                "decimals"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "ByteVec",
+                "U256",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false,
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "removePair",
+            "paramNames": [
+                "pair"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "updatePair",
+            "paramNames": [
+                "pair",
+                "price"
+            ],
+            "paramTypes": [
+                "ByteVec",
+                "U256"
+            ],
+            "paramIsMutable": [
+                false,
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "updateOracleCode",
+            "paramNames": [
+                "newCode"
+            ],
+            "paramTypes": [
+                "ByteVec"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        },
+        {
+            "name": "updateBotAddress",
+            "paramNames": [
+                "newBot"
+            ],
+            "paramTypes": [
+                "Address"
+            ],
+            "paramIsMutable": [
+                false
+            ],
+            "returnTypes": []
+        }
+    ],
+    "constants": [],
+    "enums": [],
+    "mapsSig": {
+        "names": [
+            "prices"
+        ],
+        "types": [
+            "Map[ByteVec,OracleData]"
+        ]
+    }
+}

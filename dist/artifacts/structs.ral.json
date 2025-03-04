@@ -1,0 +1,53 @@
+[
+    {
+        "name": "PairInfo",
+        "fieldNames": [
+            "pair",
+            "decimals",
+            "oracle"
+        ],
+        "fieldTypes": [
+            "ByteVec",
+            "U256",
+            "Bool"
+        ],
+        "isMutable": [
+            false,
+            true,
+            false
+        ]
+    },
+    {
+        "name": "DIAOracleValue",
+        "fieldNames": [
+            "value",
+            "timestamp"
+        ],
+        "fieldTypes": [
+            "U256",
+            "U256"
+        ],
+        "isMutable": [
+            true,
+            true
+        ]
+    },
+    {
+        "name": "OracleData",
+        "fieldNames": [
+            "token",
+            "value",
+            "decimals"
+        ],
+        "fieldTypes": [
+            "ByteVec",
+            "U256",
+            "U256"
+        ],
+        "isMutable": [
+            false,
+            true,
+            false
+        ]
+    }
+]

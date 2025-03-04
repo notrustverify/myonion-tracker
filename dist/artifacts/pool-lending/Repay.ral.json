@@ -1,0 +1,28 @@
+{
+    "version": "v3.11.1",
+    "name": "Repay",
+    "bytecodeTemplate": "01010300020019{1}0d0d{0}010917000c0d{0}01041701b47a16011600a313c3038d7ea4c68000102ca2{1}0d0c{0}010e",
+    "fieldsSig": {
+        "names": [
+            "pool",
+            "id"
+        ],
+        "types": [
+            "Pool",
+            "ByteVec"
+        ],
+        "isMutable": [
+            false,
+            false
+        ]
+    },
+    "functions": [
+        {
+            "name": "main",
+            "paramNames": [],
+            "paramTypes": [],
+            "paramIsMutable": [],
+            "returnTypes": []
+        }
+    ]
+}
