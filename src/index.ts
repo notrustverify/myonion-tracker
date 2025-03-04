@@ -119,7 +119,7 @@ const formatTelegramMessage = async (event: any): Promise<string> => {
     
     // Common header for all events with event type emoji
     const eventEmoji = getEventEmoji(event.name);
-    message += `${eventEmoji} *AlpacaFi ${formatEventName(event.name)}*\n\n`;
+    message += `${eventEmoji} *${formatEventName(event.name)}*\n\n`;
     
     // Format based on event type
     switch (event.name) {
