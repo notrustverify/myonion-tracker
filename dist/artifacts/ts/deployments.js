@@ -12,64 +12,47 @@ const _deployments_mainnet_json_1 = __importDefault(require("../../deployments/.
 const _deployments_testnet_json_1 = __importDefault(require("../../deployments/.deployments.testnet.json"));
 function toDeployments(json) {
     const contracts = {
-        AlpacaFiOracle: json.contracts["AlpacaFiOracle"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["AlpacaFiOracle"],
-                contractInstance: _1.AlpacaFiOracle.at(json.contracts["AlpacaFiOracle"].contractInstance.address),
-            },
-        Loan: json.contracts["Loan"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["Loan"],
-                contractInstance: _1.Loan.at(json.contracts["Loan"].contractInstance.address),
-            },
-        LoanFactory: json.contracts["LoanFactory"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["LoanFactory"],
-                contractInstance: _1.LoanFactory.at(json.contracts["LoanFactory"].contractInstance.address),
-            },
-        Auction: json.contracts["Auction"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["Auction"],
-                contractInstance: _1.Auction.at(json.contracts["Auction"].contractInstance.address),
-            },
-        AuctionFactory: json.contracts["AuctionFactory"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["AuctionFactory"],
-                contractInstance: _1.AuctionFactory.at(json.contracts["AuctionFactory"].contractInstance.address),
-            },
-        Fee: json.contracts["Fee"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["Fee"],
-                contractInstance: _1.Fee.at(json.contracts["Fee"].contractInstance.address),
-            },
-        TokenTest: json.contracts["TokenTest"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["TokenTest"],
-                contractInstance: _1.TokenTest.at(json.contracts["TokenTest"].contractInstance.address),
-            },
-        Debt: json.contracts["Debt"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["Debt"],
-                contractInstance: _1.Debt.at(json.contracts["Debt"].contractInstance.address),
-            },
-        Pool: json.contracts["Pool"] === undefined
-            ? undefined
-            : {
-                ...json.contracts["Pool"],
-                contractInstance: _1.Pool.at(json.contracts["Pool"].contractInstance.address),
-            },
+        Token: {
+            ...json.contracts["Token"],
+            contractInstance: _1.Token.at(json.contracts["Token"].contractInstance.address),
+        },
+        FeeHandler: {
+            ...json.contracts["FeeHandler"],
+            contractInstance: _1.FeeHandler.at(json.contracts["FeeHandler"].contractInstance.address),
+        },
+        FeeCollector: {
+            ...json.contracts["FeeCollector"],
+            contractInstance: _1.FeeCollector.at(json.contracts["FeeCollector"].contractInstance.address),
+        },
+        OnionRouter: {
+            ...json.contracts["OnionRouter"],
+            contractInstance: _1.OnionRouter.at(json.contracts["OnionRouter"].contractInstance.address),
+        },
+        BondingPair: {
+            ...json.contracts["BondingPair"],
+            contractInstance: _1.BondingPair.at(json.contracts["BondingPair"].contractInstance.address),
+        },
+        DexPair: {
+            ...json.contracts["DexPair"],
+            contractInstance: _1.DexPair.at(json.contracts["DexPair"].contractInstance.address),
+        },
+        TokenLauncher: {
+            ...json.contracts["TokenLauncher"],
+            contractInstance: _1.TokenLauncher.at(json.contracts["TokenLauncher"].contractInstance.address),
+        },
+        ProfileTracker: {
+            ...json.contracts["ProfileTracker"],
+            contractInstance: _1.ProfileTracker.at(json.contracts["ProfileTracker"].contractInstance.address),
+        },
+        CommentTracker: {
+            ...json.contracts["CommentTracker"],
+            contractInstance: _1.CommentTracker.at(json.contracts["CommentTracker"].contractInstance.address),
+        },
     };
     return {
         ...json,
         contracts: contracts,
+        scripts: { SetFeeCollector: json.scripts["SetFeeCollector"] },
     };
 }
 function loadDeployments(networkId, deployerAddress) {

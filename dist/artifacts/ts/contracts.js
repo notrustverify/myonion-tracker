@@ -3,19 +3,25 @@
 /* tslint:disable */
 /* eslint-disable */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.registerContract = registerContract;
 exports.getContractByCodeHash = getContractByCodeHash;
+const _1 = require(".");
 let contracts = undefined;
-function registerContract(factory) {
-    if (contracts === undefined) {
-        contracts = [factory];
-    }
-    else {
-        contracts.push(factory);
-    }
-}
 function getContractByCodeHash(codeHash) {
-    const c = contracts?.find((c) => c.contract.hasCodeHash(codeHash));
+    if (contracts === undefined) {
+        contracts = [
+            _1.BondingPair,
+            _1.CommentTracker,
+            _1.DexPair,
+            _1.FeeCollector,
+            _1.FeeHandler,
+            _1.FixedPointMathTest,
+            _1.OnionRouter,
+            _1.ProfileTracker,
+            _1.Token,
+            _1.TokenLauncher,
+        ];
+    }
+    const c = contracts.find((c) => c.contract.hasCodeHash(codeHash));
     if (c === undefined) {
         throw new Error("Unknown code with code hash: " + codeHash);
     }

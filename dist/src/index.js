@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_telegram_bot_api_1 = __importDefault(require("node-telegram-bot-api"));
 const dotenv_1 = __importDefault(require("dotenv"));
+const axios_1 = __importDefault(require("axios"));
+const numeral_1 = __importDefault(require("numeral"));
 const ts_1 = require("../artifacts/ts");
 const deployments_1 = require("../artifacts/ts/deployments");
 const web3_1 = require("@alephium/web3");
@@ -18,157 +20,326 @@ const chatId = process.env.CHAT_ID;
 const apiUrl = process.env.API_URL;
 let isRateLimited = false;
 let rateLimitTimeout = 0;
-const startEventFetching = async () => {
-    web3_1.web3.setCurrentNodeProvider(process.env.NEXT_PUBLIC_NODE_URL ?? "https://node.mainnet.alephium.org", undefined, undefined);
-    const deployment = (0, deployments_1.loadDeployments)(process.env.NEXT_PUBLIC_NETWORK ?? 'mainnet'); // TODO use getNetwork()
-    if (!deployment.contracts?.LoanFactory) {
-        throw new Error('LoanFactory contract not found');
-    }
-    const loanFactoryContract = ts_1.LoanFactory.at(deployment.contracts.LoanFactory.contractInstance.address);
-    const eventsCount = await loanFactoryContract.getContractEventsCurrentCount();
-    console.log(eventsCount);
-    loanFactoryContract.subscribeAllEvents({
-        pollingInterval: 1000,
-        messageCallback: function (message) {
-            // Format and send Telegram message
-            formatTelegramMessage(message).then(telegramMessage => {
-                if (bot && chatId) {
-                    // Check if we're rate limited
-                    if (isRateLimited) {
-                        console.log(`Rate limited, waiting ${rateLimitTimeout}s before sending message`);
-                        setTimeout(() => {
-                            sendTelegramMessage(chatId, telegramMessage);
-                        }, rateLimitTimeout * 1000);
-                    }
-                    else {
-                        sendTelegramMessage(chatId, telegramMessage);
-                    }
-                }
-            });
-            return Promise.resolve();
-        },
-        errorCallback: function (error, subscription) {
-            console.error(`Error from contract factory:`, error);
-            subscription.unsubscribe();
-            return Promise.resolve();
+let reconnectAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 10;
+const RECONNECT_DELAY_MS = 5000; // 5 seconds initial delay
+// Cache and throttling for API requests
+const tokenDataCache = {};
+const apiRequestTimestamps = [];
+const API_RATE_LIMIT = 5; // Max requests per time window
+const API_RATE_WINDOW_MS = 1000; // Time window in milliseconds (1 second)
+const MAX_API_RETRIES = 20; // Maximum number of retry attempts
+const RETRY_DELAY_BASE_MS = 1000; // Base delay for exponential backoff (1 second)
+const startEventFetchingTokenLauncher = async () => {
+    try {
+        reconnectAttempts = 0; // Reset reconnect attempts on successful start
+        // Setup cache cleaning
+        setupCacheCleaning();
+        web3_1.web3.setCurrentNodeProvider(process.env.NEXT_PUBLIC_NODE_URL ?? "https://node.mainnet.alephium.org", undefined, undefined);
+        const deployment = (0, deployments_1.loadDeployments)(process.env.NEXT_PUBLIC_NETWORK ?? 'mainnet'); // TODO use getNetwork()
+        if (!deployment.contracts?.TokenLauncher) {
+            throw new Error('LoanFactory contract not found');
         }
-    }, 0);
+        const tokenLauncherContract = ts_1.TokenLauncher.at(deployment.contracts.TokenLauncher.contractInstance.address);
+        const eventsCount = process.env.DEBUG == 'true' ? 0 : await tokenLauncherContract.getContractEventsCurrentCount();
+        console.log(`Starting event subscription from count: ${eventsCount}`);
+        tokenLauncherContract.subscribeAllEvents({
+            pollingInterval: 16000,
+            messageCallback: function (message) {
+                // Only process specific events
+                const eventsToProcess = ['CreateToken', 'UpdateTokenDexPair'];
+                if (eventsToProcess.includes(message.name)) {
+                    console.log(`Processing event: ${message.name}`);
+                    // Format and send Telegram message
+                    formatTelegramMessage(message).then(formattedMessage => {
+                        if (bot && chatId) {
+                            // Check if we're rate limited
+                            if (isRateLimited) {
+                                console.log(`Rate limited, waiting ${rateLimitTimeout}s before sending message`);
+                                setTimeout(() => {
+                                    // Check if we have a logo URL
+                                    if (formattedMessage.logoUrl) {
+                                        sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl);
+                                    }
+                                    else {
+                                        sendTelegramMessage(chatId, formattedMessage.text);
+                                    }
+                                }, rateLimitTimeout * 1000);
+                            }
+                            else {
+                                // Check if we have a logo URL
+                                if (formattedMessage.logoUrl) {
+                                    sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl);
+                                }
+                                else {
+                                    sendTelegramMessage(chatId, formattedMessage.text);
+                                }
+                            }
+                        }
+                    });
+                }
+                else {
+                    console.log(`Ignoring event: ${message.name}`);
+                }
+                return Promise.resolve();
+            },
+            errorCallback: function (error, subscription) {
+                console.error(`Error from contract factory:`, error);
+                subscription.unsubscribe();
+                // Attempt to reconnect after an error
+                handleReconnection();
+                return Promise.resolve();
+            }
+        }, eventsCount);
+    }
+    catch (error) {
+        console.error('Error in startEventFetching:', error);
+        // Attempt to reconnect after an exception
+        handleReconnection();
+    }
+};
+// Function to handle reconnection with exponential backoff
+const handleReconnection = () => {
+    reconnectAttempts++;
+    // Calculate delay with exponential backoff (5s, 10s, 20s, 40s, etc.)
+    const delay = RECONNECT_DELAY_MS * Math.pow(2, reconnectAttempts - 1);
+    const cappedDelay = Math.min(delay, 300000); // Cap at 5 minutes
+    if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
+        console.log(`Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${cappedDelay / 1000} seconds...`);
+        // Send notification about reconnection attempt
+        if (bot && chatId) {
+            const reconnectMessage = `⚠️ *Myonion Event Notifier Bot Alert*\n\nConnection to blockchain lost. Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} scheduled in ${cappedDelay / 1000} seconds.`;
+            sendTelegramMessage(chatId, reconnectMessage);
+        }
+        setTimeout(() => {
+            startEventFetchingTokenLauncher();
+        }, cappedDelay);
+    }
+    else {
+        console.error(`Maximum reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Shutting down the bot.`);
+        // Exit immediately without sending a final message
+        process.exit(1);
+    }
 };
 // Initialize the bot
-startEventFetching();
+startEventFetchingTokenLauncher();
 const bot = new node_telegram_bot_api_1.default(token, { polling: true });
+// Function to check if we should throttle API requests
+function shouldThrottleApiRequest() {
+    const now = Date.now();
+    // Remove timestamps older than our window
+    while (apiRequestTimestamps.length > 0 && apiRequestTimestamps[0] < now - API_RATE_WINDOW_MS) {
+        apiRequestTimestamps.shift();
+    }
+    // Check if we've hit the rate limit
+    return apiRequestTimestamps.length >= API_RATE_LIMIT;
+}
+// Function to fetch token data from Myonion API with retries
+async function fetchTokenData(tokenId, retryCount = 0) {
+    // Check cache first
+    if (tokenDataCache[tokenId]) {
+        console.log(`Using cached data for token ${tokenId}`);
+        return tokenDataCache[tokenId];
+    }
+    // Check if we've exceeded max retries
+    if (retryCount >= MAX_API_RETRIES) {
+        console.error(`Maximum retry attempts (${MAX_API_RETRIES}) reached for token ${tokenId}. Giving up.`);
+        return null;
+    }
+    // Check if we should throttle
+    if (shouldThrottleApiRequest()) {
+        console.log(`API throttling in effect, delaying request for token ${tokenId}`);
+        // Wait for the rate limit window to pass
+        await new Promise(resolve => setTimeout(resolve, API_RATE_WINDOW_MS));
+        // Try again with the same retry count
+        return fetchTokenData(tokenId, retryCount);
+    }
+    try {
+        // Record this request timestamp
+        apiRequestTimestamps.push(Date.now());
+        console.log(`Fetching data for token ${tokenId} from API (attempt ${retryCount + 1}/${MAX_API_RETRIES})`);
+        const response = await axios_1.default.get(`https://api.mainnet.myonion.fun/api/token/${tokenId}`);
+        if (response.data && response.data.data) {
+            // Cache the result
+            tokenDataCache[tokenId] = response.data.data;
+            return response.data.data;
+        }
+        console.log(`No data found for token ${tokenId}`);
+        // If the API returned a response but no data, we'll retry
+        // Calculate exponential backoff delay
+        const delay = RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+        console.log(`Retrying in ${delay / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        // Retry with incremented count
+        return fetchTokenData(tokenId, retryCount + 1);
+    }
+    catch (error) {
+        console.error(`Error fetching token data for ${tokenId}:`);
+        // Calculate exponential backoff delay
+        const delay = RETRY_DELAY_BASE_MS * Math.pow(2, retryCount);
+        console.log(`Retrying in ${delay / 1000} seconds...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        // Retry with incremented count
+        return fetchTokenData(tokenId, retryCount + 1);
+    }
+}
+// Function to clear the token data cache periodically
+function setupCacheCleaning() {
+    const CACHE_CLEANUP_INTERVAL_MS = 3600000; // 1 hour
+    setInterval(() => {
+        console.log('Clearing token data cache');
+        for (const key in tokenDataCache) {
+            delete tokenDataCache[key];
+        }
+    }, CACHE_CLEANUP_INTERVAL_MS);
+}
 // Function to format event message for Telegram
 const formatTelegramMessage = async (event) => {
     const now = new Date().toLocaleString();
     let message = '';
+    let logoUrl = '';
     try {
         // Get token list for resolving token names and symbols
         const tokenList = await (0, utils_1.getTokenList)();
         // Common header for all events with event type emoji
         const eventEmoji = getEventEmoji(event.name);
-        message += `${eventEmoji} *AlpacaFi ${formatEventName(event.name)}*\n\n`;
         // Format based on event type
         switch (event.name) {
-            case 'NewLoan': {
-                const requestedTokenId = event.fields.tokenRequested;
-                const collateralTokenId = event.fields.collateralToken;
-                const requestedToken = (0, utils_1.findTokenFromId)(tokenList, requestedTokenId);
-                const collateralToken = (0, utils_1.findTokenFromId)(tokenList, collateralTokenId);
-                const requestedTokenSymbol = requestedToken?.symbol || 'Unknown';
-                const collateralTokenSymbol = collateralToken?.symbol || 'Unknown';
-                const requestedAmount = (0, web3_1.number256ToNumber)(event.fields.tokenAmount, requestedToken?.decimals || 18);
-                const collateralAmount = (0, web3_1.number256ToNumber)(event.fields.collateralAmount, collateralToken?.decimals || 18);
-                message += `💰 *Loan Amount:* ${formatNumber(requestedAmount)} ${requestedTokenSymbol}\n`;
-                message += `🔒 *Collateral:* ${formatNumber(collateralAmount)} ${collateralTokenSymbol}\n`;
-                message += `💹 *Interest Rate:* ${formatInterestRate(event.fields.interest)}%\n`;
-                message += `⏱️ *Duration:* ${formatDuration(event.fields.duration)}\n`;
-                message += `👤 *Borrower:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            }
-            case 'AcceptedLoan':
-                message += `✅ Loan has been accepted and funded\n\n`;
-                message += `👤 *Lender:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            case 'LoanRemoved':
-                message += `🗑️ Loan has been removed from the platform\n\n`;
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            case 'LoanCanceled':
-                message += `❌ Loan has been canceled by the borrower\n\n`;
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            case 'LoanLiqWith':
-                if (event.fields.liquidation) {
-                    message += `⚠️ Loan is being liquidated\n\n`;
+            case 'CreateToken': {
+                message += `${eventEmoji} *New token detected!*\n\n`;
+                const tokenId = event.fields.tokenId;
+                // Try to fetch additional token data from Myonion API
+                const tokenData = await fetchTokenData(tokenId);
+                message += `📝 *Token ID:* \`${tokenId}\`\n\n`;
+                if (tokenData) {
+                    // Store logo URL if available
+                    if (tokenData.logo) {
+                        logoUrl = `https://file.myonion.fun/cdn-cgi/image/width=240,height=240,fit=crop,format=webp,quality=85/${tokenData.logo}`;
+                    }
+                    // Use data from API if available
+                    message += `🏷️ *Symbol:* ${tokenData.symbol || (0, web3_1.hexToString)(event.fields.symbol) || 'Unknown'}\n`;
+                    message += `📋 *Name:* ${tokenData.name || (0, web3_1.hexToString)(event.fields.name) || 'Unknown'}\n`;
+                    // Add additional data from API
+                    if (tokenData.description) {
+                        message += `📄 *Description:*\n${tokenData.description}\n`;
+                    }
+                    // Add warning flags if present
+                    if (tokenData.isNsfw) {
+                        message += `⚠️ *NSFW Content*\n`;
+                    }
+                    if (tokenData.isOffensive) {
+                        message += `⚠️ *Offensive Content*\n`;
+                    }
+                    if (tokenData.isBlocked) {
+                        message += `🚫 *Blocked Token*\n`;
+                    }
+                    if (tokenData.socials !== "") {
+                        message += `\n${formatSocialLinks(tokenData.socials)}\n`;
+                    }
                 }
                 else {
-                    message += `💸 Funds have been withdrawn from the loan\n\n`;
+                    // Fallback to event data
+                    message += `🏷️ *Symbol:* ${(0, web3_1.hexToString)(event.fields.symbol) || 'Unknown'}\n`;
+                    message += `📋 *Name:* ${(0, web3_1.hexToString)(event.fields.name) || 'Unknown'}\n`;
                 }
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            case 'LoanPayed':
-                message += `✅ Loan has been fully repaid\n\n`;
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                break;
-            case 'AddCollateralLoan': {
-                const tokenId = event.fields.token;
-                const token = (0, utils_1.findTokenFromId)(tokenList, tokenId);
-                const tokenSymbol = token?.symbol || 'Unknown';
-                const amount = (0, web3_1.number256ToNumber)(event.fields.amount, token?.decimals || 18);
-                message += `➕ Additional collateral has been added\n\n`;
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                message += `🔒 *Added:* ${formatNumber(amount)} ${tokenSymbol}\n`;
+                message += `\n👤 *Creator:* ${shortenAddress(event.fields.caller)}\n`;
                 break;
             }
-            case 'RemoveCollateralLoan': {
-                const tokenId = event.fields.token;
-                const token = (0, utils_1.findTokenFromId)(tokenList, tokenId);
-                const tokenSymbol = token?.symbol || 'Unknown';
-                const amount = (0, web3_1.number256ToNumber)(event.fields.amount, token?.decimals || 18);
-                message += `➖ Collateral has been partially withdrawn\n\n`;
-                message += `👤 *User:* ${shortenAddress(event.fields.who)}\n`;
-                message += `🔓 *Removed:* ${formatNumber(amount)} ${tokenSymbol}\n`;
+            case 'UpdateTokenBondingCurve': {
+                const tokenId = event.fields.tokenId;
+                // Try to fetch additional token data from Myonion API
+                const tokenData = await fetchTokenData(tokenId);
+                message += `📈 *Bonding Curve Initiated*\n\n`;
+                message += `📝 *Token ID:* \`${tokenId}\`\n\n`;
+                if (tokenData) {
+                    // Store logo URL if available
+                    if (tokenData.logo) {
+                        logoUrl = `https://file.myonion.fun/cdn-cgi/image/width=240,height=240,fit=crop,format=webp,quality=85/${tokenData.logo}`;
+                    }
+                    message += `🏷️ *Symbol:* ${tokenData.symbol || 'Unknown'}\n`;
+                    message += `📋 *Name:* ${tokenData.name || 'Unknown'}\n`;
+                    message += `💰 *Total Supply:* ${humanizeNumber(tokenData.supply || 0)} ${tokenData.symbol || ''}\n`;
+                    if (tokenData.description) {
+                        message += `📄 *Description:* ${tokenData.description}\n`;
+                    }
+                    if (tokenData.bondingCurve) {
+                        message += `🔗 *Bonding Curve:* \`${tokenData.bondingCurve}\`\n`;
+                    }
+                    // Add warning flags if present
+                    if (tokenData.isNsfw) {
+                        message += `⚠️ *NSFW Content*\n`;
+                    }
+                    if (tokenData.isOffensive) {
+                        message += `⚠️ *Offensive Content*\n`;
+                    }
+                    if (tokenData.isBlocked) {
+                        message += `🚫 *Blocked Token*\n`;
+                    }
+                }
+                message += `👤 *Creator:* ${shortenAddress(event.fields.caller)}\n`;
                 break;
             }
-            case 'LoanLiquidation': {
-                const tokenId = event.fields.token;
-                const token = (0, utils_1.findTokenFromId)(tokenList, tokenId);
-                const tokenSymbol = token?.symbol || 'Unknown';
-                const startingBid = (0, web3_1.number256ToNumber)(event.fields.startingBid, token?.decimals || 18);
-                message += `🔨 Liquidation auction has started\n\n`;
-                message += `🏷️ *Starting Bid:* ${formatNumber(startingBid)} ${tokenSymbol}\n`;
+            case 'UpdateTokenDexPair': {
+                const tokenId = event.fields.tokenId;
+                // Try to fetch additional token data from Myonion API
+                const tokenData = await fetchTokenData(tokenId);
+                message += `🎉 *NEW GRADUATED TOKEN!*\n\n`;
+                message += `📝 *Token ID:* \`${tokenId}\`\n\n`;
+                if (tokenData) {
+                    // Store logo URL if available
+                    if (tokenData.logo) {
+                        logoUrl = `https://file.myonion.fun/cdn-cgi/image/width=240,height=240,fit=crop,format=webp,quality=85/${tokenData.logo}`;
+                    }
+                    message += `🏷️ *Symbol:* ${tokenData.symbol || 'Unknown'}\n`;
+                    message += `📋 *Name:* ${tokenData.name || 'Unknown'}\n`;
+                    // Add warning flags if present
+                    if (tokenData.isNsfw) {
+                        message += `⚠️ *NSFW Content*\n`;
+                    }
+                    if (tokenData.isOffensive) {
+                        message += `⚠️ *Offensive Content*\n`;
+                    }
+                    if (tokenData.isBlocked) {
+                        message += `🚫 *Blocked Token*\n`;
+                    }
+                    if (tokenData.owner !== "") {
+                        message += `👤 *Creator:* ${shortenAddress(tokenData.owner)}\n`;
+                    }
+                }
                 break;
             }
             default:
-                message += `Event Details: ${JSON.stringify(event.fields)}\n`;
+            //message += `Event Details: ${JSON.stringify(event.fields)}\n`;
         }
         // Add contract info and footer
-        message += `\n📝 *Contract:* ${shortenAddress(event.fields.contract)}`;
-        // Add timestamp footer
-        message += `\n\n🕒 *Time:* ${now}`;
+        //message += `\n📝 *Contract:* ${shortenAddress(addressFromContractId(event.fields.contract || event.fields.currentContract || event.fields.previousContract))}`;
+        // Add timestamp
+        //message += `\n\n🕒 *Time:* ${now}`;
         // Add links
-        message += `\n\n🔗 *Links:*`;
-        message += `\n• [View on AlpacaFi](https://www.alpacafi.app/loan/${event.fields.contract})`;
-        message += `\n• [Explorer](https://explorer.alephium.org/addresses/${(0, web3_1.addressFromContractId)(event.fields.contract)})`;
-        return message;
+        message += `\n👉 Trade on [myonion.fun](https://myonion.fun/trade?tokenId=${event.fields.tokenId})\n`;
+        return { text: message, logoUrl };
     }
     catch (error) {
         console.error('Error formatting Telegram message:', error);
-        return `🔔 *AlpacaFi Event*\n\n*${event.name} Event Received*\n\nError formatting details: ${error.message || 'Unknown error'}\n\n🕒 *Time*: ${now}`;
+        return {
+            text: `🔔 *Myonion Event*\n\n*${event.name} Event Received*\n\nError formatting details: ${error.message || 'Unknown error'}\n\n${JSON.stringify(event.fields)}`,
+            logoUrl: ''
+        };
     }
 };
 // Helper function to get emoji for event type
 function getEventEmoji(eventName) {
     switch (eventName) {
-        case 'NewLoan': return '🆕';
-        case 'AcceptedLoan': return '✅';
-        case 'LoanRemoved': return '🗑️';
-        case 'LoanCanceled': return '❌';
-        case 'LoanLiqWith': return '💸';
-        case 'LoanPayed': return '💰';
-        case 'AddCollateralLoan': return '➕';
-        case 'RemoveCollateralLoan': return '➖';
-        case 'LoanLiquidation': return '🔨';
+        case 'CreateToken': return '🚀';
+        case 'CreateBondingCurve': return '📈';
+        case 'UpdateTokenMeta': return '🔄';
+        case 'UpdateTokenBondingCurve': return '📊';
+        case 'UpdateTokenDexPair': return '💱';
+        case 'ChangeOwnerCommence': return '👑';
+        case 'ChangeOwnerApply': return '✅';
+        case 'MigrateCommence': return '🔄';
+        case 'MigrateApply': return '✅';
+        case 'MigrateWithFieldsApply': return '✅';
         default: return '🔔';
     }
 }
@@ -178,12 +349,26 @@ function formatEventName(eventName) {
     const formatted = eventName.replace(/([A-Z])/g, ' $1').trim();
     return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
-// Helper function to format numbers with commas and limited decimal places
-function formatNumber(num) {
-    return num.toLocaleString(undefined, {
-        maximumFractionDigits: 6,
-        minimumFractionDigits: 0
-    });
+// Helper function to format numbers with K, M, B, T suffixes
+function humanizeNumber(num) {
+    if (num >= 1000000000000) {
+        return (0, numeral_1.default)(num).format('0.[00]a').toUpperCase(); // T for trillion
+    }
+    else if (num >= 1000000000) {
+        return (0, numeral_1.default)(num).format('0.[00]a').toUpperCase(); // B for billion
+    }
+    else if (num >= 1000000) {
+        return (0, numeral_1.default)(num).format('0.[00]a').toUpperCase(); // M for million
+    }
+    else if (num >= 1000) {
+        return (0, numeral_1.default)(num).format('0.[00]a').toUpperCase(); // K for thousand
+    }
+    else if (num < 0.01 && num > 0) {
+        return (0, numeral_1.default)(num).format('0.[000000]'); // Show up to 6 decimal places for very small numbers
+    }
+    else {
+        return (0, numeral_1.default)(num).format('0,0.[00]'); // Regular formatting with up to 2 decimal places
+    }
 }
 // Helper functions
 function shortenAddress(address) {
@@ -191,11 +376,6 @@ function shortenAddress(address) {
         return 'Unknown';
     const shortened = `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
     return `[${shortened}](https://explorer.alephium.org/addresses/${address})`;
-}
-function bytesToHex(bytes) {
-    // Convert ByteVec to hex string that can be used to look up tokens
-    // This is a simplified version - you may need to adjust based on your actual data format
-    return bytes.startsWith('0x') ? bytes : `0x${bytes}`;
 }
 function formatInterestRate(interest) {
     // Convert the interest rate to a human-readable percentage
@@ -222,4 +402,140 @@ function sendTelegramMessage(chatId, message) {
         }
     });
 }
-console.log('AlpacaFi Event Notifier Bot is running...');
+// New function to send message with image
+function sendTelegramMessageWithImage(chatId, message, imageUrl) {
+    // First try to send with image
+    bot.sendPhoto(chatId, imageUrl, {
+        caption: message,
+        parse_mode: 'Markdown'
+    })
+        .then(() => {
+        console.log('Message with image sent successfully');
+        isRateLimited = false;
+    })
+        .catch((error) => {
+        console.error('Error sending message with image:', error.message);
+        // If there's an error with the image, fall back to text-only message
+        if (error.code !== 'ETELEGRAM' || !error.response?.parameters?.retry_after) {
+            console.log('Falling back to text-only message');
+            sendTelegramMessage(chatId, message);
+            return;
+        }
+        // Handle rate limiting
+        const retryAfter = error.response.parameters.retry_after;
+        console.log(`Rate limited. Retry after ${retryAfter} seconds`);
+        isRateLimited = true;
+        rateLimitTimeout = retryAfter;
+        // Schedule retry after the rate limit expires
+        setTimeout(() => {
+            sendTelegramMessageWithImage(chatId, message, imageUrl);
+        }, retryAfter * 1000);
+    });
+}
+console.log('Myonion Event Notifier Bot is running...');
+// Helper function to parse and format social media links
+function formatSocialLinks(socials) {
+    // Start with the header
+    let result = "🌐 *Socials:*\n";
+    if (!socials || socials.trim() === '') {
+        // If no socials provided, show all as not available
+        result += "📌 X: Not Available\n";
+        result += "📌 Discord: Not Available\n";
+        result += "📌 Website: Not Available\n";
+        return result;
+    }
+    try {
+        // Create a map to track which platforms we've found
+        const foundPlatforms = {};
+        // Split by semicolons and filter out empty entries
+        const links = socials.split(';').filter(link => link.trim() !== '');
+        for (const link of links) {
+            // Split each entry by colon to get platform and URL/handle
+            const parts = link.split(':');
+            if (parts.length >= 2) {
+                const platform = parts[0].trim();
+                const url = parts.slice(1).join(':').trim(); // Rejoin in case URL contains colons
+                if (platform && url) {
+                    const fullUrl = url.startsWith('http') ? url : getPlatformUrl(platform, url);
+                    const displayName = getPlatformDisplayName(platform);
+                    foundPlatforms[displayName] = fullUrl;
+                }
+            }
+        }
+        // List of common platforms we want to always show
+        const commonPlatforms = ['Twitter', 'Discord', 'Website', 'Telegram'];
+        // Add each common platform, showing "Not Available" if not found
+        for (const platform of commonPlatforms) {
+            if (foundPlatforms[platform]) {
+                result += `📌 ${platform}: [Link](${foundPlatforms[platform]})\n`;
+            }
+            else {
+                result += `📌 ${platform}: Not Available\n`;
+            }
+        }
+        // Add any other platforms that were found but aren't in our common list
+        for (const [platform, url] of Object.entries(foundPlatforms)) {
+            if (!commonPlatforms.includes(platform)) {
+                result += `📌 ${platform}: [Link](${url})\n`;
+            }
+        }
+        return result;
+    }
+    catch (error) {
+        console.error('Error formatting social links:', error);
+        // Return default "not available" for all platforms on error
+        result += "📌 X: Not Available\n";
+        result += "📌 Discord: Not Available\n";
+        result += "📌 Website: Not Available\n";
+        return result;
+    }
+}
+// Helper function to get emoji for social platform
+function getSocialEmoji(platform) {
+    const lowerPlatform = platform.toLowerCase();
+    if (lowerPlatform.includes('tw') || lowerPlatform.includes('twitter') || lowerPlatform.includes('x'))
+        return '🐦';
+    if (lowerPlatform.includes('tg') || lowerPlatform.includes('telegram'))
+        return '📱';
+    if (lowerPlatform.includes('ds') || lowerPlatform.includes('discord'))
+        return '🎮';
+    if (lowerPlatform.includes('web') || lowerPlatform.includes('website'))
+        return '🌐';
+    if (lowerPlatform.includes('gh') || lowerPlatform.includes('github'))
+        return '💻';
+    if (lowerPlatform.includes('md') || lowerPlatform.includes('medium'))
+        return '📝';
+    if (lowerPlatform.includes('rd') || lowerPlatform.includes('reddit'))
+        return '📰';
+    return '🔗';
+}
+// Helper function to get full platform display name
+function getPlatformDisplayName(platform) {
+    const lowerPlatform = platform.toLowerCase();
+    if (lowerPlatform === 'tw')
+        return 'Twitter';
+    if (lowerPlatform === 'tg')
+        return 'Telegram';
+    if (lowerPlatform === 'ds')
+        return 'Discord';
+    if (lowerPlatform === 'web')
+        return 'Website';
+    if (lowerPlatform === 'gh')
+        return 'GitHub';
+    if (lowerPlatform === 'md')
+        return 'Medium';
+    if (lowerPlatform === 'rd')
+        return 'Reddit';
+    return platform;
+}
+// Helper function to get full URL for platforms that need it
+function getPlatformUrl(platform, handle) {
+    const lowerPlatform = platform.toLowerCase();
+    if (lowerPlatform === 'tw')
+        return `https://x.com/${handle}`;
+    if (lowerPlatform === 'tg')
+        return `https://t.me/${handle}`;
+    if (lowerPlatform === 'ds')
+        return `https://discord.gg/${handle}`;
+    return handle; // Return as is for other platforms
+}

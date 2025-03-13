@@ -2,13 +2,14 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export * from "./AlpacaFiOracle";
-export * from "./Auction";
-export * from "./AuctionFactory";
-export * from "./Debt";
-export * from "./Fee";
-export * from "./Loan";
-export * from "./LoanFactory";
-export * from "./Pool";
-export * from "./TokenTest";
+export * from "./BondingPair";
+export * from "./CommentTracker";
+export * from "./DexPair";
+export * from "./FeeCollector";
+export * from "./FeeHandler";
+export * from "./FixedPointMathTest";
+export * from "./OnionRouter";
+export * from "./ProfileTracker";
+export * from "./Token";
+export * from "./TokenLauncher";
 export * from "./scripts";

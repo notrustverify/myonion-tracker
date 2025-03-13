@@ -2,136 +2,117 @@
 /* tslint:disable */
 /* eslint-disable */
 
+import { NetworkId } from "@alephium/web3";
 import {
-  RunScriptResult,
-  DeployContractExecutionResult,
-  NetworkId,
-} from "@alephium/web3";
-import {
-  AlpacaFiOracle,
-  AlpacaFiOracleInstance,
-  Loan,
-  LoanInstance,
-  LoanFactory,
-  LoanFactoryInstance,
-  Auction,
-  AuctionInstance,
-  AuctionFactory,
-  AuctionFactoryInstance,
-  Fee,
-  FeeInstance,
-  TokenTest,
-  TokenTestInstance,
-  Debt,
-  DebtInstance,
-  Pool,
-  PoolInstance,
+  Token,
+  TokenInstance,
+  FeeHandler,
+  FeeHandlerInstance,
+  FeeCollector,
+  FeeCollectorInstance,
+  OnionRouter,
+  OnionRouterInstance,
+  BondingPair,
+  BondingPairInstance,
+  DexPair,
+  DexPairInstance,
+  TokenLauncher,
+  TokenLauncherInstance,
+  ProfileTracker,
+  ProfileTrackerInstance,
+  CommentTracker,
+  CommentTrackerInstance,
 } from ".";
 import { default as mainnetDeployments } from "../../deployments/.deployments.mainnet.json";
 import { default as testnetDeployments } from "../../deployments/.deployments.testnet.json";
 
+// Define types for deployment results
+type DeployContractExecutionResult<T> = {
+  contractInstance: T;
+  [key: string]: any;
+};
+
+type RunScriptResult = {
+  [key: string]: any;
+};
+
 export type Deployments = {
   deployerAddress: string;
   contracts: {
-    AlpacaFiOracle?: DeployContractExecutionResult<AlpacaFiOracleInstance>;
-    Loan?: DeployContractExecutionResult<LoanInstance>;
-    LoanFactory?: DeployContractExecutionResult<LoanFactoryInstance>;
-    Auction?: DeployContractExecutionResult<AuctionInstance>;
-    AuctionFactory?: DeployContractExecutionResult<AuctionFactoryInstance>;
-    Fee?: DeployContractExecutionResult<FeeInstance>;
-    TokenTest?: DeployContractExecutionResult<TokenTestInstance>;
-    Debt?: DeployContractExecutionResult<DebtInstance>;
-    Pool?: DeployContractExecutionResult<PoolInstance>;
+    Token: DeployContractExecutionResult<TokenInstance>;
+    FeeHandler: DeployContractExecutionResult<FeeHandlerInstance>;
+    FeeCollector: DeployContractExecutionResult<FeeCollectorInstance>;
+    OnionRouter: DeployContractExecutionResult<OnionRouterInstance>;
+    BondingPair: DeployContractExecutionResult<BondingPairInstance>;
+    DexPair: DeployContractExecutionResult<DexPairInstance>;
+    TokenLauncher: DeployContractExecutionResult<TokenLauncherInstance>;
+    ProfileTracker: DeployContractExecutionResult<ProfileTrackerInstance>;
+    CommentTracker: DeployContractExecutionResult<CommentTrackerInstance>;
   };
+  scripts: { SetFeeCollector: RunScriptResult };
 };
 
 function toDeployments(json: any): Deployments {
   const contracts = {
-    AlpacaFiOracle:
-      json.contracts["AlpacaFiOracle"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["AlpacaFiOracle"],
-            contractInstance: AlpacaFiOracle.at(
-              json.contracts["AlpacaFiOracle"].contractInstance.address
-            ),
-          },
-    Loan:
-      json.contracts["Loan"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["Loan"],
-            contractInstance: Loan.at(
-              json.contracts["Loan"].contractInstance.address
-            ),
-          },
-    LoanFactory:
-      json.contracts["LoanFactory"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["LoanFactory"],
-            contractInstance: LoanFactory.at(
-              json.contracts["LoanFactory"].contractInstance.address
-            ),
-          },
-    Auction:
-      json.contracts["Auction"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["Auction"],
-            contractInstance: Auction.at(
-              json.contracts["Auction"].contractInstance.address
-            ),
-          },
-    AuctionFactory:
-      json.contracts["AuctionFactory"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["AuctionFactory"],
-            contractInstance: AuctionFactory.at(
-              json.contracts["AuctionFactory"].contractInstance.address
-            ),
-          },
-    Fee:
-      json.contracts["Fee"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["Fee"],
-            contractInstance: Fee.at(
-              json.contracts["Fee"].contractInstance.address
-            ),
-          },
-    TokenTest:
-      json.contracts["TokenTest"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["TokenTest"],
-            contractInstance: TokenTest.at(
-              json.contracts["TokenTest"].contractInstance.address
-            ),
-          },
-    Debt:
-      json.contracts["Debt"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["Debt"],
-            contractInstance: Debt.at(
-              json.contracts["Debt"].contractInstance.address
-            ),
-          },
-    Pool:
-      json.contracts["Pool"] === undefined
-        ? undefined
-        : {
-            ...json.contracts["Pool"],
-            contractInstance: Pool.at(
-              json.contracts["Pool"].contractInstance.address
-            ),
-          },
+    Token: {
+      ...json.contracts["Token"],
+      contractInstance: Token.at(
+        json.contracts["Token"].contractInstance.address
+      ),
+    },
+    FeeHandler: {
+      ...json.contracts["FeeHandler"],
+      contractInstance: FeeHandler.at(
+        json.contracts["FeeHandler"].contractInstance.address
+      ),
+    },
+    FeeCollector: {
+      ...json.contracts["FeeCollector"],
+      contractInstance: FeeCollector.at(
+        json.contracts["FeeCollector"].contractInstance.address
+      ),
+    },
+    OnionRouter: {
+      ...json.contracts["OnionRouter"],
+      contractInstance: OnionRouter.at(
+        json.contracts["OnionRouter"].contractInstance.address
+      ),
+    },
+    BondingPair: {
+      ...json.contracts["BondingPair"],
+      contractInstance: BondingPair.at(
+        json.contracts["BondingPair"].contractInstance.address
+      ),
+    },
+    DexPair: {
+      ...json.contracts["DexPair"],
+      contractInstance: DexPair.at(
+        json.contracts["DexPair"].contractInstance.address
+      ),
+    },
+    TokenLauncher: {
+      ...json.contracts["TokenLauncher"],
+      contractInstance: TokenLauncher.at(
+        json.contracts["TokenLauncher"].contractInstance.address
+      ),
+    },
+    ProfileTracker: {
+      ...json.contracts["ProfileTracker"],
+      contractInstance: ProfileTracker.at(
+        json.contracts["ProfileTracker"].contractInstance.address
+      ),
+    },
+    CommentTracker: {
+      ...json.contracts["CommentTracker"],
+      contractInstance: CommentTracker.at(
+        json.contracts["CommentTracker"].contractInstance.address
+      ),
+    },
   };
   return {
     ...json,
     contracts: contracts as Deployments["contracts"],
+    scripts: { SetFeeCollector: json.scripts["SetFeeCollector"] },
   };
 }
 

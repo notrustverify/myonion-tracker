@@ -5,17 +5,37 @@
 import { Address, HexString, Val, Struct } from "@alephium/web3";
 import { default as allStructsJson } from "../structs.ral.json";
 export const AllStructs = allStructsJson.map((json) => Struct.fromJson(json));
-export interface DIAOracleValue extends Record<string, Val> {
-  value: bigint;
-  timestamp: bigint;
+export interface TokenLauncherSettings extends Record<string, Val> {
+  memeTokenTemplateId: HexString;
+  bondingPairTemplateId: HexString;
+  dexPairTemplateId: HexString;
+  feeCollector: HexString;
+  router: HexString;
 }
-export interface OracleData extends Record<string, Val> {
-  token: HexString;
-  value: bigint;
-  decimals: bigint;
+export interface TokenMetaData extends Record<string, Val> {
+  owner: Address;
+  ownerFeeCollector: HexString;
+  logo: HexString;
+  description: HexString;
+  socials: HexString;
+  bondingCurve: HexString;
+  bondingCurveV: HexString;
+  dexPair: HexString;
+  dexPairV: HexString;
 }
-export interface PairInfo extends Record<string, Val> {
-  pair: HexString;
-  decimals: bigint;
-  oracle: boolean;
+export interface UpgradableSettings extends Record<string, Val> {
+  upgradeDelay: bigint;
+  owner: Address;
+  newOwner: Address;
+  upgradeCommenced: bigint;
+  newCode: HexString;
+}
+export interface UserProfile extends Record<string, Val> {
+  pfp: HexString;
+  name: HexString;
+  status: HexString;
+  socials: HexString;
+  linkingId: HexString;
+  xp: bigint;
+  referrer: Address;
 }
