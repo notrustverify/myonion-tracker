@@ -24,8 +24,5 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 
-# Set environment variables
-ENV NODE_ENV=production
-
 # Run the bot
 CMD ["bun", "run", "bot:start"] 
