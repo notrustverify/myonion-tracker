@@ -15,7 +15,7 @@ COPY . .
 RUN bun run bot:build
 
 # Production stage
-FROM oven/bun:1.0-slim
+FROM oven/bun:1.2.5-alpine
 
 WORKDIR /app
 
