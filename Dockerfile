@@ -1,19 +1,31 @@
-FROM node:18-alpine
+FROM oven/bun:1.2.5-alpine as builder
 
 WORKDIR /app
 
+# Copy package files
+COPY package.json bun.lockb* ./
+
 # Install dependencies
-COPY package*.json yarn.lock ./
-RUN yarn
+RUN bun install --frozen-lockfile
 
 # Copy source code
 COPY . .
 
-# Build TypeScript code
-RUN yarn bot:build
+# Build the bot
+RUN bun run bot:build
+
+# Production stage
+FROM oven/bun:1.0-slim
+
+WORKDIR /app
+
+# Copy built files and dependencies
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
 
 # Set environment variables
 ENV NODE_ENV=production
 
 # Run the bot
-CMD ["node", "dist/src/index.js"] 
+CMD ["bun", "run", "bot:start"] 

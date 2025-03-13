@@ -1,19 +1,8 @@
-version: '3.8'
-
 services:
-  alpacafi-bot:
+  bot:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: alpacafi-telegram-bot
     restart: unless-stopped
     env_file:
       - .env
-    volumes:
-      - ./logs:/app/logs
-    networks:
-      - bot-network
-
-networks:
-  bot-network:
-    driver: bridge 
