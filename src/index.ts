@@ -72,17 +72,17 @@ const startEventFetchingTokenLauncher = async () => {
                   setTimeout(() => {
                     // Check if we have a logo URL
                     if (formattedMessage.logoUrl) {
-                      sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl);
+                      sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl, formattedMessage.tokenId);
                     } else {
-                      sendTelegramMessage(chatId, formattedMessage.text);
+                      sendTelegramMessage(chatId, formattedMessage.text, formattedMessage.tokenId);
                     }
                   }, rateLimitTimeout * 1000);
                 } else {
                   // Check if we have a logo URL
                   if (formattedMessage.logoUrl) {
-                    sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl);
+                    sendTelegramMessageWithImage(chatId, formattedMessage.text, formattedMessage.logoUrl, formattedMessage.tokenId);
                   } else {
-                    sendTelegramMessage(chatId, formattedMessage.text);
+                    sendTelegramMessage(chatId, formattedMessage.text, formattedMessage.tokenId);
                   }
                 }
               }
@@ -122,7 +122,7 @@ const handleReconnection = () => {
     // Send notification about reconnection attempt
     if (bot && chatId) {
       const reconnectMessage = `⚠️ *Myonion Event Notifier Bot Alert*\n\nConnection to blockchain lost. Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} scheduled in ${cappedDelay/1000} seconds.`;
-      sendTelegramMessage(chatId, reconnectMessage);
+      sendTelegramMessage(chatId, reconnectMessage, '');
     }
     
     setTimeout(() => {
@@ -221,10 +221,11 @@ function setupCacheCleaning() {
 }
 
 // Function to format event message for Telegram
-const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUrl: string }> => {
+const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUrl: string, tokenId: string }> => {
   const now = new Date().toLocaleString();
   let message = '';
   let logoUrl = '';
+  let tokenId = '';
   
   try {
     // Get token list for resolving token names and symbols
@@ -237,8 +238,8 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
     switch (event.name) {
       case 'CreateToken': {
         message += `${eventEmoji} *New token detected!*\n\n`;
-
-        const tokenId = event.fields.tokenId;
+  
+        tokenId = event.fields.tokenId;
         
         // Try to fetch additional token data from Myonion API
         const tokenData = await fetchTokenData(tokenId);
@@ -289,7 +290,7 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
       
       case 'UpdateTokenBondingCurve': {
         
-        const tokenId = event.fields.tokenId;
+        tokenId = event.fields.tokenId;
         
         // Try to fetch additional token data from Myonion API
         const tokenData = await fetchTokenData(tokenId);
@@ -334,7 +335,7 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
       }
       
       case 'UpdateTokenDexPair': {
-        const tokenId = event.fields.tokenId;
+        tokenId = event.fields.tokenId;
         
         // Try to fetch additional token data from Myonion API
         const tokenData = await fetchTokenData(tokenId);
@@ -384,14 +385,13 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
     
     // Add links
     
-    message += `\n👉 Trade on [myonion.fun](https://myonion.fun/trade?tokenId=${event.fields.tokenId})\n`;
-    
-    return { text: message, logoUrl };
+    return { text: message, logoUrl, tokenId };
   } catch (error: any) {
     console.error('Error formatting Telegram message:', error);
     return { 
       text: `🔔 *Myonion Event*\n\n*${event.name} Event Received*\n\nError formatting details: ${error.message || 'Unknown error'}\n\n${JSON.stringify(event.fields)}`,
-      logoUrl: ''
+      logoUrl: '',
+      tokenId: event.fields?.tokenId || ''
     };
   }
 };
@@ -454,8 +454,19 @@ function formatDuration(duration: bigint): string {
   return humanizeDuration(Number(duration), {largest: 2, round: true});
 }
 
-function sendTelegramMessage(chatId: string, message: string) {
-  bot.sendMessage(chatId, message, { parse_mode: 'Markdown', disable_web_page_preview: true })
+function sendTelegramMessage(chatId: string, message: string, tokenId: string) {
+  // Create inline keyboard with button
+  const inlineKeyboard = {
+    inline_keyboard: [
+      [{ text: '🔄 Trade on myonion.fun', url: `https://myonion.fun/trade?tokenId=${tokenId}` }]
+    ]
+  };
+  
+  bot.sendMessage(chatId, message, { 
+    parse_mode: 'Markdown', 
+    disable_web_page_preview: true,
+    reply_markup: inlineKeyboard
+  })
     .then(() => {
       console.log('Message sent successfully');
       isRateLimited = false;
@@ -474,11 +485,19 @@ function sendTelegramMessage(chatId: string, message: string) {
 }
 
 // New function to send message with image
-function sendTelegramMessageWithImage(chatId: string, message: string, imageUrl: string) {
+function sendTelegramMessageWithImage(chatId: string, message: string, imageUrl: string, tokenId: string) {
+  // Create inline keyboard with button
+  const inlineKeyboard = {
+    inline_keyboard: [
+      [{ text: '🔄 Trade on myonion.fun', url: `https://myonion.fun/trade?tokenId=${tokenId}` }]
+    ]
+  };
+  
   // First try to send with image
   bot.sendPhoto(chatId, imageUrl, { 
     caption: message,
-    parse_mode: 'Markdown'
+    parse_mode: 'Markdown',
+    reply_markup: inlineKeyboard
   })
   .then(() => {
     console.log('Message with image sent successfully');
@@ -490,7 +509,7 @@ function sendTelegramMessageWithImage(chatId: string, message: string, imageUrl:
     // If there's an error with the image, fall back to text-only message
     if (error.code !== 'ETELEGRAM' || !error.response?.parameters?.retry_after) {
       console.log('Falling back to text-only message');
-      sendTelegramMessage(chatId, message);
+      sendTelegramMessage(chatId, message, tokenId);
       return;
     }
     
@@ -502,7 +521,7 @@ function sendTelegramMessageWithImage(chatId: string, message: string, imageUrl:
     
     // Schedule retry after the rate limit expires
     setTimeout(() => {
-      sendTelegramMessageWithImage(chatId, message, imageUrl);
+      sendTelegramMessageWithImage(chatId, message, imageUrl, tokenId);
     }, retryAfter * 1000);
   });
 }
