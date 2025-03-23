@@ -394,7 +394,7 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
       tokenId: event.fields?.tokenId || ''
     };
     console.log(formattedMessage);
-    //return formattedMessage;
+    return formattedMessage;
   }
 };
 

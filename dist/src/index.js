@@ -109,7 +109,8 @@ const handleReconnection = () => {
         // Send notification about reconnection attempt
         if (bot && chatId) {
             const reconnectMessage = `⚠️ *Myonion Event Notifier Bot Alert*\n\nConnection to blockchain lost. Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} scheduled in ${cappedDelay / 1000} seconds.`;
-            sendTelegramMessage(chatId, reconnectMessage, '');
+            //sendTelegramMessage(chatId, reconnectMessage, '');
+            console.log(reconnectMessage);
         }
         setTimeout(() => {
             startEventFetchingTokenLauncher();
@@ -320,11 +321,13 @@ const formatTelegramMessage = async (event) => {
     }
     catch (error) {
         console.error('Error formatting Telegram message:', error);
-        return {
+        const formattedMessage = {
             text: `🔔 *Myonion Event*\n\n*${event.name} Event Received*\n\nError formatting details: ${error.message || 'Unknown error'}\n\n${JSON.stringify(event.fields)}`,
             logoUrl: '',
             tokenId: event.fields?.tokenId || ''
         };
+        console.log(formattedMessage);
+        return formattedMessage;
     }
 };
 // Helper function to get emoji for event type
