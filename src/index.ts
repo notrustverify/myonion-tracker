@@ -122,7 +122,8 @@ const handleReconnection = () => {
     // Send notification about reconnection attempt
     if (bot && chatId) {
       const reconnectMessage = `⚠️ *Myonion Event Notifier Bot Alert*\n\nConnection to blockchain lost. Reconnection attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} scheduled in ${cappedDelay/1000} seconds.`;
-      sendTelegramMessage(chatId, reconnectMessage, '');
+      //sendTelegramMessage(chatId, reconnectMessage, '');
+      console.log(reconnectMessage);
     }
     
     setTimeout(() => {
@@ -222,7 +223,6 @@ function setupCacheCleaning() {
 
 // Function to format event message for Telegram
 const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUrl: string, tokenId: string }> => {
-  const now = new Date().toLocaleString();
   let message = '';
   let logoUrl = '';
   let tokenId = '';
@@ -388,11 +388,13 @@ const formatTelegramMessage = async (event: any): Promise<{ text: string, logoUr
     return { text: message, logoUrl, tokenId };
   } catch (error: any) {
     console.error('Error formatting Telegram message:', error);
-    return { 
+    const formattedMessage = { 
       text: `🔔 *Myonion Event*\n\n*${event.name} Event Received*\n\nError formatting details: ${error.message || 'Unknown error'}\n\n${JSON.stringify(event.fields)}`,
       logoUrl: '',
       tokenId: event.fields?.tokenId || ''
     };
+    console.log(formattedMessage);
+    //return formattedMessage;
   }
 };
 

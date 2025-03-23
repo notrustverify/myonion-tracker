@@ -195,7 +195,6 @@ function setupCacheCleaning() {
 }
 // Function to format event message for Telegram
 const formatTelegramMessage = async (event) => {
-    const now = new Date().toLocaleString();
     let message = '';
     let logoUrl = '';
     let tokenId = '';
